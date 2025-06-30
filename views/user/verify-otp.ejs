@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OTP Verification</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+
+    .otp-container {
+      background-color: white;
+      padding: 30px 20px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .otp-inputs {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .otp-inputs input {
+      width: 40px;
+      height: 45px;
+      font-size: 20px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      transition: border 0.3s;
+    }
+
+    .otp-inputs input:focus {
+      border-color: #007bff;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .resend {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .resend a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .timer {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .expired {
+      color: red;
+    }
+
+    @media (max-width: 400px) {
+      .otp-inputs input {
+        width: 35px;
+        height: 40px;
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="otp-container">
+    <h2>Enter the 6-digit OTP</h2>
+    <form id="otpForm" onsubmit="return validateOTPform(event)">
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" oninput="moveToNext(this, 'otp2')" onkeydown="moveToPrev(this, event)" id="otp1" required>
+        <input type="text" maxlength="1" oninput="moveToNext(this, 'otp3')" onkeydown="moveToPrev(this, event)" id="otp2" required>
+        <input type="text" maxlength="1" oninput="moveToNext(this, 'otp4')" onkeydown="moveToPrev(this, event)" id="otp3" required>
+        <input type="text" maxlength="1" oninput="moveToNext(this, 'otp5')" onkeydown="moveToPrev(this, event)" id="otp4" required>
+        <input type="text" maxlength="1" oninput="moveToNext(this, 'otp6')" onkeydown="moveToPrev(this, event)" id="otp5" required>
+        <input type="text" maxlength="1" onkeydown="moveToPrev(this, event)" id="otp6" required>
+      </div>
+      <button type="submit" id="verifyBtn">Verify OTP</button>
+    </form>
+    <div class="timer">Time remaining: <span id="timerValue">60</span> seconds</div>
+    <div class="resend">Didn't receive the code? <a href="#" onclick="resendOTP()">Resend OTP</a></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Focus on first input
+    document.getElementById("otp1").focus();
+
+    let timer = 60;
+    let timerInterval;
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timer--;
+        document.getElementById("timerValue").textContent = timer;
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById("timerValue").classList.add("expired");
+          document.getElementById("timerValue").textContent = "Expired";
+          
+          // Disable all OTP inputs
+          const otpInputs = document.querySelectorAll('.otp-inputs input');
+          otpInputs.forEach(input => {
+            input.disabled = true;
+          });
+          document.getElementById("verifyBtn").disabled = true;
+        }
+      }, 1000);
+    }
+
+    // Move to next input
+    function moveToNext(current, nextId) {
+      if (current.value.length >= current.maxLength) {
+        const nextInput = document.getElementById(nextId);
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+    }
+
+    // Move to previous input on backspace
+    function moveToPrev(current, event) {
+      if (event.key === 'Backspace' && current.value === '') {
+        const inputs = document.querySelectorAll('.otp-inputs input');
+        const currentIndex = Array.from(inputs).indexOf(current);
+        if (currentIndex > 0) {
+          inputs[currentIndex - 1].focus();
+        }
+      }
+    }
+
+    // Validate OTP form
+    function validateOTPform(event) {
+      event.preventDefault();
+      
+      // Get all OTP values
+      const otp1 = document.getElementById("otp1").value;
+      const otp2 = document.getElementById("otp2").value;
+      const otp3 = document.getElementById("otp3").value;
+      const otp4 = document.getElementById("otp4").value;
+      const otp5 = document.getElementById("otp5").value;
+      const otp6 = document.getElementById("otp6").value;
+      
+      const otpInput = otp1 + otp2 + otp3 + otp4 + otp5 + otp6;
+      
+      if (otpInput.length !== 6) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid OTP",
+          text: "Please enter all 6 digits"
+        });
+        return false;
+      }
+
+      $.ajax({
+        type: "POST",
+        url: "/verify-otp",
+        data: { otp: otpInput },
+        success: function(response) {
+          if (response.success) {
+            Swal.fire({
+              icon: "success",
+              title: "OTP Verified Successfully",
+              showConfirmButton: false,
+              timer: 1500
+            }).then(() => {
+              window.location.href = response.redirectUrl;
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: response.message
+            });
+          }
+        },
+        error: function() {
+          Swal.fire({
+            icon: "error",
+            title: "Invalid OTP",
+            text: "Please try again"
+          });
+        }
+      });
+      
+      return false;
+    }
+
+    function resendOTP() {
+      $.ajax({
+        type: "POST",
+        url: "/resend-otp",
+        success: function(response) {
+          if (response.success) {
+            Swal.fire({
+              icon: "success",
+              title: "OTP Resent",
+              text: "A new OTP has been sent to your email",
+              timer: 2000
+            });
+            
+            // Reset timer
+            timer = 60;
+            document.getElementById("timerValue").textContent = timer;
+            document.getElementById("timerValue").classList.remove("expired");
+            
+            // Re-enable inputs
+            const otpInputs = document.querySelectorAll('.otp-inputs input');
+            otpInputs.forEach(input => {
+              input.disabled = false;
+              input.value = '';
+            });
+            document.getElementById("verifyBtn").disabled = false;
+            document.getElementById("otp1").focus();
+            
+            startTimer();
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "Failed to resend OTP"
+            });
+          }
+        },
+        error: function() {
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to resend OTP"
+          });
+        }
+      });
+    }
+
+    // Start timer when page loads
+    startTimer();
+  </script>
+</body>
+</html>

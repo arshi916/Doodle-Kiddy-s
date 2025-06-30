@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign up</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      max-width: 800px;
+      height: 95vh;
+      min-height: 500px;
+      margin: auto;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #fff;
+    }
+
+    .form-section {
+      width: 48%;
+      padding: 11px;
+      overflow: hidden;
+    }
+
+    .image-section {
+      width: 53%;
+      background-color:#e8e0d9;
+    }
+
+    .image-section img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 12px;
+    }
+
+    .remember-me input {
+      margin-right: 6px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .password-field {
+      position: relative;
+    }
+
+    .password-field .eye-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #b5b3b3;
+    }
+
+    .sign-up-btn {
+      width: 100%;
+      padding: 10px;
+      background-color: #1a1a1a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 10px 0;
+      color: #777;
+      font-size: 12px;
+    }
+
+    .divider:before,
+    .divider:after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #e1e1e1;
+    }
+
+    .divider:before {
+      margin-right: 8px;
+    }
+
+    .divider:after {
+      margin-left: 8px;
+    }
+
+    .google-btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 8px;
+      background-color: white;
+      border: 1px solid #e1e1e1;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .google-btn img {
+      margin-right: 8px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .sign-in-link {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .sign-in-link a {
+      color: #0084ff;
+      text-decoration: none;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 10px;
+      display: none;
+    }
+
+    .server-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 6px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      border: 1px solid #f5c6cb;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+    <div class="form-section">
+      <h1>Sign up</h1>
+
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="server-error">
+          <%= message %>
+        </div>
+      <% } %>
+
+      <form id="signform" method="POST" action="/signup">
+        <div class="remember-me">
+          <input type="checkbox" id="remember" name="remember" />
+          <label for="remember" style="display: inline; margin-bottom: 0;">Remember me</label>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" required />
+          <div id="error1" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+          <div id="error2" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" required />
+          <div id="error3" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input type="password" id="password" name="password" required />
+            <span class="eye-icon" onclick="togglePassword('password')">
+              👁
+            </span>
+          </div>
+          <div id="error4" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <div class="password-field">
+            <input type="password" id="confirm-password" name="confirm_password" required />
+            <span class="eye-icon" onclick="togglePassword('confirm-password')">
+              👁
+            </span>
+          </div>
+          <div id="error5" class="error-message"></div>
+        </div>
+
+        
+          <% if (locals.message && message.length > 0) { %>
+  <div class="alert alert-danger text-center">
+    <%= message %>
+  </div>
+<% } %>
+
+
+        <button type="submit" class="sign-up-btn">Sign up</button>
+      </form>
+
+      <div class="divider">or</div>
+
+      <a href = "/auth/google" class="google-btn">
+        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google logo">
+        Continue with Google
+      </a>
+
+      <div class="sign-in-link">
+        Already have an account? <a href="#">Sign in</a>
+      </div>
+    </div>
+
+    <div class="image-section">
+      <img src="/images/image 3.jpg" alt="Children playing">
+    </div>
+  </div>
+
+  <script>
+    const nameid = document.getElementById("name")
+    const emailid = document.getElementById("email")
+    const phoneid = document.getElementById("phone")
+    const passid = document.getElementById("password");
+    const cpassid = document.getElementById("confirm-password")
+    const error1 = document.getElementById("error1")
+    const error2 = document.getElementById("error2")
+    const error3 = document.getElementById("error3")
+    const error4 = document.getElementById("error4")
+    const error5 = document.getElementById("error5")
+    const signform = document.getElementById("signform")
+
+    function togglePassword(fieldId) {
+      const field = document.getElementById(fieldId);
+      field.type = field.type === "password" ? "text" : "password";
+    }
+
+    function nameValidateCheking() {
+      const nameval = nameid.value;
+      const namepattern = /^[A-Za-z\s]+$/;
+      if (nameval.trim() === "") {
+        error1.style.display = "block";
+        error1.innerHTML = "Please enter a valid name";
+        return false;
+      } else if (!namepattern.test(nameval)) {
+        error1.style.display = "block";
+        error1.innerHTML = "Name can only contain alphabets and spaces";
+        return false;
+      } else {
+        error1.style.display = "none";
+        return true;
+      }
+    }
+
+    function emailVAlidateCheking() {
+      const emailval = emailid.value;
+      const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      if (!emailpattern.test(emailval)) {
+        error2.style.display = "block";
+        error2.innerHTML = "Invalid email format";
+        return false;
+      } else {
+        error2.style.display = "none";
+        return true;
+      }
+    }
+
+    function phoneValidateCheking() {
+      const phoneval = phoneid.value;
+      const phonePattern = /^[0-9]{10}$/;
+      if (!phonePattern.test(phoneval)) {
+        error3.style.display = "block";
+        error3.innerHTML = "Enter a valid 10-digit phone number";
+        return false;
+      } else {
+        error3.style.display = "none";
+        return true;
+      }
+    }
+
+    function passValidateCheking() {
+      const passval = passid.value;
+      const cpassval = cpassid.value;
+      const alpha = /[a-zA-Z]/;
+      const digit = /\d/;
+      let isValid = true;
+
+      if (passval.length < 8 || !alpha.test(passval) || !digit.test(passval)) {
+        error4.style.display = "block";
+        error4.innerHTML = "Password must be 8+ chars, letters and numbers";
+        isValid = false;
+      } else {
+        error4.style.display = "none";
+      }
+
+      if (cpassval && passval !== cpassval) {
+        error5.style.display = "block";
+        error5.innerHTML = "Passwords do not match";
+        isValid = false;
+      } else {
+        error5.style.display = "none";
+      }
+
+      return isValid;
+    }
+
+    nameid.addEventListener('blur', nameValidateCheking);
+    emailid.addEventListener('blur', emailVAlidateCheking);
+    phoneid.addEventListener('blur', phoneValidateCheking);
+    passid.addEventListener('blur', passValidateCheking);
+    cpassid.addEventListener('blur', passValidateCheking);
+
+    document.addEventListener("DOMContentLoaded", function () {
+      signform.addEventListener('submit', function (e) {
+        if (!nameValidateCheking() || !emailVAlidateCheking() || !phoneValidateCheking() || !passValidateCheking()) {
+          e.preventDefault();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

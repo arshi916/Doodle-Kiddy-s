@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doodle Kiddy's</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-white text-gray-900">
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+      <!-- Logo and menu -->
+      <div class="flex items-center space-x-4">
+        <button class="text-gray-400 hover:text-gray-600 focus:outline-none"><i class="fas fa-bars"></i></button>
+       <img src="images\WhatsApp Image 2025-04-19 at 13.08.27_a46a8f41.jpg" alt="Logo" class="w-8 h-8 rounded-full" />
+
+        <span class="text-sm font-semibold text-gray-600">Doodle Kiddy's</span>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="hidden md:flex space-x-6 text-sm font-semibold text-gray-400">
+        <a href="#" class="hover:text-gray-900">Home</a>
+        <a href="#" class="hover:text-gray-900">Shop</a>
+        <a href="#" class="hover:text-gray-900">About</a>
+        <a href="#" class="hover:text-gray-900">Contact</a>
+      </nav>
+
+      <!-- Icons and Search -->
+      <div class="flex items-center space-x-4 text-gray-400 relative">
+        <!-- Search bar -->
+        <div class="hidden md:block">
+          <input
+            type="text"
+            placeholder="Search..."
+            class="px-3 py-1 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+          />
+        </div>
+
+        <!-- Search icon -->
+        <button class="hover:text-gray-600 focus:outline-none">
+          <i class="fas fa-search"></i>
+        </button>
+
+   <div class="relative inline-block text-left">
+  <!-- Gray User Icon Button -->
+  <button id="userDropdownBtn" class="p-2 rounded-full hover:bg-gray-100 focus:outline-none">
+    <!-- Gray Heroicons User Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 0112 15a4 4 0 016.879 2.804M15 11a3 3 0 10-6 0 3 3 0 006 0z" />
+    </svg>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+  <% if (typeof user !== 'undefined') { %>
+    <!-- If user is logged in -->
+    <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+    <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+  <% } else { %>
+    <!-- If user is not logged in -->
+    <a href="/login" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Login</a>
+    <a href="/signup" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Signup</a>
+  <% } %>
+</div>
+
+
+<script>
+  const userBtn = document.getElementById('userDropdownBtn');
+  const userMenu = document.getElementById('userDropdownMenu');
+
+  userBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userMenu.classList.toggle('hidden');
+  });
+
+  window.addEventListener('click', () => {
+    userMenu.classList.add('hidden');
+  });
+</script>
+
+
+        <button class="hover:text-gray-600 focus:outline-none">
+          <i class="fas fa-heart"></i>
+        </button>
+        <button class="hover:text-gray-600 focus:outline-none">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button class="hover:text-gray-600 focus:outline-none">
+          <i class="fas fa-shopping-cart"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+</body>
+</html>
+

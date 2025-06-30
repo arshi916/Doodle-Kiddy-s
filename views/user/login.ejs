@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Nunito Sans', sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      background-color: #f8f9fa;
+    }
+
+    .login-container {
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      max-width: 950px;
+      height: 520px;
+      border-radius: 15px;
+      overflow: hidden;
+      background-color: #fff;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-side {
+      flex: 1;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+    }
+
+    .form-control {
+      font-size: 0.9rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-top: 10px;
+      background-color: black;
+      color: #fcfbfb;
+      
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+
+    .signup-link a {
+      color: #5862ee;
+      text-decoration: none;
+    }
+
+    .signup-link a:hover {
+      color: #c7a44d;
+    }
+
+    .alert {
+      font-size: 0.85rem;
+      padding: 0.4rem;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 0.8rem;
+      display: none;
+    }
+
+    .image-side {
+      flex: 1;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0px;
+    }
+
+    .image-side img {
+      width: 100%;
+      height: auto;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    @media (max-width: 768px) {
+      .login-card {
+        flex-direction: column;
+        height: auto;
+      }
+
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      
+      <!-- Form Side -->
+      <div class="form-side">
+        <h3 class="text-center mb-4">Log In</h3>
+        <form id="loginForm" action="/login" method="post">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" class="form-control" name="email" id="email" placeholder="Enter email">
+            <div id="error1" class="error-message"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" name="password" id="password" placeholder="Enter password">
+            <div id="error2" class="error-message"></div>
+          </div>
+
+          <% if (locals.message && message.length > 0) { %>
+  <div class="alert alert-danger text-center">
+    <%= message %>
+  </div>
+<% } %>
+
+
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+
+        <div class="signup-link">
+          <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+      </div>
+
+      <!-- Image Side -->
+      <div class="image-side">
+        <a href="/">
+          <img src="images\image 3.jpg" alt="Login Illustration" />
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JS Validation -->
+  <script>
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const error1 = document.getElementById("error1");
+    const error2 = document.getElementById("error2");
+    const loginForm = document.getElementById("loginForm");
+
+    function validateEmail() {
+      const emailVal = email.value.trim();
+      const pattern = /^[a-zA-Z0-9._-]+@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,4})$/;
+
+      if (!pattern.test(emailVal)) {
+        error1.style.display = "block";
+        error1.innerText = "Invalid email format";
+        return false;
+      } else {
+        error1.style.display = "none";
+        return true;
+      }
+    }
+
+    function validatePassword() {
+      const passVal = password.value.trim();
+      if (passVal.length < 8) {
+        error2.style.display = "block";
+        error2.innerText = "Password must be at least 8 characters";
+        return false;
+      } else {
+        error2.style.display = "none";
+        return true;
+      }
+    }
+
+    loginForm.addEventListener("submit", function (e) {
+      const emailValid = validateEmail();
+      const passValid = validatePassword();
+
+      if (!emailValid || !passValid) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Customers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-100">
+
+<div class="flex h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-lg">
+    <div class="p-6 text-2xl font-bold text-purple-600">AdminHub</div>
+    <nav class="mt-6 space-y-2 text-gray-800 font-medium">
+      <!-- Dashboard -->
+      <!-- Dashboard -->
+        <a href="/admin" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+          </svg>
+          Dashboard
+        </a>
+      <!-- Customers -->
+      <a href="/admin/customers" class="flex items-center gap-3 py-2 px-4 rounded <%= activePage === 'customers' ? 'bg-purple-100 text-purple-700' : 'hover:bg-purple-100' %>">
+        👥 Customers
+      </a>
+
+       <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0H4m0 0v6a2 2 0 002 2h12a2 2 0 002-2v-6" />
+          </svg>
+          Product
+        </a>
+
+    <!-- Orders -->
+        <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M3 3h18v4H3V3zm0 8h18v10H3V11z" />
+          </svg>
+          Orders
+        </a>
+
+     
+        <!-- Categories -->
+        <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          Categories
+        </a>
+
+       <!-- Offers -->
+        <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M3 10h18M3 14h18M5 7h14M5 17h14" />
+          </svg>
+          Offers
+        </a>
+
+       <!-- Coupons -->
+        <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M16 3H8a2 2 0 00-2 2v2a2 2 0 010 4v2a2 2 0 010 4v2a2 2 0 002 2h8a2 2 0 002-2v-2a2 2 0 010-4v-2a2 2 0 010-4V5a2 2 0 00-2-2z" />
+          </svg>
+          Coupons
+        </a>
+
+<!-- Settings -->
+        <a href="#" class="flex items-center gap-3 py-2 px-4 hover:bg-purple-100 rounded">
+          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4z" />
+            <path d="M19.4 15a7.91 7.91 0 010-6l2.1-2.1a1 1 0 00-1.4-1.4L18 7.6a7.91 7.91 0 01-6 0l-2.1-2.1a1 1 0 00-1.4 1.4L7.6 6a7.91 7.91 0 010 6l-2.1 2.1a1 1 0 001.4 1.4L6 16.4a7.91 7.91 0 016 0l2.1 2.1a1 1 0 001.4-1.4L16.4 18a7.91 7.91 0 010-6z" />
+          </svg>
+          Settings
+        </a>
+      <!-- Logout -->
+       <!-- Logout -->
+        <a href="/admin/logout" class="flex items-center gap-3 py-2 px-4 text-red-600 hover:bg-red-100 rounded">
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24">
+            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
+          </svg>
+          Logout
+        </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+   <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+  <h1 class="text-xl font-semibold text-gray-800">Users Management</h1>
+  <div class="flex items-center space-x-4">
+    <form method="GET" action="/admin/customers" class="flex items-center space-x-2">
+  <input name="search" value="<%= search %>" type="text" placeholder="Search for User Name"
+         class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring focus:border-purple-400"/>
+
+  <% if (search) { %>
+    <a href="/admin/customers" class="bg-gray-400 text-white px-2 py-1 text-sm rounded hover:bg-gray-500">Clear</a>
+  <% } %>
+
+  <button type="submit" class="bg-purple-600 text-white px-3 py-1 text-sm rounded hover:bg-purple-700">Search</button>
+</form>
+
+    <!-- Person/User SVG Icon -->
+    <div class="w-9 h-9 bg-purple-100 text-purple-700 flex items-center justify-center rounded-full">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+           stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5.121 17.804A7.975 7.975 0 0112 15c2.21 0 4.21.896 5.656 2.344M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    </div>
+  </div>
+</header>
+
+
+    <main class="p-6 overflow-x-auto">
+      <div class="bg-white p-4 rounded-lg shadow">
+        <div class="text-gray-700 font-semibold mb-4">Total Users:
+          <span class="text-lg font-bold"><%= customers.length %></span>
+        </div>
+        <table class="w-full table-auto text-sm leading-tight">
+          <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+            <tr>
+              <th class="px-3 py-2">Image</th>
+              <th class="px-3 py-2">Name</th>
+              <th class="px-3 py-2">Email</th>
+              <th class="px-3 py-2">Address</th>
+              <th class="px-3 py-2">Created</th>
+              <th class="px-3 py-2">Action</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-700 text-xs">
+            <% customers.forEach(customer => { %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2">
+  <!-- Person/User SVG Icon -->
+  <div class="w-7 h-7 bg-purple-100 text-purple-700 flex items-center justify-center rounded-full">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+         stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M5.121 17.804A7.975 7.975 0 0112 15c2.21 0 4.21.896 5.656 2.344M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </div>
+</td>
+
+                <td class="px-3 py-2"><%= customer.name %></td>
+                <td class="px-3 py-2"><%= customer.email %></td>
+                <td class="px-3 py-2"><%= customer.address || 'N/A' %></td>
+                <td class="px-3 py-2"><%= customer.createdOn ? customer.createdOn.toLocaleDateString() : 'N/A' %></td>
+                <td class="px-3 py-2 space-x-1 flex items-center">
+                 <form method="POST" action="/admin/users/toggle-block" 
+  onsubmit="event.preventDefault(); showConfirmModal(this, `<%= customer.isBlocked ? 'Unblock this user?' : 'Block this user?' %>`)">
+  <input type="hidden" name="userId" value="<%= customer._id %>">
+  <button type="submit" class="<%= customer.isBlocked ? 'bg-green-500' : 'bg-red-500' %> text-white px-2 py-1 rounded">
+    <%= customer.isBlocked ? 'UNBLOCK' : 'BLOCK' %>
+  </button>
+</form>
+
+
+
+
+<!-- Edit Icon Button -->
+<a href="/admin/users/edit/<%= customer._id %>" class="text-blue-500 hover:text-blue-600">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-1.5a2.121 2.121 0 113 3L9 21H6v-3L16.732 6.732z" />
+  </svg>
+</a>
+
+<!-- Delete Icon Button -->
+<form method="POST" action="/admin/users/delete" class="inline" onsubmit="event.preventDefault(); showConfirmModal(this, 'Delete this user permanently?')">
+  <input type="hidden" name="userId" value="<%= customer._id %>">
+  <button type="submit" class="text-gray-600 hover:text-red-600">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4" />
+    </svg>
+  </button>
+</form>
+
+                  <a href="/admin/users/details/<%= customer._id %>" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">Details</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+
+        <!-- Pagination placeholder -->
+        <div class="mt-6 flex justify-center">
+  <nav aria-label="Page navigation">
+    <ul class="inline-flex items-center space-x-1">
+      <!-- Previous Button -->
+      <% if (currentPage > 1) { %>
+        <li>
+          <a href="?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" 
+             class="px-3 py-1 text-sm bg-white text-purple-600 border border-gray-300 rounded hover:bg-purple-100">
+            &laquo; Previous
+          </a>
+        </li>
+      <% } %>
+
+      <!-- Page Numbers -->
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <li>
+          <a href="?page=<%= i %><%= search ? '&search=' + search : '' %>"
+             class="px-3 py-1 text-sm <%= i === parseInt(currentPage) ? 'bg-purple-500 text-white' : 'bg-white text-purple-600' %> border border-gray-300 rounded hover:bg-purple-100">
+            <%= i %>
+          </a>
+        </li>
+      <% } %>
+
+      <!-- Next Button -->
+      <% if (currentPage < totalPages) { %>
+        <li>
+          <a href="?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" 
+             class="px-3 py-1 text-sm bg-white text-purple-600 border border-gray-300 rounded hover:bg-purple-100">
+            Next &raquo;
+          </a>
+        </li>
+      <% } %>
+    </ul>
+  </nav>
+</div>
+
+
+      </div>
+    </main>
+  </div>
+</div>
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-80 animate-fadeIn">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">Are you sure?</h2>
+    <p id="confirmMessage" class="text-sm text-gray-600 mb-6"></p>
+    <div class="flex justify-end space-x-3">
+      <button onclick="closeConfirmModal()" class="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm">Cancel</button>
+      <button onclick="submitConfirmedAction()" class="px-4 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm">Yes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let confirmForm = null;
+  function showConfirmModal(form, message) {
+    confirmForm = form;
+    document.getElementById('confirmMessage').innerText = message;
+    document.getElementById('confirmModal').classList.remove('hidden');
+    document.getElementById('confirmModal').classList.add('flex');
+  }
+
+  function closeConfirmModal() {
+    confirmForm = null;
+    document.getElementById('confirmModal').classList.remove('flex');
+    document.getElementById('confirmModal').classList.add('hidden');
+  }
+
+  function submitConfirmedAction() {
+    if (confirmForm) confirmForm.submit();
+    closeConfirmModal();
+  }
+</script>
+
+<style>
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  @keyframes fadeIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+</style>
+
+</body>
+</html>
