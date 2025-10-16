@@ -2,40 +2,52 @@ const mongoose = require('mongoose');
 const {Schema} = mongoose;
 
 const cartSchema = new Schema({
-    userId :{
-        type : Schema.Types.ObjectId,
-        ref : "User",
-        required:true,
-
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
     },
-    items:[{
-        productId:{
-            type:Schema.Types.ObjectId,
-            ref:'Product',
+    items: [{
+        productId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Product',
             required: true,
         },
-        quantity:{
-            type:Number,
-            default:1
+        selectedSize: {
+            type: String,
+            default: '', // Allow empty string for products without sizes
+            // Remove the enum validation to make it more flexible
         },
-        price:{
-            type:Number,
-            required:true,
+        selectedColor: {
+            type: String,
+            default: '', // FIXED: Allow empty string for products without colors
         },
-        totalPrice:{
-            typr:Number,
-            required:true
+        quantity: {
+            type: Number,
+            default: 1,
+            min: 1
         },
-        status:{
-            type:String,
-            default:'placed'
+        price: {
+            type: Number,
+            required: true,
         },
-        cancellationReason:{
-            type:String,
-            default:'none'
+        totalPrice: {
+            type: Number,
+            required: true
+        },
+        status: {
+            type: String,
+            default: 'placed'
+        },
+        cancellationReason: {
+            type: String,
+            default: 'none'
         }
     }]
-})
+});
 
-const Cart = mongoose.model("Cart",cartSchema);
-module.exports=Cart;
+cartSchema.index({ userId: 1 });
+cartSchema.index({ "items.productId": 1 });
+
+const Cart = mongoose.model("Cart", cartSchema);
+module.exports = Cart;

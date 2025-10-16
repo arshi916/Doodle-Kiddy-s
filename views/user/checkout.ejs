@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Kids Fashion Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <%- include("../../views/partials/user/header") %>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f7f4ef 0%, #e8ddd4 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .checkout-header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkout-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #D4B896, #C8A882);
+        }
+
+        .checkout-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .checkout-title h1 {
+            font-size: 2.5rem;
+            color: #333;
+            font-weight: 700;
+        }
+
+        .checkout-title i {
+            font-size: 2rem;
+            color: #D4B896;
+        }
+
+        .checkout-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #D4B896;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .breadcrumb a:hover {
+            color: #C8A882;
+        }
+
+        .breadcrumb span {
+            color: #999;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            color: #999;
+        }
+
+        .step.active {
+            color: #D4B896;
+        }
+
+        .step.completed {
+            color: #27ae60;
+        }
+
+        .step-number {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .step.active .step-number {
+            background: #D4B896;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #27ae60;
+            color: white;
+        }
+
+        .step-connector {
+            width: 80px;
+            height: 2px;
+            background: #e0e0e0;
+            margin: 0 20px;
+        }
+
+        .step.completed + .step-connector {
+            background: #27ae60;
+        }
+
+        /* Main Layout */
+        .checkout-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        /* Form Section */
+        .checkout-form {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #D4B896;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #D4B896;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(212, 184, 150, 0.1);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Address Selection Styles */
+        .address-selection {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .address-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .address-toggle-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+
+        .address-toggle-btn.active {
+            border-color: #D4B896;
+            background: #D4B896;
+            color: white;
+        }
+
+        .address-toggle-btn:hover:not(.active) {
+            border-color: #D4B896;
+            color: #D4B896;
+        }
+
+        /* Saved Addresses */
+        .saved-addresses-container {
+            display: none;
+        }
+
+        .saved-addresses-container.show {
+            display: block;
+        }
+
+        .saved-address-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .saved-address-card:hover {
+            border-color: #D4B896;
+            box-shadow: 0 4px 15px rgba(212, 184, 150, 0.1);
+        }
+
+        .saved-address-card.selected {
+            border-color: #D4B896;
+            background: rgba(212, 184, 150, 0.05);
+        }
+
+        .address-radio {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+        }
+
+        .address-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .address-type {
+            background: #D4B896;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .address-type.default {
+            background: #27ae60;
+        }
+
+        .address-name {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .address-details {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-right: 30px;
+        }
+
+        /* New Address Form */
+        .new-address-container {
+            display: none;
+        }
+
+        .new-address-container.show {
+            display: block;
+        }
+
+        .address-actions {
+            position: absolute;
+            top: 15px;
+            right: 50px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+
+        .saved-address-card:hover .address-actions {
+            opacity: 1;
+        }
+
+        .address-action-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .address-action-btn.edit {
+            color: #D4B896;
+            border: 1px solid #D4B896;
+        }
+
+        .address-action-btn.edit:hover {
+            background: #D4B896;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 184, 150, 0.3);
+        }
+
+        .address-action-btn.delete {
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .address-action-btn.delete:hover {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+        }
+
+        .edit-address-actions {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(212, 184, 150, 0.1);
+            border-radius: 10px;
+            border: 2px solid #D4B896;
+        }
+
+        .edit-address-actions.show {
+            display: block;
+        }
+
+        .save-address-btn {
+            background: linear-gradient(135deg, #D4B896 0%, #C8A882 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .save-address-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 184, 150, 0.4);
+        }
+
+        .cancel-edit-btn {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e9ecef;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cancel-edit-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        /* Payment Methods */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .payment-option {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .payment-option:hover {
+            border-color: #D4B896;
+            box-shadow: 0 4px 15px rgba(212, 184, 150, 0.1);
+        }
+
+        .payment-option.selected {
+            border-color: #D4B896;
+            background: rgba(212, 184, 150, 0.05);
+        }
+
+        .payment-option input[type="radio"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .payment-icon {
+            font-size: 1.5rem;
+            color: #D4B896;
+        }
+
+        .payment-details {
+            flex: 1;
+        }
+
+        .payment-details h4 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .payment-details p {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Card Details */
+        .card-details {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .card-details.show {
+            display: block;
+        }
+
+        .card-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
+
+        /* Order Summary */
+        .order-summary {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .summary-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .item-details {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .item-price {
+            font-size: 14px;
+            font-weight: 600;
+            color: #D4B896;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+            margin-top: 20px;
+        }
+
+        .place-order-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #D4B896 0%, #C8A882 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .place-order-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 184, 150, 0.4);
+        }
+
+        .place-order-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Security Badge */
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(39, 174, 96, 0.1);
+            border-radius: 8px;
+            color: #27ae60;
+            font-size: 12px;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #D4B896;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .checkout-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .checkout-header {
+                padding: 25px 20px;
+            }
+
+            .checkout-title h1 {
+                font-size: 2rem;
+            }
+
+            .checkout-form, .order-summary {
+                padding: 25px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+
+            .card-row {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .step-connector {
+                width: 2px;
+                height: 30px;
+                margin: 10px 0;
+            }
+
+            .address-options {
+                flex-direction: column;
+            }
+
+            .address-actions {
+                position: absolute;
+                top: 15px;
+                right: 50px; 
+                display: flex;
+                gap: 8px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: 5; 
+            }
+
+            .saved-address-card:hover .address-actions {
+                opacity: 1;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .checkout-form, .order-summary {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* Custom SweetAlert2 styles */
+        .custom-swal-popup {
+            border-radius: 20px !important;
+            padding: 2rem !important;
+        }
+        .custom-swal-title {
+            color: #333 !important;
+            font-weight: 700 !important;
+        }
+        .custom-swal-content {
+            color: #666 !important;
+        }
+        .custom-swal-confirm-btn {
+            background: linear-gradient(135deg, #D4B896 0%, #C8A882 100%) !important;
+            border: none !important;
+            border-radius: 10px !important;
+            padding: 10px 30px !important;
+            font-weight: 600 !important;
+        }
+        .custom-swal-cancel-btn {
+            background: #f8f9fa !important;
+            color: #666 !important;
+            border: 2px solid #e9ecef !important;
+            border-radius: 10px !important;
+            padding: 10px 30px !important;
+            font-weight: 600 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Checkout Header -->
+        <div class="checkout-header">
+            <div class="checkout-title">
+                <i class="fas fa-credit-card"></i>
+                <h1>Checkout</h1>
+            </div>
+            <p class="checkout-subtitle">Complete your order securely</p>
+            <div class="breadcrumb">
+                <a href="/">Home</a>
+                <span>/</span>
+                <a href="/shop">Shop</a>
+                <span>/</span>
+                <a href="/cart">Cart</a>
+                <span>/</span>
+                <span>Checkout</span>
+            </div>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step completed">
+                <div class="step-number">1</div>
+                <span>Cart</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step active">
+                <div class="step-number">2</div>
+                <span>Checkout</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <span>Payment</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <span>Complete</span>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="checkout-layout">
+            <!-- Checkout Form -->
+            <div class="checkout-form">
+                <form id="checkout-form" method="POST" action="/user/checkout">
+                    <!-- Shipping Information -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-truck"></i>
+                            Shipping Information
+                        </div>
+
+                        <!-- Address Selection -->
+                        <div class="address-selection">
+                            <div class="address-options">
+                                <button type="button" class="address-toggle-btn <%= addresses.length > 0 ? 'active' : '' %>" onclick="toggleAddressMode('saved')">
+                                    <i class="fas fa-map-marker-alt"></i> Use Saved Address
+                                </button>
+                                <button type="button" class="address-toggle-btn <%= addresses.length === 0 ? 'active' : '' %>" onclick="toggleAddressMode('new')">
+                                    <i class="fas fa-plus"></i> Add New Address
+                                </button>
+                            </div>
+
+                            <!-- Saved Addresses Container -->
+                            <div class="saved-addresses-container <%= addresses.length > 0 ? 'show' : '' %>" id="saved-addresses">
+                                <% if (addresses && addresses.length > 0) { %>
+                                    <% addresses.forEach((address, index) => { %>
+                                        <div class="saved-address-card <%= address.isDefault || index === 0 ? 'selected' : '' %>" onclick="selectAddress('<%= address._id %>')">
+                                            <input type="radio" name="selectedAddress" value="<%= address._id %>" class="address-radio" <%= address.isDefault || index === 0 ? 'checked' : '' %>>
+                                            
+                                            <div class="address-actions">
+                                                <button type="button" class="address-action-btn edit" onclick="editAddress(event, '<%= address._id %>')" title="Edit Address">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="address-action-btn delete" onclick="deleteAddress(event, '<%= address._id %>')" title="Delete Address">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="address-header">
+                                                <div class="address-name"><%= address.name %></div>
+                                                <div class="address-type <%= address.isDefault ? 'default' : '' %>">
+                                                    <%= address.isDefault ? 'Default' : address.addressType %>
+                                                </div>
+                                            </div>
+                                            <div class="address-details">
+                                                <%= address.address %><br>
+                                                <%= address.city %>, <%= address.state %> <%= address.zipCode %><br>
+                                                <%= address.country %><br>
+                                                Phone: <%= address.phone %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <p style="text-align: center; color: #666; padding: 20px;">
+                                        No saved addresses found. Please add a new address.
+                                    </p>
+                                <% } %>
+                            </div>
+
+                            <!-- New Address Form Container -->
+                            <div class="new-address-container <%= addresses.length === 0 ? 'show' : '' %>" id="new-address">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="addressType">Address Type</label>
+                                        <select id="addressType" name="addressType">
+                                            <option value="Home">Home</option>
+                                            <option value="Work">Work</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="firstName">Full Name</label>
+                                        <input type="text" id="firstName" name="firstName" value="<%= user ? user.name : '' %>">
+                                        <div class="error-message" id="firstName-error"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone" name="phone" value="<%= user ? user.phone : '' %>">
+                                    <div class="error-message" id="phone-error"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="address">Street Address</label>
+                                    <input type="text" id="address" name="address" placeholder="123 Main Street">
+                                    <div class="error-message" id="address-error"></div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="city">City</label>
+                                        <input type="text" id="city" name="city">
+                                        <div class="error-message" id="city-error"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="zipCode">ZIP Code</label>
+                                        <input type="text" id="zipCode" name="zipCode">
+                                        <div class="error-message" id="zipCode-error"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="country">Country</label>
+                                        <select id="country" name="country" onchange="loadStates()">
+                                            <option value="">Select Country</option>
+                                            <% countries.forEach(country => { %>
+                                                <option value="<%= country %>" <%= country === 'India' ? 'selected' : '' %>><%= country %></option>
+                                            <% }); %>
+                                        </select>
+                                        <div class="error-message" id="country-error"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="state">State</label>
+                                        <select id="state" name="state">
+                                            <option value="">Select State</option>
+                                        </select>
+                                        <div class="error-message" id="state-error"></div>
+                                    </div>
+                                </div>
+
+                                <div class="edit-address-actions" id="edit-actions">
+                                    <button type="button" class="save-address-btn" onclick="saveEditedAddress()">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <button type="button" class="cancel-edit-btn" onclick="cancelEdit()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-credit-card"></i>
+                            Payment Method
+                        </div>
+
+                        <div class="payment-methods">
+                            <div class="payment-option selected" onclick="selectPayment('card')">
+                                <input type="radio" name="paymentMethod" value="card" checked>
+                                <div class="payment-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Credit/Debit Card</h4>
+                                    <p>Visa, Mastercard, American Express</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment('paypal')">
+                                <input type="radio" name="paymentMethod" value="paypal">
+                                <div class="payment-icon">
+                                    <i class="fab fa-paypal"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>PayPal</h4>
+                                    <p>Pay with your PayPal account</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment('cod')">
+                                <input type="radio" name="paymentMethod" value="cod">
+                                <div class="payment-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Cash on Delivery</h4>
+                                    <p>Pay when you receive your order</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment('wallet')">
+                                <input type="radio" name="paymentMethod" value="wallet">
+                                <div class="payment-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div class="payment-details">
+                                    <h4>Digital Wallet</h4>
+                                    <p>Apple Pay, Google Pay</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Details (shown when card is selected) -->
+                        <div class="card-details show" id="card-details">
+                            <div class="form-group">
+                                <label for="cardNumber">Card Number</label>
+                                <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                                <div class="error-message" id="cardNumber-error"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cardName">Name on Card</label>
+                                <input type="text" id="cardName" name="cardName" placeholder="John Doe">
+                                <div class="error-message" id="cardName-error"></div>
+                            </div>
+
+                            <div class="card-row">
+                                <div class="form-group">
+                                    <label for="expiryDate">Expiry Date</label>
+                                    <input type="text" id="expiryDate" name="expiryDate" placeholder="MM/YY" maxlength="5">
+                                    <div class="error-message" id="expiryDate-error"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cvv">CVV</label>
+                                    <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4">
+                                    <div class="error-message" id="cvv-error"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Notes -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-sticky-note"></i>
+                            Order Notes (Optional)
+                        </div>
+
+                        <div class="form-group">
+                            <textarea id="orderNotes" name="orderNotes" rows="3" placeholder="Any special instructions for your order..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <div class="section-title">
+                    <i class="fas fa-receipt"></i>
+                    Order Summary
+                </div>
+
+                <div class="summary-items">
+                    <% if (cart && cart.items && cart.items.length > 0) { %>
+                        <% cart.items.forEach(item => { %>
+                            <div class="summary-item">
+                                <img src="<%= item.productImage?item.productImage:'https://via.placeholder.com/60x60/f0f0f0/cccccc?text=No+Image' %>" alt="<%= item.productId ? item.productName : 'Product' %>" class="item-image">
+                                <div class="item-info">
+                                    <div class="item-name"><%= item.productId ? item.productName : 'Unknown Product' %></div>
+                                    <div class="item-details">
+                                        Qty: <%= item.quantity %>
+                                    </div>
+                                    <div class="item-price">₹<%= item.totalPrice.toFixed(2) %></div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+
+                <% if (cart && cart.items && cart.items.length > 0) { %>
+                    <div class="summary-row">
+                        <span>Subtotal (<%= cart.items.reduce((sum, item) => sum + item.quantity, 0) %> items)</span>
+                        <span>₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2) %></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping</span>
+                        <span id="shipping-cost">₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? '0.00' : '99.00' %></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax</span>
+                        <span>₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18).toFixed(2) %></span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>Total</span>
+                        <span id="order-total">₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? 0 : 99) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18)).toFixed(2) %></span>
+                    </div>
+                <% } %>
+
+                <button type="submit" form="checkout-form" class="place-order-btn" id="place-order-btn">
+                    <span class="btn-text">Place Order</span>
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Processing...
+                    </div>
+                </button>
+
+                <div class="security-badge">
+                    <i class="fas fa-shield-alt"></i>
+                    Your payment information is secure
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include("../../views/partials/user/footer") %>
+
+    <script>
+        const countryStateData = <%- countryStateData %>;
+        let currentEditId = null;
+
+        // Address mode toggle
+        function toggleAddressMode(mode) {
+            const savedContainer = document.getElementById('saved-addresses');
+            const newContainer = document.getElementById('new-address');
+            const buttons = document.querySelectorAll('.address-toggle-btn');
+
+            // Remove active class from all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (mode === 'saved') {
+                // Show saved addresses, hide new address form
+                savedContainer.classList.add('show');
+                newContainer.classList.remove('show');
+                buttons[0].classList.add('active');
+            } else {
+                // Show new address form, hide saved addresses
+                savedContainer.classList.remove('show');
+                newContainer.classList.add('show');
+                buttons[1].classList.add('active');
+                
+                // Load states for default country (India)
+                loadStates();
+            }
+        }
+
+        // Select saved address
+        function selectAddress(addressId) {
+            const cards = document.querySelectorAll('.saved-address-card');
+            const radios = document.querySelectorAll('input[name="selectedAddress"]');
+
+            // Remove selected class from all cards
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            event.currentTarget.classList.add('selected');
+
+            // Update radio button
+            radios.forEach(radio => {
+                radio.checked = radio.value === addressId;
+            });
+        }
+
+        // Edit address function
+        async function editAddress(event, addressId) {
+            event.stopPropagation(); // Prevent card selection
+            
+            currentEditId = addressId;
+            
+            try {
+                const response = await fetch(`/user/checkout/address/${addressId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const address = data.address;
+                    
+                    // Switch to new address mode
+                    toggleAddressMode('new');
+                    
+                    // Populate form
+                    document.getElementById('addressType').value = address.addressType;
+                    document.getElementById('firstName').value = address.name;
+                    document.getElementById('phone').value = address.phone;
+                    document.getElementById('address').value = address.address;
+                    document.getElementById('city').value = address.city;
+                    document.getElementById('zipCode').value = address.zipCode;
+                    document.getElementById('country').value = address.country;
+                    
+                    // Load states for the country
+                    await loadStates();
+                    document.getElementById('state').value = address.state;
+                    
+                    // Show edit actions
+                    document.getElementById('edit-actions').classList.add('show');
+                    
+                    showAlert('info', 'Edit Mode', 'You are now editing an existing address.');
+                } else {
+                    showAlert('error', 'Error', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching address:', error);
+                showAlert('error', 'Error', 'Failed to load address details');
+            }
+        }
+
+        // Delete address function
+        function deleteAddress(event, addressId) {
+            event.stopPropagation(); // Prevent card selection
+            
+            Swal.fire({
+                title: 'Delete Address?',
+                text: 'Are you sure you want to delete this address? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Delete',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'custom-swal-popup',
+                    title: 'custom-swal-title',
+                    content: 'custom-swal-content',
+                    confirmButton: 'custom-swal-confirm-btn',
+                    cancelButton: 'custom-swal-cancel-btn'
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/user/checkout/address/${addressId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Remove address card from DOM
+                            const addressCard = document.querySelector(`input[value="${addressId}"]`).closest('.saved-address-card');
+                            if (addressCard) {
+                                addressCard.style.transition = 'all 0.3s ease';
+                                addressCard.style.opacity = '0';
+                                addressCard.style.transform = 'translateY(-20px)';
+                                
+                                setTimeout(() => {
+                                    addressCard.remove();
+                                    
+                                    // Check if no addresses left
+                                    const remainingCards = document.querySelectorAll('.saved-address-card');
+                                    if (remainingCards.length === 0) {
+                                        // Switch to new address mode if no addresses left
+                                        toggleAddressMode('new');
+                                    } else {
+                                        // Select first remaining address if deleted address was selected
+                                        const firstAddress = remainingCards[0].querySelector('input[type="radio"]');
+                                        if (firstAddress) {
+                                            firstAddress.checked = true;
+                                            remainingCards[0].classList.add('selected');
+                                        }
+                                    }
+                                }, 300);
+                            }
+                            
+                            showAlert('success', 'Deleted!', data.message);
+                        } else {
+                            showAlert('error', 'Error', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting address:', error);
+                        showAlert('error', 'Error', 'Failed to delete address');
+                    }
+                }
+            });
+        }
+
+        // Save edited address
+        async function saveEditedAddress() {
+            const form = document.getElementById('checkout-form');
+            const formData = new FormData();
+            
+            // Collect form data
+            formData.append('addressType', document.getElementById('addressType').value);
+            formData.append('name', document.getElementById('firstName').value);
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('address', document.getElementById('address').value);
+            formData.append('city', document.getElementById('city').value);
+            formData.append('state', document.getElementById('state').value);
+            formData.append('zipCode', document.getElementById('zipCode').value);
+            formData.append('country', document.getElementById('country').value);
+            
+            // Validation
+            if (!formData.get('name') || !formData.get('phone') || !formData.get('address') || 
+                !formData.get('city') || !formData.get('state') || !formData.get('zipCode') || 
+                !formData.get('country')) {
+                showAlert('error', 'Error', 'Please fill in all required fields');
+                return;
+            }
+            
+            // Phone validation
+            const phonePattern = /^\d{10}$/;
+            if (!phonePattern.test(formData.get('phone').replace(/\D/g, ''))) {
+                showAlert('error', 'Error', 'Please enter a valid 10-digit phone number');
+                return;
+            }
+            
+            // Zip code validation
+            const zipPattern = /^\d{5,6}$/;
+            if (!zipPattern.test(formData.get('zipCode'))) {
+                showAlert('error', 'Error', 'Please enter a valid zip code');
+                return;
+            }
+            
+            try {
+                const url = currentEditId ? 
+                    `/user/checkout/address/${currentEditId}` : 
+                    '/user/checkout/address';
+                const method = currentEditId ? 'PUT' : 'POST';
+                
+                const addressData = Object.fromEntries(formData.entries());
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(addressData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('success', 'Success!', data.message);
+                    
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('error', 'Error', data.message);
+                }
+            } catch (error) {
+                console.error('Error saving address:', error);
+                showAlert('error', 'Error', 'Failed to save address');
+            }
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            document.getElementById('edit-actions').classList.remove('show');
+            document.querySelector('.new-address-container').classList.remove('show');
+            document.querySelector('.saved-addresses-container').classList.add('show');
+            
+            // Clear form
+            document.getElementById('addressType').value = 'Home';
+            document.getElementById('firstName').value = '<%= user ? user.name : "" %>';
+            document.getElementById('phone').value = '<%= user ? user.phone : "" %>';
+            document.getElementById('address').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('state').value = '';
+            document.getElementById('zipCode').value = '';
+            document.getElementById('country').value = 'India';
+            
+            // Reset buttons
+            const buttons = document.querySelectorAll('.address-toggle-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons[0].classList.add('active');
+            
+            currentEditId = null;
+            loadStates();
+        }
+
+        // Load states based on country
+        async function loadStates() {
+            const country = document.getElementById('country').value;
+            const stateSelect = document.getElementById('state');
+            
+            // Clear existing options
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            
+            if (country && countryStateData[country]) {
+                const states = countryStateData[country];
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Payment method selection
+        function selectPayment(method) {
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            event.target.closest('.payment-option').classList.add('selected');
+            
+            // Show/hide card details
+            const cardDetails = document.getElementById('card-details');
+            if (method === 'card') {
+                cardDetails.classList.add('show');
+            } else {
+                cardDetails.classList.remove('show');
+            }
+        }
+
+document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+        showAlert('error', 'Error', 'Please fill in all required fields correctly');
+        return;
+    }
+
+    const placeOrderBtn = document.getElementById('place-order-btn');
+    const btnText = placeOrderBtn.querySelector('.btn-text');
+    const loading = placeOrderBtn.querySelector('.loading');
+    
+    // Show loading state
+    placeOrderBtn.disabled = true;
+    btnText.style.display = 'none';
+    loading.style.display = 'flex';
+
+    // Collect form data
+    const formData = new FormData();
+    
+    const currentMode = document.getElementById('new-address').classList.contains('show') ? 'new' : 'saved';
+    
+    if (currentMode === 'saved') {
+        const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+        if (selectedAddress) {
+            formData.append('selectedAddress', selectedAddress.value);
+        }
+    } else {
+        formData.append('addressType', document.getElementById('addressType').value);
+        formData.append('firstName', document.getElementById('firstName').value);
+        formData.append('phone', document.getElementById('phone').value);
+        formData.append('address', document.getElementById('address').value);
+        formData.append('city', document.getElementById('city').value);
+        formData.append('state', document.getElementById('state').value);
+        formData.append('zipCode', document.getElementById('zipCode').value);
+        formData.append('country', document.getElementById('country').value);
+    }
+    
+    const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+    formData.append('paymentMethod', selectedPayment ? selectedPayment.value : 'cod');
+    
+    const orderNotes = document.getElementById('orderNotes').value;
+    if (orderNotes) {
+        formData.append('orderNotes', orderNotes);
+    }
+
+    if (selectedPayment && selectedPayment.value === 'card') {
+        formData.append('cardNumber', document.getElementById('cardNumber').value);
+        formData.append('cardName', document.getElementById('cardName').value);
+        formData.append('expiryDate', document.getElementById('expiryDate').value);
+        formData.append('cvv', document.getElementById('cvv').value);
+    }
+    fetch('/checkout/process', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Success!', data.message);
+            
+            setTimeout(() => {
+                window.location.href = '/order-success';
+            }, 2000);
+        } else {
+            throw new Error(data.message || 'Failed to place order');
+        }
+    })
+    .catch(error => {
+        console.error('Error placing order:', error);
+        showAlert('error', 'Error', error.message || 'Error placing order. Please try again.');
+        
+        placeOrderBtn.disabled = false;
+        btnText.style.display = 'inline';
+        loading.style.display = 'none';
+    });
+});
+function validateForm() {
+    let isValid = true;
+    const currentMode = document.getElementById('new-address').classList.contains('show') ? 'new' : 'saved';
+    
+    if (currentMode === 'new') {
+        const required = ['firstName', 'phone', 'address', 'city', 'state', 'zipCode', 'country'];
+        
+        required.forEach(field => {
+            const input = document.getElementById(field);
+            const error = document.getElementById(field + '-error');
+            
+            if (error && !input.value.trim()) {
+                error.textContent = 'This field is required';
+                error.style.display = 'block';
+                isValid = false;
+            } else if (error) {
+                error.style.display = 'none';
+            }
+        });
+
+        const phone = document.getElementById('phone');
+        const phoneError = document.getElementById('phone-error');
+        const phonePattern = /^\d{10}$/;
+        
+        if (phone.value && !phonePattern.test(phone.value.replace(/\D/g, ''))) {
+            phoneError.textContent = 'Please enter a valid 10-digit phone number';
+            phoneError.style.display = 'block';
+            isValid = false;
+        }
+
+        const zipCode = document.getElementById('zipCode');
+        const zipCodeError = document.getElementById('zipCode-error');
+        
+        if (zipCode.value && !/^\d{5,6}$/.test(zipCode.value)) {
+            zipCodeError.textContent = 'Please enter a valid zip code';
+            zipCodeError.style.display = 'block';
+            isValid = false;
+        }
+    } else {
+        const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
+        if (!selectedAddress) {
+            showAlert('error', 'Error', 'Please select an address');
+            isValid = false;
+        }
+    }
+
+    const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+    if (!selectedPayment) {
+        showAlert('error', 'Error', 'Please select a payment method');
+        isValid = false;
+    }
+
+    if (selectedPayment && selectedPayment.value === 'card') {
+        const cardFields = ['cardNumber', 'cardName', 'expiryDate', 'cvv'];
+        
+        cardFields.forEach(field => {
+            const input = document.getElementById(field);
+            const error = document.getElementById(field + '-error');
+            
+            if (!input.value.trim()) {
+                error.textContent = 'This field is required for card payment';
+                error.style.display = 'block';
+                isValid = false;
+            } else {
+                error.style.display = 'none';
+            }
+        });
+
+        const cardNumber = document.getElementById('cardNumber');
+        const cardNumberError = document.getElementById('cardNumber-error');
+        const cardDigits = cardNumber.value.replace(/\s/g, '');
+        
+        if (cardNumber.value && (cardDigits.length < 13 || cardDigits.length > 19 || !/^\d+$/.test(cardDigits))) {
+            cardNumberError.textContent = 'Please enter a valid card number';
+            cardNumberError.style.display = 'block';
+            isValid = false;
+        }
+
+        const expiryDate = document.getElementById('expiryDate');
+        const expiryError = document.getElementById('expiryDate-error');
+        const expiryPattern = /^(0[1-9]|1[0-2])\/\d{2}$/;
+        
+        if (expiryDate.value && !expiryPattern.test(expiryDate.value)) {
+            expiryError.textContent = 'Please enter date in MM/YY format';
+            expiryError.style.display = 'block';
+            isValid = false;
+        }
+
+        const cvv = document.getElementById('cvv');
+        const cvvError = document.getElementById('cvv-error');
+        
+        if (cvv.value && (!/^\d{3,4}$/.test(cvv.value))) {
+            cvvError.textContent = 'Please enter a valid CVV';
+            cvvError.style.display = 'block';
+            isValid = false;
+        }
+    }
+
+    return isValid;
+}
+
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+            let formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
+            
+            if (formattedValue.length <= 19) {
+                e.target.value = formattedValue;
+            }
+        });
+
+        document.getElementById('expiryDate').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('cvv').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+        });
+
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 10) {
+                if (value.length > 6) {
+                    value = value.substring(0, 3) + '-' + value.substring(3, 6) + '-' + value.substring(6);
+                } else if (value.length > 3) {
+                    value = value.substring(0, 3) + '-' + value.substring(3);
+                }
+            }
+            e.target.value = value;
+        });
+
+        document.getElementById('zipCode').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
+        });
+
+        document.getElementById('checkout-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                showAlert('error', 'Error', 'Please fill in all required fields correctly');
+                return;
+            }
+
+            const placeOrderBtn = document.getElementById('place-order-btn');
+            const btnText = placeOrderBtn.querySelector('.btn-text');
+            const loading = placeOrderBtn.querySelector('.loading');
+            
+            placeOrderBtn.disabled = true;
+            btnText.style.display = 'none';
+            loading.style.display = 'flex';
+
+            setTimeout(() => {
+                const formData = new FormData(this);
+                
+                fetch('/user/checkout', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', 'Success!', 'Order placed successfully!');
+                        setTimeout(() => {
+                            window.location.href = `/order-confirmation/${data.orderId}`;
+                        }, 2000);
+                    } else {
+                        throw new Error(data.message || 'Failed to place order');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error placing order:', error);
+                    showAlert('error', 'Error', error.message || 'Error placing order. Please try again.');
+                    
+                    placeOrderBtn.disabled = false;
+                    btnText.style.display = 'inline';
+                    loading.style.display = 'none';
+                });
+            }, 2000);
+        });
+
+        function showAlert(type, title, text) {
+            Swal.fire({
+                icon: type,
+                title: title,
+                text: text,
+                confirmButtonColor: '#D4B896',
+                customClass: {
+                    popup: 'custom-swal-popup',
+                    title: 'custom-swal-title',
+                    content: 'custom-swal-content',
+                    confirmButton: 'custom-swal-confirm-btn'
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('new-address').classList.contains('show')) {
+                loadStates();
+            }
+            
+            const elements = document.querySelectorAll('.checkout-header, .progress-steps, .checkout-form, .order-summary');
+            elements.forEach((element, index) => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(30px)';
+
+                setTimeout(() => {
+                    element.style.transition = 'all 0.6s ease';
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, index * 150);
+            });
+        });
+
+      
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.addEventListener('blur', function() {
+                const errorElement = document.getElementById(this.id + '-error');
+                if (errorElement) {
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        errorElement.textContent = 'This field is required';
+                        errorElement.style.display = 'block';
+                    } else {
+                        errorElement.style.display = 'none';
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

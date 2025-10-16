@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Product - Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: white !important;
+    }
+    .hover-lift {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hover-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .gradient-border {
+      background: linear-gradient(135deg, #8B7355 0%, #A0845C 100%);
+      padding: 2px;
+      border-radius: 12px;
+    }
+    .gradient-border-inner {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .floating-label {
+      position: relative;
+    }
+    .floating-label input:focus + label,
+    .floating-label input:not(:placeholder-shown) + label,
+    .floating-label select:focus + label,
+    .floating-label select:not([value=""]) + label,
+    .floating-label textarea:focus + label,
+    .floating-label textarea:not(:placeholder-shown) + label {
+      transform: translateY(-24px) scale(0.85);
+      color: #8B7355;
+    }
+    .floating-label label {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      background: white;
+      padding: 0 4px;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      color: #6B7280;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen">
+  <main class="relative min-h-screen flex items-center justify-center px-4 py-8 bg-white">
+    <div class="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-stone-300 hover-lift fade-in">
+      <!-- Header Section -->
+      <div class="bg-gradient-to-r from-stone-600 to-amber-800 rounded-t-3xl p-8">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-3xl font-bold text-white">Edit Product</h1>
+              <p class="text-amber-100 mt-1">Update your product details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Section -->
+      <div class="p-8 bg-white">
+        <form id="productForm" onsubmit="return validateForm(event)">
+          <!-- Image Display + Upload -->
+          <div class="mb-8">
+            <div class="gradient-border">
+              <div class="gradient-border-inner">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 4 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Product Images</h3>
+                    <p class="text-sm text-gray-500">Upload 3-4 high-quality images (Required: minimum 3, maximum 4)</p>
+                  </div>
+                </div>
+                <div id="existingImages" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  <% product.productImage.forEach((image, index) => { %>
+                    <div class="relative aspect-square rounded-xl overflow-hidden border border-gray-200">
+                      <img src="/images/<%= image %>" class="w-full h-full object-cover rounded-xl" />
+                      <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-7 h-7 text-sm hover:bg-red-600 transition-all duration-200 hover:scale-110 shadow-lg" onclick="removeOldImage('<%= image %>', this)">×</button>
+                    </div>
+                  <% }) %>
+                </div>
+                <input type="hidden" name="images" id="remainingImages" value='<%= JSON.stringify(product.productImage) %>' />
+                <div id="newImagePreview" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4"></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div class="aspect-square border-2 border-dashed border-gray-300 flex items-center justify-center rounded-xl cursor-pointer bg-gray-50/50 hover:bg-gray-100/50 hover:border-stone-400 transition-all duration-300 relative group" onclick="document.getElementById('imageInput').click()">
+                    <span class="text-3xl text-gray-400 font-light group-hover:text-stone-600 transition-colors">+</span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </div>
+                </div>
+                <input type="file" id="imageInput" name="productImage" accept="image/*" class="hidden" multiple />
+                <div id="imageError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  <span></span>
+                </div>
+                <div id="imageCount" class="text-sm text-gray-600 mt-2">
+                  Images uploaded: <span id="currentCount" class="font-medium text-stone-600"><%= product.productImage.length %></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Details Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="floating-label">
+              <input id="productName" name="productName" value="<%= product.productName %>" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 placeholder-transparent bg-white" placeholder="Product Name" required />
+              <label class="font-medium">Product Name <span class="text-red-500">*</span></label>
+              <div id="productNameError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+            <div class="floating-label">
+              <select id="category" name="category" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 bg-white" required>
+                <option value="">Select Category</option>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat._id %>" <%= product.category && product.category._id && product.category._id.toString() === cat._id.toString() ? 'selected' : '' %>><%= cat.name %></option>
+                <% }) %>
+              </select>
+              <label class="font-medium">Category <span class="text-red-500">*</span></label>
+              <div id="categoryError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color Selection -->
+          <div class="mb-8">
+            <div class="relative">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Colors Available <span class="text-red-500">*</span></label>
+              <button id="colorDropdownBtn" class="w-full flex justify-between items-center border-2 border-gray-200 p-4 rounded-xl cursor-pointer bg-white hover:border-stone-400 focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300" onclick="toggleDropdown()" type="button">
+                <span id="selectedColors"><%= product.color.length ? product.color.join(', ') : 'Select Color(s)' %></span>
+                <svg class="w-5 h-5 ml-2 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="dropdownIcon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              <div id="colorDropdown" class="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl hidden max-h-64 overflow-y-auto custom-scrollbar">
+                <div class="p-2">
+                  <% ['White', 'Gray', 'Beige', 'Yellow', 'Orange', 'Red', 'Purple', 'Blue', 'Green', 'Black'].forEach(color => { %>
+                    <label class="flex items-center px-3 py-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors">
+                      <input type="checkbox" name="color" value="<%= color %>" class="mr-3 w-4 h-4 text-stone-600 rounded focus:ring-stone-500" <%= product.color.includes(color.toLowerCase()) ? 'checked' : '' %>>
+                      <span class="flex items-center">
+                        <span class="w-5 h-5 rounded-full <%= {White: 'bg-white border-2 border-gray-300', Gray: 'bg-gray-400', Beige: 'bg-yellow-100', Yellow: 'bg-yellow-400', Orange: 'bg-orange-400', Red: 'bg-red-500', Purple: 'bg-purple-500', Blue: 'bg-blue-500', Green: 'bg-green-500', Black: 'bg-black'}[color] %> mr-3 shadow-sm"></span>
+                        <span class="font-medium"><%= color %></span>
+                      </span>
+                    </label>
+                  <% }) %>
+                </div>
+              </div>
+              <div id="colorError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pricing & Status Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="floating-label">
+              <input id="regularPrice" name="regularPrice" type="number" min="1" step="0.01" value="<%= product.regularPrice %>" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 placeholder-transparent bg-white" placeholder="₹ Amount" required />
+              <label class="font-medium">Regular Price (₹) <span class="text-red-500">*</span></label>
+              <div id="regularPriceError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+            <div class="floating-label">
+              <input id="salePrice" name="salePrice" type="number" min="1" step="0.01" value="<%= product.salePrice %>" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 placeholder-transparent bg-white" placeholder="₹ Sale price" required />
+              <label class="font-medium">Sale Price (₹) <span class="text-red-500">*</span></label>
+              <div id="salePriceError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+            <div class="floating-label">
+              <select name="status" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 bg-white" required>
+                <option value="Available" <%= product.status === 'Available' ? 'selected' : '' %>>Available</option>
+                <option value="out of stock" <%= product.status === 'out of stock' ? 'selected' : '' %>>Out of Stock</option>
+                <option value="Discontinued" <%= product.status === 'Discontinued' ? 'selected' : '' %>>Discontinued</option>
+              </select>
+              <label class="font-medium">Status <span class="text-red-500">*</span></label>
+            </div>
+          </div>
+
+          <!-- Return Policy & Size Selection -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-4">Return Policy</label>
+              <div class="flex gap-6">
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="radio" name="returnPolicy" value="false" class="w-4 h-4 text-stone-600 focus:ring-stone-500" <%= !product.returnPolicy ? 'checked' : '' %> />
+                  <span class="flex items-center gap-2 font-medium text-gray-700 group-hover:text-stone-600 transition-colors">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    No Returns
+                  </span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer group">
+                  <input type="radio" name="returnPolicy" value="true" class="w-4 h-4 text-stone-600 focus:ring-stone-500" <%= product.returnPolicy ? 'checked' : '' %> />
+                  <span class="flex items-center gap-2 font-medium text-gray-700 group-hover:text-stone-600 transition-colors">
+                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Returns Allowed
+                  </span>
+                </label>
+              </div>
+              <div class="mt-3 text-sm text-gray-500">
+                <p>Choose whether customers can return this product</p>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-4">Sizes Available (Kids) <span class="text-red-500">*</span></label>
+              <div class="flex gap-3 flex-wrap" id="sizeOptions">
+                <% const sizes = ["XS", "S", "M", "L", "XL"]; %>
+                <% const selectedSizes = product.size || []; %>
+                <% sizes.forEach(size => { %>
+                  <div class="text-center">
+                    <button type="button" data-size="<%= size %>" class="size-btn px-4 py-2 bg-gray-100 border-2 border-gray-200 rounded-xl hover:border-stone-400 hover:bg-stone-50 transition-all duration-300 font-medium <%= selectedSizes.includes(size) ? 'bg-stone-600 text-white border-stone-600' : '' %>"><%= size %></button>
+                    <p class="text-xs text-gray-500 mt-2">
+                      <% if (size === 'XS') { %>2-3 Years<% } %>
+                      <% if (size === 'S') { %>4-5 Years<% } %>
+                      <% if (size === 'M') { %>6-7 Years<% } %>
+                      <% if (size === 'L') { %>8-9 Years<% } %>
+                      <% if (size === 'XL') { %>10-12 Years<% } %>
+                    </p>
+                  </div>
+                <% }) %>
+              </div>
+              <input type="hidden" name="sizes" id="selectedSizes" value="<%= selectedSizes.join(',') %>" />
+              <div class="mt-3 text-sm text-gray-500">
+                <p>Select all available sizes (click to toggle)</p>
+              </div>
+              <div id="sizeError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock Management Section -->
+          <div id="stockManagement" class="mb-8">
+            <label class="block text-sm font-semibold text-gray-700 mb-4">Stock Quantities <span class="text-red-500">*</span></label>
+            <div id="stockGrid" class="overflow-x-auto">
+              <p class="text-gray-500">Select colors and sizes to manage stock</p>
+            </div>
+            <div class="mt-3 text-sm text-gray-500">
+              <p>Enter stock for each color-size combination (0 if out of stock)</p>
+            </div>
+            <div id="stockError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <span></span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-8">
+            <div class="floating-label">
+              <textarea id="description" name="description" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-stone-500 focus:ring-4 focus:ring-stone-500/10 transition-all duration-300 placeholder-transparent h-32 resize-none bg-white" placeholder="Product description..." required><%= product.description %></textarea>
+              <label class="font-medium">Description <span class="text-red-500">*</span></label>
+              <div id="descriptionError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex justify-center">
+            <button type="submit" id="submitBtn" class="group relative px-8 py-4 bg-gradient-to-r from-stone-600 to-amber-800 text-white font-semibold rounded-2xl hover:from-stone-700 hover:to-amber-900 transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              <span class="relative z-10 flex items-center gap-3">
+                <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Save Changes
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-stone-700 to-amber-900 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+<script>
+  let isSubmitting = false;
+  const existingStocks = <%- JSON.stringify(product.stocks || []) %>;
+
+  function updateImageCount() {
+    const oldImages = JSON.parse(document.getElementById('remainingImages').value) || [];
+    const newImagesCount = document.getElementById('newImagePreview').children.length;
+    const totalImages = oldImages.length + newImagesCount;
+    const countElement = document.getElementById('currentCount');
+    const imageCountElement = document.getElementById('imageCount');
+    countElement.textContent = totalImages;
+    
+    if (totalImages < 3) {
+      countElement.className = 'font-medium text-red-600';
+      imageCountElement.className = 'text-sm text-red-600 mt-2';
+    } else if (totalImages >= 3 && totalImages <= 4) {
+      countElement.className = 'font-medium text-green-600';
+      imageCountElement.className = 'text-sm text-green-600 mt-2';
+    }
+  }
+
+  function removeOldImage(imageName, btn) {
+    const existing = JSON.parse(document.getElementById('remainingImages').value);
+    const updated = existing.filter(img => img !== imageName);
+    document.getElementById('remainingImages').value = JSON.stringify(updated);
+    btn.parentElement.remove();
+    updateImageCount();
+    hideError('imageError');
+  }
+
+  const previewContainer = document.getElementById("newImagePreview");
+  const imageInput = document.getElementById("imageInput");
+  imageInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        showError('imageError', 'Please select a valid image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showError('imageError', 'Image size should be less than 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("relative", "aspect-square", "rounded-xl", "overflow-hidden", "border", "border-gray-200");
+        const img = document.createElement("img");
+        img.src = event.target.result;
+        img.className = "w-full h-full object-cover rounded-xl";
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "×";
+        closeBtn.className = "absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-7 h-7 text-sm hover:bg-red-600 transition-all duration-200 hover:scale-110 shadow-lg";
+        closeBtn.onclick = () => {
+          wrapper.remove();
+          updateImageCount();
+        };
+        wrapper.appendChild(img);
+        wrapper.appendChild(closeBtn);
+        previewContainer.appendChild(wrapper);
+        updateImageCount();
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  function toggleDropdown() {
+    const dropdown = document.getElementById("colorDropdown");
+    const icon = document.getElementById("dropdownIcon");
+    dropdown.classList.toggle("hidden");
+    icon.style.transform = dropdown.classList.contains("hidden") ? "rotate(0deg)" : "rotate(180deg)";
+  }
+
+  const checkboxes = document.querySelectorAll('input[name="color"]');
+  const selectedDisplay = document.getElementById("selectedColors");
+  
+  function updateSelectedColors() {
+    const selected = Array.from(checkboxes)
+      .filter(i => i.checked)
+      .map(i => i.value);
+    selectedDisplay.textContent = selected.length ? selected.join(', ') : "Select Color(s)";
+    selectedDisplay.style.color = selected.length ? "#374151" : "#6B7280";
+    hideError('colorError');
+    buildStockGrid();
+  }
+  
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", updateSelectedColors);
+  });
+
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("colorDropdown");
+    const button = document.getElementById("colorDropdownBtn");
+    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+      dropdown.classList.add("hidden");
+      document.getElementById("dropdownIcon").style.transform = "rotate(0deg)";
+    }
+  });
+
+  const sizeButtons = document.querySelectorAll('.size-btn');
+  const hiddenSizesInput = document.getElementById('selectedSizes');
+  
+  sizeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      button.classList.toggle('bg-stone-600');
+      button.classList.toggle('text-white');
+      button.classList.toggle('border-stone-600');
+      button.classList.toggle('bg-gray-100');
+      button.classList.toggle('border-gray-200');
+
+      const selectedSizes = Array.from(document.querySelectorAll('.size-btn.bg-stone-600'))
+        .map(btn => btn.dataset.size)
+        .sort((a, b) => ['XS', 'S', 'M', 'L', 'XL'].indexOf(a) - ['XS', 'S', 'M', 'L', 'XL'].indexOf(b));
+      hiddenSizesInput.value = selectedSizes.join(',');
+
+      hideError('sizeError');
+      buildStockGrid();
+    });
+  });
+
+  function buildStockGrid() {
+    const grid = document.getElementById('stockGrid');
+    grid.innerHTML = '';
+
+    const selectedColors = Array.from(document.querySelectorAll('input[name="color"]:checked')).map(cb => cb.value);
+    const selectedSizes = hiddenSizesInput.value ? hiddenSizesInput.value.split(',') : [];
+
+    if (selectedColors.length === 0 || selectedSizes.length === 0) {
+      grid.innerHTML = '<p class="text-gray-500">Select colors and sizes to manage stock</p>';
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'w-full border-collapse';
+
+    const thead = document.createElement('thead');
+    let tr = document.createElement('tr');
+    let th = document.createElement('th');
+    th.className = 'p-2 border border-gray-200 bg-gray-50 text-left font-medium';
+    th.textContent = 'Color';
+    tr.appendChild(th);
+    selectedSizes.forEach(size => {
+      th = document.createElement('th');
+      th.className = 'p-2 border border-gray-200 bg-gray-50 text-center font-medium';
+      th.textContent = size;
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    selectedColors.forEach(color => {
+      tr = document.createElement('tr');
+      let td = document.createElement('td');
+      td.className = 'p-2 border border-gray-200 font-medium';
+      td.textContent = color;
+      tr.appendChild(td);
+      selectedSizes.forEach(size => {
+        td = document.createElement('td');
+        td.className = 'p-2 border border-gray-200';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.name = `stock_${color.toLowerCase()}_${size}`;
+        input.className = 'w-full p-1 border border-gray-300 rounded text-center focus:border-stone-500 focus:ring-stone-500/10 transition-all';
+        const matchingStock = existingStocks.find(s => s.color === color.toLowerCase() && s.size === size);
+        input.value = matchingStock ? matchingStock.quantity : 0;
+        td.appendChild(input);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    grid.appendChild(table);
+    hideError('stockError');
+  }
+
+  document.getElementById('regularPrice').addEventListener('input', validatePrices);
+  document.getElementById('salePrice').addEventListener('input', validatePrices);
+
+  function validatePrices() {
+    const regularPrice = parseFloat(document.getElementById('regularPrice').value);
+    const salePrice = parseFloat(document.getElementById('salePrice').value);
+    
+    if (regularPrice && salePrice) {
+      if (salePrice >= regularPrice) {
+        showError('salePriceError', 'Sale price must be less than regular price');
+        return false;
+      } else {
+        hideError('salePriceError');
+        hideError('regularPriceError');
+        return true;
+      }
+    }
+    return true;
+  }
+
+  function showError(elementId, message) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.querySelector('span').textContent = message;
+    errorElement.classList.remove('hidden');
+    Swal.fire({
+      icon: 'error',
+      title: 'Validation Error',
+      text: message,
+      confirmButtonColor: '#8B7355',
+      backdrop: 'rgba(0,0,0,0.6)',
+      allowOutsideClick: true,
+      timer: 3000
+    });
+  }
+
+  function hideError(elementId) {
+    const errorElement = document.getElementById(elementId);
+    errorElement.classList.add('hidden');
+  }
+
+  function validateForm(event) {
+    event.preventDefault();
+
+    if (isSubmitting) {
+      return false;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+
+    let isValid = true;
+    
+    const oldImages = JSON.parse(document.getElementById('remainingImages').value) || [];
+    const newImagesCount = document.getElementById('newImagePreview').children.length;
+    const totalImages = oldImages.length + newImagesCount;
+    
+    if (totalImages < 3) {
+      showError('imageError', `Please upload at least 3 images. You currently have ${totalImages} image(s). Please add ${3 - totalImages} more image(s).`);
+      isValid = false;
+    } else if (totalImages > 4) {
+      showError('imageError', `Maximum 4 images allowed. You have ${totalImages} images. Please remove ${totalImages - 4} image(s).`);
+      isValid = false;
+    } else {
+      hideError('imageError');
+    }
+    
+    const productName = document.getElementById('productName').value.trim();
+    if (!productName) {
+      showError('productNameError', 'Product name is required');
+      isValid = false;
+    } else if (productName.length < 3) {
+      showError('productNameError', 'Product name must be at least 3 characters');
+      isValid = false;
+    } else if (productName.length > 50) {
+      showError('productNameError', 'Product name cannot exceed 50 characters');
+      isValid = false;
+    } else {
+      hideError('productNameError');
+    }
+    
+    const category = document.getElementById('category').value;
+    if (!category) {
+      showError('categoryError', 'Please select a category');
+      isValid = false;
+    } else {
+      hideError('categoryError');
+    }
+    
+    const selectedColors = Array.from(checkboxes).filter(cb => cb.checked);
+    if (selectedColors.length === 0) {
+      showError('colorError', 'Please select at least one color');
+      isValid = false;
+    } else {
+      hideError('colorError');
+    }
+    
+    if (!validatePrices()) {
+      isValid = false;
+    }
+
+    const selectedSizesCount = document.querySelectorAll('.size-btn.bg-stone-600').length;
+    if (selectedSizesCount === 0) {
+      showError('sizeError', 'Please select at least one size');
+      isValid = false;
+    } else {
+      hideError('sizeError');
+    }
+
+    const stockInputs = document.querySelectorAll('#stockGrid input[type="number"]');
+    let totalQty = 0;
+    stockInputs.forEach(inp => {
+      const q = parseInt(inp.value) || 0;
+      totalQty += q;
+    });
+    if (totalQty === 0) {
+      showError('stockError', 'Please provide stock quantity for at least one color-size combination');
+      isValid = false;
+    } else {
+      hideError('stockError');
+    }
+    
+    const description = document.getElementById('description').value.trim();
+    if (!description) {
+      showError('descriptionError', 'Description is required');
+      isValid = false;
+    } else if (description.length < 10) {
+      showError('descriptionError', 'Description must be at least 10 characters');
+      isValid = false;
+    } else if (description.length > 1000) {
+      showError('descriptionError', 'Description cannot exceed 1000 characters');
+      isValid = false;
+    } else {
+      hideError('descriptionError');
+    }
+    
+    if (!isValid) {
+      submitBtn.disabled = false;
+      return false;
+    }
+
+    isSubmitting = true;
+    submitForm();
+    return false;
+  }
+
+  async function submitForm() {
+    const submitBtn = document.getElementById('submitBtn');
+    const originalHTML = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = `
+      <span class="relative z-10 flex items-center gap-3">
+        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Saving Changes...
+      </span>
+    `;
+
+    const formData = new FormData();
+    const form = document.getElementById('productForm');
+    const formElements = form.elements;
+    
+    for (let element of formElements) {
+      if (element.type === 'checkbox' && element.name === 'color') {
+        if (element.checked) {
+          formData.append('color', element.value);
+        }
+      } else if (element.type === 'radio' && element.checked) {
+        formData.append(element.name, element.value);
+      } else if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'file' && element.name) {
+        formData.append(element.name, element.value);
+      }
+    }
+
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput.files.length > 0) {
+      Array.from(imageInput.files).forEach(file => {
+        formData.append('productImage', file);
+      });
+    }
+    
+    try {
+      const response = await fetch('/admin/products/edit/<%= product._id %>', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Product Updated',
+          text: 'Product updated successfully!',
+          confirmButtonColor: '#8B7355',
+          backdrop: 'rgba(0,0,0,0.6)',
+          timer: 1500,
+          timerProgressBar: true,
+          showConfirmButton: false
+        }).then(() => {
+          window.location.href = '/admin/products';
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || 'Failed to update product',
+          confirmButtonColor: '#8B7355',
+          backdrop: 'rgba(0,0,0,0.6)',
+        });
+        submitBtn.innerHTML = originalHTML;
+        submitBtn.disabled = false;
+        isSubmitting = false;
+      }
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to update product. Please try again.',
+        confirmButtonColor: '#8B7355',
+        backdrop: 'rgba(0,0,0,0.6)',
+      });
+      submitBtn.innerHTML = originalHTML;
+      submitBtn.disabled = false;
+      isSubmitting = false;
+    }
+  }
+
+  document.getElementById('productName').addEventListener('input', function() {
+    const value = this.value.trim();
+    if (value && value.length >= 3 && value.length <= 50) {
+      hideError('productNameError');
+    }
+  });
+
+  document.getElementById('category').addEventListener('change', function() {
+    if (this.value) {
+      hideError('categoryError');
+    }
+  });
+
+  document.getElementById('description').addEventListener('input', function() {
+    const value = this.value.trim();
+    if (value && value.length >= 10 && value.length <= 1000) {
+      hideError('descriptionError');
+    }
+  });
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    updateImageCount();
+    buildStockGrid();
+    const sections = document.querySelectorAll('.gradient-border, .floating-label, .grid');
+    sections.forEach((section, index) => {
+      section.style.opacity = '0';
+      section.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        section.style.transition = 'all 0.5s ease';
+        section.style.opacity = '1';
+        section.style.transform = 'translateY(0)';
+      }, index * 100);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Customer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+  <form action="/admin/customers/edit/<%= customer._id %>" method="POST" enctype="multipart/form-data"
+        class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 w-full max-w-sm">
+
+    <h2 class="text-2xl mb-4 text-center font-semibold">Edit Customer</h2>
+
+    <!-- Profile Image Circle -->
+    <div class="flex justify-center mb-4">
+      <label for="imageUpload" class="cursor-pointer">
+        <img id="profilePreview"
+             src="/images/<%= customer.image || 'default-profile.png' %>"
+             alt="Profile"
+             class="w-24 h-24 rounded-full object-cover shadow" />
+      </label>
+      <input type="file" name="image" id="imageUpload" class="hidden" accept="image/*" onchange="previewImage(event)">
+    </div>
+
+    <label class="block text-gray-700 text-sm font-bold mb-2">Name</label>
+    <input type="text" name="name" value="<%= customer.name %>" required
+           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-4">
+
+    <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+    <input type="email" name="email" value="<%= customer.email %>" required
+           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-4">
+
+    <label class="block text-gray-700 text-sm font-bold mb-2">Phone</label>
+    <input type="text" name="phone" value="<%= customer.phone || '' %>"
+           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-4">
+
+    <label class="block text-gray-700 text-sm font-bold mb-2">Address</label>
+    <input type="text" name="address" value="<%= customer.address || '' %>"
+           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-4">
+
+    <div class="flex justify-between items-center">
+      <a href="/admin/customers" class="text-sm text-purple-600 hover:underline">Cancel</a>
+      <button type="submit"
+              class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+        Update
+      </button>
+    </div>
+  </form>
+
+  <script>
+    function previewImage(event) {
+      const input = event.target;
+      const reader = new FileReader();
+      reader.onload = function(){
+        const img = document.getElementById('profilePreview');
+        img.src = reader.result;
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  </script>
+
+</body>
+</html>

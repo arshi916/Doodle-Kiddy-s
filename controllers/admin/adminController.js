@@ -3,78 +3,78 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");  
 
 const pageerror = async (req, res) => {
-    res.render("admin-error", {
+    res.render("admin/admin-error", {
         title: "Admin Error",
         message: "Something went wrong on the admin panel."
     });
 };
 
-
 const loadLogin = (req, res) => {      
+    console.log('Session on loadLogin:', req.session); // Debug
     if (req.session.admin) {         
-        return res.redirect("/admin"); // Redirect to admin dashboard
+        return res.redirect("/admin"); 
     }      
-    res.render("admin-login", { message: null }); 
+    res.render("admin/admin-login", { message: null });
 };    
 
 const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+    const { email, password } = req.body;
+    const admin = await User.findOne({ email, isAdmin: true });
 
-        // Find admin user
-        const admin = await User.findOne({ email, isAdmin: true });
-        
-        if (admin) {
-            // Compare password correctly with await
-            const passwordMatch = await bcrypt.compare(password, admin.password);
-            
-            if (passwordMatch) {
-                req.session.admin = true;
-                return res.redirect("/admin");
-            } else {
-                return res.render("admin-login", { message: "Invalid password" });
-            }
-        } else {
-            return res.render("admin-login", { message: "Admin not found" });
-        }
-    } catch (error) {
-        console.log("login error", error);
-        return res.render("admin-login", { message: "Login error occurred" });
+    if (!admin) {
+        console.log('Admin not found for email:', email);
+        return res.render("admin/admin-login", { message: "Invalid credentials" });
     }
+
+    let isPasswordCorrect;
+    if (admin.password.length < 20) {
+        isPasswordCorrect = (password === admin.password);
+    } else {
+        isPasswordCorrect = await bcrypt.compare(password, admin.password);
+    }
+
+    if (!isPasswordCorrect) {
+        console.log('Invalid password for email:', email);
+        return res.render("admin/admin-login", { message: "Invalid credentials" });
+    }
+
+    req.session.admin = admin._id;
+    console.log('Session set after login:', req.session); // Debug
+    res.redirect("/admin");
 };
 
 const loadDashboard = async (req, res) => {
+    console.log('Session on loadDashboard:', req.session); // Debug
     if (req.session.admin) {
         try {
-            res.render("dashboard");  // dashboard.ejs inside views/admin/
+            res.render("admin/admin-dashboard", {
+                activePage: "dashboard"
+            });
         } catch (error) {
             console.log("Dashboard error:", error);
-            res.redirect("/admin/login");
+            res.redirect("/admin/pageerror");
         }
     } else {
+        console.log('No admin session, redirecting to login');
         res.redirect("/admin/login");
     }
 };
 
-
-const logout = async (req,res)=>{
-    try{
-req.session.destroy(err =>{
-    if(err){
-        console.log("Error destroying session");
-        return res.redirect("/pageerror")
+const logout = async (req, res) => {
+    try {
+        req.session.destroy(err => {
+            if (err) {
+                console.log("Error destroying session:", err);
+                return res.redirect("/pageerror");
+            }
+            console.log('Session destroyed');
+            res.redirect("/admin/login");
+        });
+    } catch (error) {
+        console.log("Unexpected error during logout:", error);
+        res.redirect("/pageerror");
     }
-    res.redirect("/admin/login")
-})
-    }catch (error){
-
-        console.log(("unexpected error during logout",error));
-        res.redirect("/pageerror")
-    }
-}
-
-
-
+};
 
 module.exports = {     
     loadLogin,
@@ -83,4 +83,3 @@ module.exports = {
     pageerror,
     logout
 };
- 

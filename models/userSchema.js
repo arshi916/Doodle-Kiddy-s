@@ -1,84 +1,109 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
 
-const UserSchema = new Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  phone: {
-    type: String,
-    required: false,
-    unique: true,
-    sparse: true,
-    defult:null,
-  },
-  googleID: {
-    type: String,
-    unique: true,
-    sparse: true // This allows multiple null values
-  },
-  password: {
-    type: String,
-    required: function() {
-      return !this.googleID; // Password required only if not Google auth
-    }
-  },
-  isBlocked: {
-    type: Boolean,
-    default: false
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false
-  },
-  cart: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Cart'
-  }],
-  wallet: {
-    type: Number,
-    default: 0
-  },
-  wishlist: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Wishlist'
-  }],
-  orderHistory: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Order'
-  }],
-  createdOn: {
-    type: Date,
-    default: Date.now
-  },
-  redeemed: {
-    type: Boolean,
-    default: false
-  },
-  redeemedUsers: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  searchHistory: {
-    category: {
-      type: Schema.Types.ObjectId,
-      ref: 'Category'
-    },
-    brand: {
-      type: String
-    },
-    searchOn: {
-      type: Date,
-      default: Date.now
-    }
-  }
-});
+const mongoose = require("mongoose"); const { Schema } = mongoose;
 
-const User = mongoose.model('User', UserSchema);
-module.exports = User;
+
+const addressSchema = new Schema({
+    addressType: {
+        type: String,
+        enum: ['Home', 'Work', 'Other'],
+        default: 'Home'
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    phone: {
+        type: String,
+        required: true
+    },
+    address: {
+        type: String,
+        required: true
+    },
+    city: {
+        type: String,
+        required: true
+    },
+    state: {
+        type: String,
+        required: true
+    },
+    zipCode: {
+        type: String,
+        required: true
+    },
+    country: {
+        type: String,
+        required: true,
+        default: 'India'
+    },
+    isDefault: {
+        type: Boolean,
+        default: false
+    }
+}, { timestamps: true });
+
+
+
+const userSchema = new Schema({
+    name: { type: String, 
+        required: true },
+    email: { type: String, 
+        required: true, 
+        unique: true },
+    phone: { 
+        type: String, 
+        required: function() { return !this.googleID; }, 
+        sparse: true, 
+        unique: true 
+    },
+    password: { 
+        type: String, 
+        required: function() { return !this.googleID; } 
+    },
+    googleID: { type: String, sparse: true, unique: true },
+
+    profileImage: {  
+        type: String,  
+        default: "/images/default-avatar.png"  
+    },
+    
+
+    isBlocked: { 
+        type: Boolean,
+         default: false },
+    isAdmin: { 
+        type: Boolean,
+         default: false },
+    cart: [{
+         type: Schema.Types.ObjectId, 
+         ref: "Cart" }],
+    wallet: {
+         type: Number,
+          default: 0 },
+    wishlist: [{ type: Schema.
+        Types.ObjectId,
+         ref: "Wishlist" }],
+    orderHistory: [{ type: Schema.Types.ObjectId,
+         ref: "Order" }],
+    createdOn: { type: Date,
+         default: Date.now },
+    referalCode: { type: String },
+    redeemed: { type: Boolean },
+    redeemedUsers: [{ type: Schema.Types.ObjectId,
+         ref: "User" }],
+    searchHistory: [{
+        category: { type: Schema.Types.ObjectId,
+             ref: "Category" },
+        searchOn: { type: Date, default: Date.now }
+    }],
+        addresses: [addressSchema]
+}, { timestamps: true });
+
+
+
+
+module.exports = mongoose.model("User", userSchema);
+
+
+

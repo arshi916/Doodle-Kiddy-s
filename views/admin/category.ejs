@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Categories</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif; 
+    }
+    .glass-effect {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+    .hover-lift {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(101, 67, 33, 0.15);
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-stone-100 to-amber-50 min-h-screen">
+
+<div class="flex h-screen">
+  <!-- Enhanced Sidebar -->
+  <aside class="w-64 bg-white shadow-2xl border-r border-stone-300">
+    <div class="p-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold bg-gradient-to-r from-stone-600 to-amber-800 bg-clip-text text-transparent">AdminHub</h2>
+      </div>
+    </div>
+    
+    <nav class="mt-2 px-4 space-y-1">
+      <!-- Dashboard -->
+      <a href="/admin" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+        </svg>
+        <span class="font-medium">Dashboard</span>
+      </a>
+
+      <!-- Customers -->
+      <a href="/admin/customers" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+        <span class="font-medium">Customers</span>
+      </a>
+
+      <!-- Products -->
+      <a href="/admin/products" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0H4m0 0v6a2 2 0 002 2h12a2 2 0 002-2v-6" />
+        </svg>
+        <span class="font-medium">Products</span>
+      </a>
+
+      <!-- Orders -->
+      <a href="/admin/orders" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span class="font-medium">Orders</span>
+      </a>
+
+      <!-- Categories - Active -->
+      <a href="/admin/categories" class="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-stone-200 to-amber-100 text-stone-800 rounded-xl shadow-sm">
+        <svg class="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+        <span class="font-semibold">Categories</span>
+      </a>
+
+      <!-- Offers -->
+      <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+        <span class="font-medium">Offers</span>
+      </a>
+
+      <!-- Coupons -->
+      <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+        </svg>
+        <span class="font-medium">Coupons</span>
+      </a>
+
+      <!-- Settings -->
+      <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="font-medium">Settings</span>
+      </a>
+
+      <!-- Logout -->
+      <div class="pt-4 mt-4 border-t border-stone-200">
+        <a href="/admin/logout" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 group">
+          <svg class="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
+          </svg>
+          <span class="font-medium">Logout</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Enhanced Header -->
+    <header class="glass-effect shadow-lg border-b border-stone-300 px-6 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <h1 class="text-2xl font-bold text-gray-800">Category Management</h1>
+          <div class="status-badge bg-stone-200 text-stone-800">
+            <div class="w-2 h-2 bg-stone-600 rounded-full animate-pulse"></div>
+            Active
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <form method="GET" action="/admin/categories" class="flex items-center space-x-3">
+            <div class="relative">
+              <input name="search" value="<%= typeof search !== 'undefined' ? search : '' %>" type="text" placeholder="Search categories..." 
+                     class="pl-10 pr-4 py-2 w-64 border border-stone-400 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-200 shadow-sm"/>
+              <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            
+            <% if (search) { %>
+              <a href="/admin/categories" class="px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 text-sm font-medium shadow-sm">
+                Clear
+              </a>
+            <% } %>
+            
+            <button type="submit" class="px-4 py-2 bg-gradient-to-r from-stone-600 to-stone-700 text-white rounded-xl hover:from-stone-700 hover:to-stone-800 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md">
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <main class="p-6 overflow-x-auto flex-1">
+      <div class="bg-white rounded-2xl shadow-xl border border-stone-300 hover-lift fade-in">
+        <!-- Stats Header -->
+        <div class="p-6 border-b border-stone-300 bg-gradient-to-r from-stone-100 to-amber-50 rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-6">
+              <div class="bg-gradient-to-r from-stone-600 to-amber-800 p-3 rounded-xl">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600 font-medium">Total Categories</p>
+                <p class="text-3xl font-bold text-gray-800"><%= categories.length %></p>
+              </div>
+            </div>
+            
+            <a href="/admin/categories/add" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add New Category
+            </a>
+          </div>
+        </div>
+
+        <!-- Enhanced Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gradient-to-r from-stone-100 to-amber-50 border-b border-stone-300">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Category</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Description</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Updated</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-stone-200">
+              <% categories.forEach(category => { %>
+                <tr class="hover:bg-stone-50 transition-colors duration-200">
+                  <!-- ID -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-stone-200 text-stone-800 font-mono">
+                      #<%= category._id.toString().slice(-5) %>
+                    </span>
+                  </td>
+
+                  <!-- Category -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 bg-gradient-to-br from-stone-300 to-amber-400 rounded-xl flex items-center justify-center shadow-md">
+                        <svg class="w-6 h-6 text-stone-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold text-gray-900 <%= category.isListed ? '' : 'text-red-600' %>">
+                          <%= category.name %>
+                          <% if (!category.isListed) { %>
+                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Unlisted
+                            </span>
+                          <% } %>
+                        </p>
+                        <p class="text-xs text-gray-500">Category ID: <%= category._id.toString().slice(-8) %></p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Description -->
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-700 max-w-xs">
+                      <div class="truncate" title="<%= category.description %>">
+                        <%= category.description || 'No description' %>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium <%= category.isListed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                      <div class="w-2 h-2 <%= category.isListed ? 'bg-green-500' : 'bg-red-500' %> rounded-full mr-2"></div>
+                      <%= category.isListed ? 'Listed' : 'Unlisted' %>
+                    </span>
+                  </td>
+
+                  <!-- Updated -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <%= category.updatedAt ? category.updatedAt.toLocaleDateString() : 'N/A' %>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <a href="/admin/categories/edit/<%= category._id %>" class="inline-flex items-center p-2 text-stone-600 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-all duration-200" title="Edit Category">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </a>
+                      
+                      <button 
+                        onclick="toggleCategoryListing('<%= category._id %>', '<%= category.name %>', <%= category.isListed %>)"
+                        class="inline-flex items-center p-2 <%= !category.isListed ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-red-600 hover:text-red-700 hover:bg-red-50' %> rounded-lg transition-all duration-200" 
+                        title="<%= !category.isListed ? 'List Category' : 'Unlist Category' %>">
+                        
+                        <% if (!category.isListed) { %>
+                          <!-- Eye Icon for List (when category is currently unlisted) -->
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        <% } else { %>
+                          <!-- Eye Off Icon for Unlist (when category is currently listed) -->
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                          </svg>
+                        <% } %>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Enhanced Pagination -->
+        <div class="px-6 py-4 border-t border-stone-300 bg-stone-100 rounded-b-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-700">
+              Showing page <span class="font-medium"><%= currentPage %></span> of <span class="font-medium"><%= totalPages %></span>
+            </p>
+            
+            <nav class="flex items-center space-x-2">
+              <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" 
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-400 rounded-lg hover:bg-stone-100 hover:text-stone-800 transition-colors duration-200">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </a>
+              <% } %>
+              
+              <div class="flex space-x-1">
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %>"
+                     class="inline-flex items-center px-3 py-2 text-sm font-medium <%= i === parseInt(currentPage) ? 'bg-stone-600 text-white border-stone-600' : 'text-stone-700 bg-white border-stone-400 hover:bg-stone-100' %> border rounded-lg transition-colors duration-200">
+                    <%= i %>
+                  </a>
+                <% } %>
+              </div>
+              
+              <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" 
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-400 rounded-lg hover:bg-stone-100 hover:text-stone-800 transition-colors duration-200">
+                  Next
+                  <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              <% } %>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// Toggle Category Listing Function
+async function toggleCategoryListing(categoryId, categoryName, currentStatus) {
+  const action = currentStatus ? 'unlist' : 'list';
+  const actionText = currentStatus ? 'Unlist' : 'List';
+  
+  const result = await Swal.fire({
+    title: `${actionText} Category?`,
+    text: `Are you sure you want to ${action} "${categoryName}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: currentStatus ? '#dc2626' : '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: `Yes, ${actionText}!`,
+    cancelButtonText: 'Cancel',
+    background: '#ffffff',
+    customClass: {
+      popup: 'rounded-2xl shadow-2xl',
+      title: 'text-gray-800 font-semibold',
+      content: 'text-gray-600',
+      confirmButton: 'rounded-xl px-6 py-3 font-medium',
+      cancelButton: 'rounded-xl px-6 py-3 font-medium'
+    }
+  });
+
+  if (result.isConfirmed) {
+    try {
+      // Show loading
+      Swal.fire({
+        title: 'Processing...',
+        text: `${actionText}ing category...`,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const response = await fetch('/admin/categories/toggle-listing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ categoryId })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        await Swal.fire({
+          title: 'Success!',
+          text: `Category "${categoryName}" has been ${action}ed successfully!`,
+          icon: 'success',
+          confirmButtonColor: '#059669',
+          confirmButtonText: 'Great!',
+          background: '#ffffff',
+          customClass: {
+            popup: 'rounded-2xl shadow-2xl',
+            title: 'text-gray-800 font-semibold',
+            content: 'text-gray-600',
+            confirmButton: 'rounded-xl px-6 py-3 font-medium'
+          }
+        });
+        
+        // Reload page to reflect changes
+        window.location.reload();
+      } else {
+        throw new Error(data.message || 'Failed to update category');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      await Swal.fire({
+        title: 'Error!',
+        text: error.message || 'Something went wrong. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'OK',
+        background: '#ffffff',
+        customClass: {
+          popup: 'rounded-2xl shadow-2xl',
+          title: 'text-gray-800 font-semibold',
+          content: 'text-gray-600',
+          confirmButton: 'rounded-xl px-6 py-3 font-medium'
+        }
+      });
+    }
+  }
+}
+
+// Check for success message from server
+document.addEventListener('DOMContentLoaded', function() {
+  <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+    Swal.fire({
+      title: 'Success!',
+      text: '<%= successMessage %>',
+      icon: 'success',
+      confirmButtonColor: '#059669',
+      confirmButtonText: 'Great!',
+      background: '#ffffff',
+      customClass: {
+        popup: 'rounded-2xl shadow-2xl',
+        title: 'text-gray-800 font-semibold',
+        content: 'text-gray-600',
+        confirmButton: 'rounded-xl px-6 py-3 font-medium'
+      }
+    });
+  <% } %>
+
+  // Add loading states to search button
+  const searchButton = document.querySelector('button[type="submit"]');
+  if (searchButton) {
+    searchButton.addEventListener('click', function() {
+      this.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Searching...
+      `;
+    });
+  }
+
+  // Add hover effects to category icons
+  const categoryIcons = document.querySelectorAll('.w-12.h-12');
+  categoryIcons.forEach(icon => {
+    icon.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.1) rotate(5deg)';
+      this.style.transition = 'transform 0.2s ease';
+    });
+    
+    icon.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1) rotate(0deg)';
+    });
+  });
+
+  // Add smooth scroll for pagination
+  const paginationLinks = document.querySelectorAll('nav a');
+  paginationLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+});
+</script>
+
+</body>
+</html>

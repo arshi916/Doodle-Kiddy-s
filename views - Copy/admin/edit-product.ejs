@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Product</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+<main class="min-h-screen flex items-center justify-center px-4 py-8">
+  <div class="w-full max-w-3xl bg-white rounded-xl shadow-md p-8">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Edit Product</h1>
+
+    <form id="productForm" onsubmit="validateForm(event)">
+      <!-- Image Display + Upload -->
+      <div class="mb-6">
+        <!-- Existing Images -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Current Images</label>
+        <div id="existingImages" class="flex gap-2 flex-wrap mb-2">
+          <% product.productImage.forEach((image, index) => { %>
+            <div class="relative w-24 h-24 rounded overflow-hidden">
+              <img src="/images/<%= image %>" class="object-cover w-full h-full rounded border" />
+              <button type="button"
+                      class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
+                      onclick="removeOldImage('<%= image %>', this)">×</button>
+            </div>
+          <% }) %>
+        </div>
+        <!-- Hidden input to keep track of remaining old images -->
+        <input type="hidden" name="images" id="remainingImages" value='<%= JSON.stringify(product.productImage) %>' />
+
+        <!-- New Image Upload + Preview -->
+        <label class="block text-sm font-medium text-gray-700 mb-1">Upload New Images</label>
+        <div id="newImagePreview" class="flex gap-2 flex-wrap mb-2"></div>
+
+        <div class="w-24 h-24 border-2 border-dashed border-gray-300 flex items-center justify-center rounded cursor-pointer bg-gray-50 hover:bg-gray-100"
+             onclick="document.getElementById('imageInput').click()">
+          <span class="text-2xl text-gray-400 font-bold">+</span>
+        </div>
+
+        <input type="file" id="imageInput" name="productImage" accept="image/*" class="hidden" multiple>
+        
+        <div class="mt-2 text-sm text-gray-600">
+          <p id="imageCount">Current images: <span id="currentImageCount"><%= product.productImage.length %></span>/4 (minimum 3 required)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+          <input name="productName" value="<%= product.productName %>" required class="w-full p-2 border rounded" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select name="category" required class="w-full p-2 border rounded">
+            <% categories.forEach(cat => { %>
+              <option value="<%= cat._id %>" <%= cat._id.equals(product.category) ? 'selected' : '' %>><%= cat.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- SALE PRICE -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Sale Price</label>
+          <input type="number" name="salePrice" value="<%= product.salePrice %>" required class="w-full p-2 border rounded" />
+        </div>
+
+        <!-- REGULAR PRICE -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Regular Price</label>
+          <input type="number" name="regularPrice" value="<%= product.regularPrice %>" required class="w-full p-2 border rounded" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+          <input type="number" name="quantity" value="<%= product.quantity %>" required class="w-full p-2 border rounded" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" required class="w-full p-2 border rounded">
+            <option <%= product.status === 'Available' ? 'selected' : '' %>>Available</option>
+            <option <%= product.status === 'out of stock' ? 'selected' : '' %>>Out of Stock</option>
+            <option <%= product.status === 'Discontinued' ? 'selected' : '' %>>Discontinued</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Return Policy</label>
+          <select name="returnPolicy" class="w-full p-2 border rounded">
+            <option value="true" <%= product.returnPolicy ? 'selected' : '' %>>True</option>
+            <option value="false" <%= !product.returnPolicy ? 'selected' : '' %>>False</option>
+          </select>
+        </div>
+
+     <!-- Color Dropdown Button -->
+<div class="mt-4 relative">
+  <label class="block text-sm font-medium text-gray-700 mb-1">Color(s)</label>
+  <button id="colorDropdownBtn" class="w-full flex justify-between items-center border border-gray-300 p-2 rounded cursor-pointer bg-white" onclick="toggleDropdown()" type="button">
+    <span id="selectedColors">Select Color(s)</span>
+    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+
+  <!-- Dropdown menu -->
+  <div id="colorDropdown" class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg hidden max-h-60 overflow-y-auto">
+    <% ['White', 'Gray', 'Beige', 'Yellow', 'Orange', 'Red', 'Purple', 'Blue', 'Green', 'Black'].forEach(color => { %>
+      <label class="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100">
+        <input type="checkbox" name="color" value="<%= color %>" class="mr-2" <%= product.color.includes(color.toLowerCase()) ? 'checked' : '' %>>
+        <span class="flex items-center">
+          <span class="w-4 h-4 rounded-full <%= {White: 'bg-white border', Gray: 'bg-gray-400', Beige: 'bg-yellow-100', Yellow: 'bg-yellow-400', Orange: 'bg-orange-400', Red: 'bg-red-500', Purple: 'bg-purple-500', Blue: 'bg-blue-500', Green: 'bg-green-500', Black: 'bg-black'}[color] %> mr-2"></span> <%= color %>
+        </span>
+      </label>
+    <% }) %>
+  </div>
+</div>
+
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Size Available (Kids)</label>
+          <div class="flex gap-3 flex-wrap" id="sizeOptions">
+            <% const sizes = ["XS", "S", "M", "L", "XL"]; %>
+            <% const selectedSizes = product.size || []; %>
+            <% sizes.forEach(size => { %>
+              <div class="text-center">
+                <button type="button"
+                        data-size="<%= size %>"
+                        class="size-btn px-4 py-1 rounded-full 
+                               <%= selectedSizes.includes(size) ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300' %>">
+                  <%= size %>
+                </button>
+                <p class="text-xs text-gray-500">
+                  <% if (size === 'XS') { %>2-3 Years<% } %>
+                  <% if (size === 'S') { %>4-5 Years<% } %>
+                  <% if (size === 'M') { %>6-7 Years<% } %>
+                  <% if (size === 'L') { %>8-9 Years<% } %>
+                  <% if (size === 'XL') { %>10-12 Years<% } %>
+                </p>
+              </div>
+            <% }); %>
+          </div>
+          <input type="hidden" name="sizes" id="selectedSizes" value="<%= selectedSizes.join(',') %>" />
+        </div>
+
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea name="description" required class="w-full p-2 border rounded"><%= product.description %></textarea>
+        </div>
+      </div>
+
+      <!-- Form Error Display -->
+      <div id="formError" class="text-red-500 text-sm mt-2 hidden flex items-center gap-2 justify-center">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span></span>
+      </div>
+
+      <div class="text-center mt-6">
+        <button type="submit" id="submitBtn" class="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script>
+  console.log("Script loaded");
+  let isSubmitting = false;
+
+  function updateImageCount() {
+    const oldImages = JSON.parse(document.getElementById('remainingImages').value) || [];
+    const newImagesCount = document.getElementById('newImagePreview').children.length;
+    const totalImages = oldImages.length + newImagesCount;
+    
+    const countElement = document.getElementById('currentImageCount');
+    countElement.textContent = totalImages;
+    
+    const imageCountElement = document.getElementById('imageCount');
+    if (totalImages < 3) {
+      imageCountElement.className = 'mt-2 text-sm text-red-600';
+      imageCountElement.innerHTML = `Current images: <span id="currentImageCount" class="font-medium">${totalImages}</span>/4 (minimum 3 required) - <span class="font-semibold">Please add ${3 - totalImages} more image(s)</span>`;
+    } else if (totalImages >= 3 && totalImages <= 4) {
+      imageCountElement.className = 'mt-2 text-sm text-green-600';
+      imageCountElement.innerHTML = `Current images: <span id="currentImageCount" class="font-medium">${totalImages}</span>/4 ✓`;
+    } else {
+      imageCountElement.className = 'mt-2 text-sm text-red-600';
+      imageCountElement.innerHTML = `Current images: <span id="currentImageCount" class="font-medium">${totalImages}</span>/4 - <span class="font-semibold">Please remove ${totalImages - 4} image(s)</span>`;
+    }
+  }
+
+  // Toggle color dropdown
+  function toggleDropdown() {
+    document.getElementById("colorDropdown").classList.toggle("hidden");
+  }
+
+  // Update selected colors display
+  const checkboxes = document.querySelectorAll('input[name="color"]');
+  const selectedDisplay = document.getElementById("selectedColors");
+
+  function updateSelectedColors() {
+    console.log("Updating selected colors");
+    const selected = Array.from(checkboxes)
+      .filter(i => i.checked)
+      .map(i => i.value);
+    selectedDisplay.textContent = selected.length ? selected.join(', ') : "Select Color(s)";
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", updateSelectedColors);
+  });
+
+  // Initial update for pre-selected colors
+  updateSelectedColors();
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("colorDropdown");
+    const button = document.getElementById("colorDropdownBtn");
+    if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  // Preview new uploaded images
+  const previewContainer = document.getElementById("newImagePreview");
+  const imageInput = document.getElementById("imageInput");
+  const remainingInput = document.getElementById("remainingImages");
+
+  imageInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    console.log("Files selected:", files.length);
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("relative", "w-24", "h-24", "rounded", "overflow-hidden");
+
+        const img = document.createElement("img");
+        img.src = event.target.result;
+        img.className = "object-cover w-full h-full rounded border";
+
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "×";
+        closeBtn.className = "absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600 transition-colors";
+        closeBtn.onclick = () => {
+          wrapper.remove();
+          updateImageCount();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(closeBtn);
+        previewContainer.appendChild(wrapper);
+        
+        updateImageCount();
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Remove old image from list
+  function removeOldImage(imageName, btn) {
+    const existing = JSON.parse(remainingInput.value);
+    const updated = existing.filter(img => img !== imageName);
+    remainingInput.value = JSON.stringify(updated);
+    btn.parentElement.remove();
+    updateImageCount();
+  }
+
+  // Size selection
+  document.addEventListener("DOMContentLoaded", () => {
+    const buttons = document.querySelectorAll(".size-btn");
+    const hiddenInput = document.getElementById("selectedSizes");
+
+    buttons.forEach(button => {
+      button.addEventListener("click", () => {
+        button.classList.toggle("bg-blue-500");
+        button.classList.toggle("text-white");
+        button.classList.toggle("bg-gray-200");
+
+        const selected = [];
+        document.querySelectorAll(".size-btn.bg-blue-500").forEach(btn => {
+          selected.push(btn.getAttribute("data-size"));
+        });
+        hiddenInput.value = selected.join(",");
+      });
+    });
+    
+    // Initialize image count
+    updateImageCount();
+  });
+
+  // Utility functions for errors
+  function showError(message) {
+    const errorElement = document.getElementById("formError");
+    errorElement.querySelector('span').textContent = message;
+    errorElement.classList.remove('hidden');
+  }
+
+  function hideError() {
+    document.getElementById("formError").classList.add('hidden');
+  }
+
+  // Form validation and submission
+  function validateForm(event) {
+    event.preventDefault();
+    console.log("Validating form");
+    hideError();
+    let isValid = true;
+
+    // Validate images - minimum 3, maximum 4
+    const oldImages = JSON.parse(document.getElementById('remainingImages').value) || [];
+    const newImagesCount = document.getElementById('newImagePreview').children.length;
+    const totalImages = oldImages.length + newImagesCount;
+    
+    if (totalImages < 3) {
+      showError(`Product must have at least 3 images. Currently you have ${totalImages} image(s). Please add ${3 - totalImages} more image(s).`);
+      isValid = false;
+    } else if (totalImages > 4) {
+      showError(`Product can have maximum 4 images. Currently you have ${totalImages} images. Please remove ${totalImages - 4} image(s).`);
+      isValid = false;
+    }
+
+    const productName = document.querySelector('input[name="productName"]').value.trim();
+    if (!productName || productName.length < 3) {
+      showError('Product name must be at least 3 characters');
+      isValid = false;
+    } else if (productName.length > 50) {
+      showError('Product name cannot exceed 50 characters');
+      isValid = false;
+    }
+
+    const category = document.querySelector('select[name="category"]').value;
+    if (!category) {
+      showError('Please select a category');
+      isValid = false;
+    }
+
+    const selectedColors = Array.from(checkboxes).filter(cb => cb.checked);
+    if (selectedColors.length === 0) {
+      showError('Please select at least one color');
+      isValid = false;
+    }
+
+    const regularPrice = parseFloat(document.querySelector('input[name="regularPrice"]').value);
+    const salePrice = parseFloat(document.querySelector('input[name="salePrice"]').value);
+    if (isNaN(regularPrice) || isNaN(salePrice) || regularPrice <= 0 || salePrice <= 0) {
+      showError('Prices must be valid positive numbers');
+      isValid = false;
+    } else if (salePrice >= regularPrice) {
+      showError('Sale price must be less than regular price');
+      isValid = false;
+    }
+
+    const quantity = parseInt(document.querySelector('input[name="quantity"]').value);
+    if (isNaN(quantity) || quantity < 0) {
+      showError('Quantity must be a valid number (0 or greater)');
+      isValid = false;
+    }
+
+    const description = document.querySelector('textarea[name="description"]').value.trim();
+    if (!description || description.length < 10) {
+      showError('Description must be at least 10 characters');
+      isValid = false;
+    } else if (description.length > 1000) {
+      showError('Description cannot exceed 1000 characters');
+      isValid = false;
+    }
+
+    if (isValid && !isSubmitting) {
+      submitForm();
+    }
+  }
+
+function submitForm() {
+  console.log("Submitting form");
+  isSubmitting = true;
+  const submitBtn = document.getElementById('submitBtn');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving...';
+  submitBtn.disabled = true;
+
+  const formData = new FormData(document.getElementById('productForm'));
+  console.log("Form data prepared:", Object.fromEntries(formData));
+
+  fetch(`/admin/products/edit/<%= product._id %>`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest' // This helps identify AJAX requests
+    },
+    body: formData
+  })
+  .then(response => {
+    console.log("Response status:", response.status);
+    console.log("Response headers:", [...response.headers.entries()]);
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      // If it's a redirect or HTML, it means success but wrong response type
+      if (response.ok) {
+        return { success: true, message: 'Product updated successfully!' };
+      } else {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+    }
+  })
+  .then(data => {
+    console.log("Response data:", data);
+    if (data.success) {
+  hideError(); // Clear error
+  alert('Product updated successfully!'); // Or use a better UI notification
+  setTimeout(() => {
+    window.location.href = '/admin/products';
+  }, 500);
+} else {
+      showError(data.message || 'Failed to update product');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      isSubmitting = false;
+    }
+  })
+  .catch(error => {
+    console.error('Fetch Error:', error);
+    showError('Failed to update product. Please try again.');
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+    isSubmitting = false;
+  });
+}
+</script>
+</body>
+</html>
