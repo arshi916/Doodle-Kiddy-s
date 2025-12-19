@@ -12,7 +12,6 @@ const loadOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
 
-    // Build search query - search by orderId, user name, or status
     let query = {};
     if (search) {
       query = {
@@ -38,7 +37,6 @@ const loadOrders = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    // If search includes user name, we need a different approach
     if (search && !orders.length) {
       const users = await User.find({
         name: { $regex: search, $options: "i" }
@@ -168,11 +166,11 @@ const viewOrder = async (req, res) => {
     res.redirect("/admin/orders");
   }
 };
+
 const updateOrderStatus = async (req, res) => {
   try {
     const { orderId, status } = req.body;
     
-   
     if (!orderId || !status) {
       return res.status(400).json({ 
         success: false, 
@@ -180,7 +178,6 @@ const updateOrderStatus = async (req, res) => {
       });
     }
     
-
     const validStatuses = ['Pending', 'Processing', 'Shipping', 'Delivered', 'Return Request', 'Returned', 'Cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ 
@@ -189,18 +186,8 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
- 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { 
-        status: status,
-       
-        ...(status === 'Delivered' && { invoiceDate: new Date() }),
-    
-        updatedAt: new Date()
-      },
-      { new: true }
-    ).populate('address', 'name email');
+    // Find the order and populate items
+    const order = await Order.findById(orderId).populate('orderedItemes.product');
 
     if (!order) {
       return res.status(404).json({ 
@@ -209,30 +196,56 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (['Processing', 'Shipping', 'Delivered'].includes(status) && order.status === 'Pending') {
+    const oldStatus = order.status;
+
+    // UPDATE OVERALL ORDER STATUS
+    order.status = status;
+    order.updatedAt = new Date();
+
+    // If marked as Delivered, set invoiceDate
+    if (status === 'Delivered' && !order.invoiceDate) {
+      order.invoiceDate = new Date();
+    }
+
+    // === CRITICAL FIX: UPDATE ALL ITEM STATUSES TOO ===
+    if (['Processing', 'Shipping', 'Delivered'].includes(status)) {
+      order.orderedItemes.forEach(item => {
+        // Only update item status if it's still in early stage
+        if (['Pending', 'Processing', 'Shipping'].includes(item.status || 'Pending')) {
+          item.status = status;  // Sync item status with order status
+        }
+      });
+    }
+
+    // Stock deduction only on first transition from Pending
+    if (oldStatus === 'Pending' && ['Processing', 'Shipping', 'Delivered'].includes(status)) {
       for (const item of order.orderedItemes) {
-        const product = await Product.findById(item.product);
+        const product = item.product;
         if (product && product.quantity >= item.quantity) {
           product.quantity -= item.quantity;
           await product.save();
         } else {
-          throw new Error(`Insufficient stock for product ${item.product}`);
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for product: ${product?.productName || 'Unknown'}`
+          });
         }
       }
     }
 
+    await order.save();
 
-    console.log(`Order ${order.orderId} status changed to ${status} at ${new Date()}`);
+    console.log(`Order ${order._id} status changed from ${oldStatus} to ${status}`);
 
     res.json({ 
       success: true, 
       message: `Order status updated to ${status} successfully`,
       order: {
         id: order._id,
-        orderId: order.orderId,
         status: order.status,
         customerName: order.address?.name || 'Unknown',
-        updatedAt: order.updatedAt
+        updatedAt: order.updatedAt,
+        itemStatuses: order.orderedItemes.map(i => ({ product: i.product?.productName, status: i.status }))
       }
     });
 
@@ -245,6 +258,93 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+const handleReturnRequest = async (req, res) => {
+  try {
+    const { orderId, action } = req.body;
+
+    if (!orderId || !action || !['accept', 'reject'].includes(action)) {
+      return res.json({ success: false, message: 'Invalid request' });
+    }
+
+    const order = await Order.findById(orderId)
+      .populate('orderedItemes.product')
+      .populate('address');
+
+    if (!order) {
+      return res.json({ success: false, message: 'Order not found' });
+    }
+
+    // === CORRECT VALIDATION: Check for ANY item with 'Return Request' ===
+    const returnRequestedItems = order.orderedItemes.filter(
+      item => (item.status || '').trim() === 'Return Request'
+    );
+
+    if (returnRequestedItems.length === 0) {
+      return res.json({ 
+        success: false, 
+        message: 'This order does not have any pending return request' 
+      });
+    }
+
+    // ACCEPT RETURN
+    if (action === 'accept') {
+      for (const item of returnRequestedItems) {
+        // Restore stock
+        if (item.product) {
+          await Product.findByIdAndUpdate(
+            item.product._id,
+            { $inc: { quantity: item.quantity } }
+          );
+        }
+
+        // Mark item as Returned
+        item.status = 'Returned';
+        item.returnReason = undefined;
+        item.returnComments = undefined;
+        item.returnRequestedDate = undefined;
+      }
+
+      // Optional: Update overall status if ALL items are returned/cancelled
+      const allProcessed = order.orderedItemes.every(
+        i => ['Returned', 'Cancelled'].includes(i.status || '')
+      );
+      if (allProcessed) {
+        order.status = 'Returned';
+      }
+
+      await order.save();
+
+      return res.json({ 
+        success: true, 
+        message: `Return accepted for ${returnRequestedItems.length} item(s). Stock restored.` 
+      });
+    }
+
+    // REJECT RETURN
+    if (action === 'reject') {
+      for (const item of returnRequestedItems) {
+        item.status = 'Delivered';
+        item.returnReason = undefined;
+        item.returnComments = undefined;
+        item.returnRequestedDate = undefined;
+      }
+
+      await order.save();
+
+      return res.json({ 
+        success: true, 
+        message: `Return rejected for ${returnRequestedItems.length} item(s).` 
+      });
+    }
+
+  } catch (error) {
+    console.error('Error handling return request:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error. Please try again.' 
+    });
+  }
+};
 
 const getOrderStats = async (req, res) => {
   try {
@@ -292,14 +392,12 @@ const exportOrders = async (req, res) => {
     
     let query = {};
     
-  
     if (startDate || endDate) {
       query.createdOn = {};
       if (startDate) query.createdOn.$gte = new Date(startDate);
       if (endDate) query.createdOn.$lte = new Date(endDate);
     }
     
-
     if (status && status !== 'all') {
       query.status = status;
     }
@@ -308,7 +406,6 @@ const exportOrders = async (req, res) => {
       .populate('address', 'name email phone')
       .populate('orderedItemes.product', 'productName price')
       .sort({ createdOn: -1 });
-
 
     const csvHeaders = [
       'Order ID',
@@ -386,7 +483,6 @@ const deleteOrder = async (req, res) => {
   }
 };
 
-
 const bulkUpdateStatus = async (req, res) => {
   try {
     const { orderIds, status } = req.body;
@@ -433,8 +529,9 @@ module.exports = {
   loadOrders, 
   viewOrder, 
   updateOrderStatus,
+  handleReturnRequest,  
   getOrderStats,
   exportOrders,
   deleteOrder,
   bulkUpdateStatus
-}
+};

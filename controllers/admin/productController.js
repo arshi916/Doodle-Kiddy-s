@@ -398,6 +398,11 @@ const getEditProduct = async (req, res) => {
 const updateProductPost = async (req, res) => {
   try {
     const productId = req.params.id;
+
+    console.log('=== UPDATE REQUEST ===');
+    console.log('body.existingImages:', req.body.existingImages);
+    console.log('files count:', req.files?.length || 0);
+
     const {
       productName,
       description,
@@ -407,70 +412,45 @@ const updateProductPost = async (req, res) => {
       status,
       color,
       returnPolicy,
-      images,
-      sizes  // New: comma-separated selected sizes
+      sizes
     } = req.body;
 
-    console.log('Update Product Request received', { productId, body: req.body, files: req.files });
-
-    // Find the product
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Handle images
+    // === FIXED IMAGE HANDLING ===
     let oldImages = [];
-    if (images) {
+    if (req.body.existingImages) {
       try {
-        oldImages = JSON.parse(images);
+        oldImages = JSON.parse(req.body.existingImages);
       } catch (err) {
-        console.error('Error parsing remaining images:', err);
-        return res.status(400).json({ success: false, message: "Invalid image data" });
+        return res.status(400).json({ success: false, message: "Invalid existing images data" });
       }
     }
 
     let newImages = [];
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        if (!file.mimetype.startsWith("image/")) {
-          return res.status(400).json({ success: false, message: "Please upload valid image files only" });
-        }
-        if (file.size > 5 * 1024 * 1024) {
-          return res.status(400).json({ success: false, message: "Each image must be less than 5MB" });
-        }
-      }
-
-      for (let file of req.files) {
-        const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.originalname}`;
-        const outputPath = path.join("public", "images", filename);
-
-        await sharp(file.buffer || file.path)
-          .resize(300, 300, { fit: "cover", position: "center" })
-          .jpeg({ quality: 90 })
-          .toFile(outputPath);
-
-        if (file.path && fs.existsSync(file.path)) {
-          fs.unlinkSync(file.path);
-        }
+        
         newImages.push(filename);
       }
     }
 
     const productImages = [...oldImages, ...newImages];
 
-    // Validate images
     if (productImages.length < 3) {
       return res.status(400).json({ 
         success: false, 
-        message: `Product must have at least 3 images. Currently you have ${productImages.length} image(s). Please add ${3 - productImages.length} more image(s).` 
+        message: `Product must have at least 3 images. Currently ${productImages.length}.` 
       });
     }
 
     if (productImages.length > 4) {
       return res.status(400).json({ 
         success: false, 
-        message: `Product can have maximum 4 images. Currently you have ${productImages.length} images. Please remove ${productImages.length - 4} image(s).` 
+        message: `Maximum 4 images allowed. Currently ${productImages.length}.` 
       });
     }
 

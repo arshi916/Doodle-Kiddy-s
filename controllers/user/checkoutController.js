@@ -92,14 +92,13 @@ const processOrder = async (req, res) => {
         });
 
         const cart = await Cart.findOne({ userId }).populate({
-            path: 'items.productId',
-            select: 'productName finalPrice productImage quantity status'
-        });
+    path: 'items.productId',
+    select: 'productName finalPrice productImage quantity status isBlocked'  // ← Fixed!
+});
 
-        if (!cart || cart.items.length === 0) {
-            return res.json({ success: false, message: 'Your cart is empty' });
-        }
-
+if (!cart || cart.items.length === 0) {
+    return res.json({ success: false, message: 'Your cart is empty' });
+}
         const user = await User.findById(userId);
         if (!user) {
             return res.json({ success: false, message: 'User not found' });
@@ -138,20 +137,32 @@ const processOrder = async (req, res) => {
         }
 
         for (let item of cart.items) {
-            const product = item.productId;
-            if (product.quantity < item.quantity) {
-                return res.json({ 
-                    success: false, 
-                    message: `${product.productName} is out of stock or insufficient quantity. Only ${product.quantity} available.` 
-                });
-            }
-            if (product.status === "out of stock") {
-                return res.json({ 
-                    success: false, 
-                    message: `${product.productName} is out of stock.` 
-                });
-            }
-        }
+    const product = item.productId;
+
+    // 1. Check if product is BLOCKED by admin
+    if (product.isBlocked === true) {
+        return res.json({ 
+            success: false, 
+            message: `${product.productName} is currently unavailable for purchase.` 
+        });
+    }
+
+    // 2. Check insufficient stock
+    if (product.quantity < item.quantity) {
+        return res.json({ 
+            success: false, 
+            message: `${product.productName} has insufficient stock. Only ${product.quantity} left (you requested ${item.quantity}).` 
+        });
+    }
+
+    // 3. Check if marked as "out of stock"
+    if (product.status === "out of stock") {
+        return res.json({ 
+            success: false, 
+            message: `${product.productName} is currently out of stock.` 
+        });
+    }
+}
 
         const subtotal = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
         const shippingCost = subtotal > 2500 ? 0 : 99;

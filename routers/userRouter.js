@@ -7,7 +7,7 @@ const { profileUpload } = require("../middlewares/upload");
 const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
 const multer = require('multer');
-
+1
 const { userAuth } = require("../middlewares/auth");
 const upload = multer();
 
@@ -23,22 +23,25 @@ router.get('/auth/google', passport.authenticate('google', {
     prompt: 'select_account' 
 }));
 
-router.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/signup?error=google_auth_failed' }),
+router.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login?error=auth_failed",
+    failureFlash: true,
+  }),
   (req, res) => {
     try {
       if (req.user) {
         req.session.user = req.user._id;
-        console.log('Google OAuth successful, user ID stored in session:', req.user._id);
-        console.log('User details:', req.user);
-        res.redirect('/');
+        console.log("Google OAuth successful, user:", req.user.email);
+        res.redirect("/");
       } else {
-        console.error('No user object found after Google authentication');
-        res.redirect('/signup?error=auth_failed');
+        console.error("No user object found after Google authentication");
+        res.redirect("/login?error=auth_failed");
       }
     } catch (error) {
-      console.error('Error in Google OAuth callback:', error);
-      res.redirect('/signup?error=callback_error');
+      console.error("Error in Google OAuth callback:", error);
+      res.redirect("/login?error=callback_error");
     }
   }
 );
@@ -105,11 +108,13 @@ router.post('/checkout/process', upload.none(), checkoutController.processOrder)
 router.get('/order-success', checkoutController.orderSuccess);
 
 // Orders routes
+router.get('/profile', userAuth, profileController.loadProfile);
+router.get('/profile/addresses', userAuth, profileController.loadAddresses);
 router.get('/profile/orders', userAuth, profileController.loadOrders);
 router.get('/profile/order/:id', userAuth, profileController.getOrderDetails);
-router.post('/return-order', userAuth, profileController.returnOrder);
-
-
-router.post('/cancel-order', userAuth, profileController.cancelOrder);
+router.post('/profile/cancel-order', userAuth, profileController.cancelOrder);
+router.post('/profile/return-order', userAuth, profileController.returnOrder);
+router.post('/profile/cancel-order-item', userAuth, profileController.cancelOrderItem);
+router.post('/profile/return-order-item', userAuth, profileController.returnOrderItem);
 
 module.exports = router; 

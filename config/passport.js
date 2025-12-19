@@ -15,14 +15,13 @@ passport.use(new GoogleStrategy({
         let user = await User.findOne({ googleID: profile.id });
         
         if (!user) {
-            // check with email if already exists
             user = await User.findOne({ email: profile.emails[0].value });
             
             if (user) {
                 user.googleID = profile.id;
                 await user.save();
             } else {
-                // create new user
+            
                 user = new User({
                     name: profile.displayName,
                     email: profile.emails[0].value,
@@ -38,7 +37,6 @@ passport.use(new GoogleStrategy({
             }
         }
 
-        // 🔴 Block check always here
         if (user.isBlocked) {
             return done(null, false, { message: "Your account is blocked" });
         }
@@ -65,3 +63,5 @@ passport.deserializeUser(async (id, done) => {
 });
 
 module.exports = passport;
+
+ 

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart - Kids Fashion Store</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <%- include("../../views/partials/user/header") %>
+
+     <%- include("../../views/partials/user/header") %>
     <style>
         * {
             margin: 0;
@@ -124,6 +124,7 @@
             color: #D4B896;
         }
         
+
         .cart-item {
             display: flex;
             gap: 20px;
@@ -156,25 +157,24 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        
-        .item-description {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.4;
-            max-height: 2.8em;
-        }
+          .item-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4;
+        max-height: 2.8em; /* 2 lines * 1.4 line-height */
+    }
     
-        .clickable-product {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    .clickable-product {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
     
-        .clickable-product:hover {
-            transform: scale(1.02);
-        }
+    .clickable-product:hover {
+        transform: scale(1.02);
+    }
 
         .item-info h3 {
             font-size: 1.2rem;
@@ -201,6 +201,7 @@
             font-size: 0.8rem;
             font-weight: 600;
         }
+       x
 
         .size-badge {
             background: rgba(212, 184, 150, 0.2);
@@ -213,13 +214,13 @@
         }
 
         .color-badge {
-            background: rgba(52, 152, 219, 0.2);
-            color: #3498db;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
+    background: rgba(52, 152, 219, 0.2);  /* Blue theme, adjust as needed */
+    color: #3498db;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
 
         .item-actions {
             display: flex;
@@ -409,6 +410,41 @@
             box-shadow: 0 10px 25px rgba(212, 184, 150, 0.4);
         }
 
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cart-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .cart-header {
+                padding: 25px 20px;
+            }
+
+            .cart-title h1 {
+                font-size: 2rem;
+            }
+
+            .cart-items, .order-summary {
+                padding: 25px 20px;
+            }
+
+            .cart-item {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .item-image {
+                width: 100%;
+                height: 200px;
+            }
+
+            .item-actions {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
         /* Recommendations */
         .recommendations {
             background: white;
@@ -515,6 +551,33 @@
         .cart-item {
             animation: fadeIn 0.5s ease-in-out;
         }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.success {
+            background: #27ae60;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        
     </style>
 </head>
 <body>
@@ -544,378 +607,299 @@
                     Cart Items (<span id="cart-item-count"><%= cart.items.length %></span>)
                 </div>
 
-                <% if (cart.items.length > 0) { %>
-                    <div id="cart-items-container">
-                        <% cart.items.forEach((item, index) => { %>
-                            <% if (item.productId && !item.productId.isBlocked) { %>
-                                <div class="cart-item" data-product-id="<%= item.productId._id %>">
-                                    <% 
-                                        let imageSrc = 'https://via.placeholder.com/200x200/f0f0f0/cccccc?text=No+Image';
-                                        if (item.productId && item.productId.productImage) {
-                                            if (Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0) {
-                                                imageSrc = item.productId.productImage[0];
-                                            } else if (typeof item.productId.productImage === 'string' && item.productId.productImage.trim() !== '') {
-                                                imageSrc = item.productId.productImage;
-                                            }
-                                        }
-                                        if (imageSrc && !imageSrc.startsWith('http') && !imageSrc.startsWith('/')) {
-                                            imageSrc = '/images/' + imageSrc;
-                                        }
-                                    %>
-                                    <img src="<%= imageSrc %>" 
-                                         alt="<%= item.productId ? item.productId.productName : 'Product' %>" 
-                                         class="item-image clickable-product"
-                                         style="width: 120px; height: 120px; object-fit: cover; background: #f0f0f0;"
-                                         onerror="this.src='https://via.placeholder.com/200x200/f0f0f0/cccccc?text=Image+Not+Found'"
-                                         onclick="goToProductDetail('<%= item.productId._id %>')">
-                                    
-                                    <div class="item-details">
-                                        <div class="item-info">
-                                            <h3 class="clickable-product" onclick="goToProductDetail('<%= item.productId._id %>')">
-                                                <%= item.productId ? item.productId.productName : 'Unknown Product' %>
-                                            </h3>
-                                            <p class="item-description">
-                                                <%= item.productId ? (item.productId.description || 'No description available') : 'Product not found' %>
-                                            </p>
-                                            <div class="item-meta">
-                                                <span class="size-badge">Size: <%= item.selectedSize %></span>
-                                                <span class="color-badge">Color: <%= item.selectedColor %></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="item-actions">
-                                        <div class="item-price">₹<span class="item-total-price"><%= item.totalPrice.toFixed(2) %></span></div>
-                                        <div class="quantity-controls">
-                                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', -1)">-</button>
-                                            <span class="qty-display" id="qty-<%= item.productId._id %>"><%= item.quantity %></span>
-                                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', 1)">+</button>
-                                        </div>
-                                        <button class="remove-btn" onclick="removeItem('<%= item.productId._id %>')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <script>
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Item Unavailable',
-                                        text: 'The product "<%= item.productId ? item.productId.productName : 'Unknown Product' %>" has been removed from your cart as it is no longer available.',
-                                        showConfirmButton: true,
-                                        confirmButtonColor: '#D4B896',
-                                        timer: 5000
-                                    });
-                                </script>
-                            <% } %>
-                        <% }); %>
-                    </div>
-                <% } else { %>
-                    <div class="empty-cart" id="empty-cart-message">
-                        <i class="fas fa-shopping-cart"></i>
-                        <h2>Your cart is empty</h2>
-                        <p>Looks like you haven't added anything to your cart yet</p>
-                        <a href="/shop" class="shop-now-btn">
-                            <i class="fas fa-shopping-bag"></i>
-                            Start Shopping
-                        </a>
-                    </div>
-                <% } %>
-            </div>
-
-            <div class="order-summary" id="order-summary" <% if (cart.items.length === 0) { %>style="display: none;"<% } %>>
-                <div class="section-title">
-                    <i class="fas fa-receipt"></i>
-                    Order Summary
-                </div>
-
-                <div class="summary-row">
-                    <span>Subtotal (<span id="item-count"><%= cart.items.reduce((sum, item) => sum + item.quantity, 0) %></span> items)</span>
-                    <span id="subtotal">₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2) %></span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping</span>
-                    <span id="shipping">₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? '0.00' : '99.00' %></span>
-                </div>
-                <div class="summary-row">
-                    <span>Tax</span>
-                    <span id="tax">₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18).toFixed(2) %></span>
-                </div>
-
-                <div class="summary-row total">
-                    <span>Total</span>
-                    <span id="total">₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? 0 : 99) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18)).toFixed(2) %></span>
-                </div>
-
-                <button class="checkout-btn" onclick="proceedToCheckout()">
-                    Proceed to Checkout
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-
-                <div class="continue-shopping">
-                    <a href="/shop" class="continue-link">
-                        <i class="fas fa-arrow-left"></i>
-                        Continue Shopping
-                    </a>
-                </div>
-            </div>
-        </div>
-    
-        <!-- Recommendations -->
-        <% if (recommendations && recommendations.length > 0) { %>
-            <div class="recommendations">
-                <div class="section-title">
-                    <i class="fas fa-heart"></i>
-                    You Might Also Like
-                </div>
-                <div class="recommendation-grid">
-                    <% recommendations.forEach(product => { %>
-                        <div class="recommendation-item" onclick="addToCart('<%= product._id %>', '<%= product.size && product.size.length > 0 ? product.size[0] : 'S' %>', '<%= product.color && product.color.length > 0 ? product.color[0] : 'white' %>')">
-                            <img src="<%= product.productImage[0] ? (product.productImage[0].startsWith('http') ? product.productImage[0] : '/images/' + product.productImage[0]) : 'https://via.placeholder.com/200x150' %>" alt="<%= product.productName %>">
-                            <h4><%= product.productName %></h4>
-                            <p><%= product.description || 'No description available' %></p>
-                            <div class="recommendation-price">₹<%= product.salePrice.toFixed(2) %></div>
+           <% if (cart.items.length > 0) { %>
+    <div id="cart-items-container">
+        <% cart.items.forEach((item, index) => { %>
+            <% if (item.productId && !item.productId.isBlocked) { %>
+                <div class="cart-item" data-product-id="<%= item.productId._id %>">
+                    <% 
+                        let imageSrc = 'https://via.placeholder.com/200x200/f0f0f0/cccccc?text=No+Image';
+                        if (item.productId && item.productId.productImage) {
+                            if (Array.isArray(item.productId.productImage) && item.productId.productImage.length > 0) {
+                                imageSrc = item.productId.productImage[0];
+                            } else if (typeof item.productId.productImage === 'string' && item.productId.productImage.trim() !== '') {
+                                imageSrc = item.productId.productImage;
+                            }
+                        }
+                        if (imageSrc && !imageSrc.startsWith('http') && !imageSrc.startsWith('/')) {
+                            imageSrc = '/images/' + imageSrc;
+                        }
+                    %>
+                    <img src="<%= imageSrc %>" 
+                         alt="<%= item.productId ? item.productId.productName : 'Product' %>" 
+                         class="item-image clickable-product"
+                         style="width: 120px; height: 120px; object-fit: cover; background: #f0f0f0;"
+                         onerror="this.src='https://via.placeholder.com/200x200/f0f0f0/cccccc?text=Image+Not+Found'"
+                         onclick="goToProductDetail('<%= item.productId._id %>')">
+                    
+                    <div class="item-details">
+                        <div class="item-info">
+                            <h3 class="clickable-product" onclick="goToProductDetail('<%= item.productId._id %>')">
+                                <%= item.productId ? item.productId.productName : 'Unknown Product' %>
+                            </h3>
+                            <p class="item-description">
+                                <%= item.productId ? (item.productId.description || 'No description available') : 'Product not found' %>
+                            </p>
+                            <div class="item-meta">
+                                <span class="size-badge">Size: <%= item.selectedSize %></span>
+                                <span class="color-badge">Color: <%= item.selectedColor %></span>
+                            </div>
                         </div>
-                    <% }); %>
+                    </div>
+                    <div class="item-actions">
+                        <div class="item-price">₹<span class="item-total-price"><%= item.totalPrice.toFixed(2) %></span></div>
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', -1)">-</button>
+                            <span class="qty-display" id="qty-<%= item.productId._id %>"><%= item.quantity %></span>
+                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', 1)">+</button>
+                        </div>
+                        <button class="remove-btn" onclick="removeItem('<%= item.productId._id %>')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
+            <% } else { %>
+                <!-- Optionally notify user about removed item -->
+                <div class="notification error show" style="position: relative; margin: 10px 0;">
+                    The product "<%= item.productId ? item.productId.productName : 'Unknown Product' %>" has been removed from your cart as it is no longer available.
+                </div>
+            <% } %>
+        <% }); %>
+    </div>
+<% } else { %>
+    <div class="empty-cart" id="empty-cart-message">
+        <i class="fas fa-shopping-cart"></i>
+        <h2>Your cart is empty</h2>
+        <p>Looks like you haven't added anything to your cart yet</p>
+        <a href="/shop" class="shop-now-btn">
+            <i class="fas fa-shopping-bag"></i>
+            Start Shopping
+        </a>
+    </div>
+<% } %>
             </div>
-        <% } %>
+           <div class="order-summary" id="order-summary" <% if (cart.items.length === 0) { %>style="display: none;"<% } %>>
+    <div class="section-title">
+        <i class="fas fa-receipt"></i>
+        Order Summary
     </div>
 
-    <%- include("../../views/partials/user/footer") %>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <div class="summary-row">
+        <span>Subtotal (<span id="item-count"><%= cart.items.reduce((sum, item) => sum + item.quantity, 0) %></span> items)</span>
+        <span id="subtotal">₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0).toFixed(2) %></span>
+    </div>
+    <div class="summary-row">
+        <span>Shipping</span>
+        <span id="shipping">₹<%= cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? '0.00' : '99.00' %></span>
+    </div>
+    <div class="summary-row">
+        <span>Tax</span>
+        <span id="tax">₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18).toFixed(2) %></span>
+    </div>
+
+    <div class="summary-row total">
+        <span>Total</span>
+        <span id="total">₹<%= (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) > 2500 ? 0 : 99) + (cart.items.reduce((sum, item) => sum + item.totalPrice, 0) * 0.18)).toFixed(2) %></span>
+    </div>
+
+    <button class="checkout-btn" onclick="proceedToCheckout()">
+        Proceed to Checkout
+        <i class="fas fa-arrow-right"></i>
+    </button>
+
+    <div class="continue-shopping">
+        <a href="/shop" class="continue-link">
+            <i class="fas fa-arrow-left"></i>
+            Continue Shopping
+        </a>
+    </div>
+</div>
+</div>
+    
+       <!-- 4. Update recommendations section prices -->
+<% if (recommendations && recommendations.length > 0) { %>
+    <div class="recommendations">
+        <div class="section-title">
+            <i class="fas fa-heart"></i>
+            You Might Also Like
+        </div>
+        <div class="recommendation-grid">
+            <% recommendations.forEach(product => { %>
+                <div class="recommendation-item" onclick="addToCart('<%= product._id %>', '<%= product.size && product.size.length > 0 ? product.size[0] : 'S' %>', '<%= product.color && product.color.length > 0 ? product.color[0] : 'white' %>')">
+                    <img src="<%= product.productImage[0] ? (product.productImage[0].startsWith('http') ? product.productImage[0] : '/images/' + product.productImage[0]) : 'https://via.placeholder.com/200x150' %>" alt="<%= product.productName %>">
+                    <h4><%= product.productName %></h4>
+                    <p><%= product.description || 'No description available' %></p>
+                    <div class="recommendation-price">₹<%= product.salePrice.toFixed(2) %></div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+<% } %>
+</div>
+
+<%-include("../../views/partials/user/footer")%>
     <script>
-        function goToProductDetail(productId) {
-            window.location.href = `/product/${productId}`;
+function goToProductDetail(productId) {
+    window.location.href = `/product/${productId}`;
+}
+
+function addToCart(productId, selectedSize, selectedColor) {
+    console.log('addToCart called with:', { productId, selectedSize, selectedColor }); // Debug log
+    if (!productId || !selectedSize || !selectedColor) {
+        showNotification('Please select a product, size, and color', 'error');
+        return;
+    }
+
+    fetch('/api/add-to-cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            productId: productId,
+            quantity: 1,
+            selectedSize: selectedSize,
+            selectedColor: selectedColor
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server response:', data); // Debug log
+        if (data.success) {
+            updateCartCount();
+            updateCartSummary();
+            showNotification('Product added to cart', 'success');
+            window.location.reload();
+        } else {
+            showNotification(data.message || 'Failed to add to cart', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding to cart:', error);
+        showNotification('Error adding to cart', 'error');
+    });
+}
+
+         // Update the updateQuantity function to handle rupees in display
+    function updateQuantity(productId, change) {
+        const qtyDisplay = document.getElementById(`qty-${productId}`);
+        let currentQty = parseInt(qtyDisplay.textContent);
+        let newQty = currentQty + change;
+
+        if (newQty < 1) {
+            return;
         }
 
-        function addToCart(productId, selectedSize, selectedColor) {
-            console.log('addToCart called with:', { productId, selectedSize, selectedColor });
-            if (!productId || !selectedSize || !selectedColor) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Selection',
-                    text: 'Please select a product, size, and color',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
-                });
-                return;
-            }
-
-            fetch('/api/add-to-cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    quantity: 1,
-                    selectedSize: selectedSize,
-                    selectedColor: selectedColor
-                })
+        fetch('/api/update-cart-quantity', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                productId: productId, 
+                quantity: newQty 
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Server response:', data);
-                if (data.success) {
-                    updateCartCount();
-                    updateCartSummary();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Product added to cart successfully',
-                        showConfirmButton: true,
-                        confirmButtonColor: '#D4B896',
-                        timer: 3000
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to add to cart',
-                        showConfirmButton: true,
-                        confirmButtonColor: '#D4B896'
-                    });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                qtyDisplay.textContent = newQty;
+                
+                // Update item total price with rupee symbol
+                const itemTotalElement = document.querySelector(`[data-product-id="${productId}"] .item-total-price`);
+                if (itemTotalElement) {
+                    itemTotalElement.textContent = data.itemTotal.toFixed(2);
                 }
-            })
-            .catch(error => {
-                console.error('Error adding to cart:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error adding to cart',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
-                });
-            });
-        }
-
-        function updateQuantity(productId, change) {
-            const qtyDisplay = document.getElementById(`qty-${productId}`);
-            let currentQty = parseInt(qtyDisplay.textContent);
-            let newQty = currentQty + change;
-
-            if (newQty < 1) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Invalid Quantity',
-                    text: 'Quantity cannot be less than 1',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
-                });
-                return;
+                
+                // Update cart summary
+                updateCartSummary();
+                updateCartCount();
+                showNotification('Quantity updated successfully', 'success');
+            } else {
+                showNotification(data.message || 'Failed to update quantity', 'error');
             }
-
-            fetch('/api/update-cart-quantity', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    productId: productId, 
-                    quantity: newQty 
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    qtyDisplay.textContent = newQty;
-                    const itemTotalElement = document.querySelector(`[data-product-id="${productId}"] .item-total-price`);
-                    if (itemTotalElement) {
-                        itemTotalElement.textContent = data.itemTotal.toFixed(2);
-                    }
-                    updateCartSummary();
-                    updateCartCount();
-                  
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to update quantity',
-                        showConfirmButton: true,
-                        confirmButtonColor: '#D4B896'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error updating quantity:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Error updating quantity',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
-                });
-            });
-        }
-
+        })
+        .catch(error => {
+            console.error('Error updating quantity:', error);
+            showNotification('Error updating quantity', 'error');
+        });
+    }
         function removeItem(productId) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Do you want to remove this item from your cart?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#D4B896',
-                cancelButtonColor: '#e74c3c',
-                confirmButtonText: 'Yes, remove it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch('/api/remove-from-cart', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ productId: productId })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const cartItem = document.querySelector(`[data-product-id="${productId}"]`);
-                            if (cartItem) {
-                                cartItem.style.transform = 'translateX(-100%)';
-                                cartItem.style.opacity = '0';
+            if (confirm('Are you sure you want to remove this item from your cart?')) {
+                fetch('/api/remove-from-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ productId: productId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove item from DOM
+                        const cartItem = document.querySelector(`[data-product-id="${productId}"]`);
+                        if (cartItem) {
+                            cartItem.style.transform = 'translateX(-100%)';
+                            cartItem.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                cartItem.remove();
                                 
-                                setTimeout(() => {
-                                    cartItem.remove();
-                                    const remainingItems = document.querySelectorAll('.cart-item');
-                                    if (remainingItems.length === 0) {
-                                        showEmptyCart();
-                                    }
-                                    updateCartSummary();
-                                    updateCartCount();
-                                }, 300);
-                            }
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Removed',
-                                text: 'Item removed from cart',
-                                showConfirmButton: true,
-                                confirmButtonColor: '#D4B896',
-                                timer: 3000
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: data.message || 'Failed to remove item',
-                                showConfirmButton: true,
-                                confirmButtonColor: '#D4B896'
-                            });
+                               
+                                const remainingItems = document.querySelectorAll('.cart-item');
+                                if (remainingItems.length === 0) {
+                                    showEmptyCart();
+                                }
+                                
+                                updateCartSummary();
+                                updateCartCount();
+                            }, 300);
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error removing item:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Error removing item',
-                            showConfirmButton: true,
-                            confirmButtonColor: '#D4B896'
-                        });
-                    });
-                }
-            });
-        }
-
-        function updateCartSummary() {
-            fetch('/api/cart-summary', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const summary = data.summary;
-                    document.getElementById('subtotal').textContent = `₹${summary.subtotal.toFixed(2)}`;
-                    document.getElementById('shipping').textContent = summary.shipping === 0 ? 'FREE' : `₹${summary.shipping.toFixed(2)}`;
-                    document.getElementById('tax').textContent = `₹${summary.tax.toFixed(2)}`;
-                    document.getElementById('total').textContent = `₹${summary.total.toFixed(2)}`;
-                    document.getElementById('item-count').textContent = summary.itemCount;
-                    document.getElementById('cart-item-count').textContent = document.querySelectorAll('.cart-item').length;
-                    
-                    const shippingElement = document.getElementById('shipping');
-                    if (summary.shipping === 0) {
-                        shippingElement.style.color = '#27ae60';
-                        shippingElement.textContent = 'FREE';
+                        
+                        showNotification('Item removed from cart', 'success');
                     } else {
-                        shippingElement.style.color = '';
+                        showNotification(data.message || 'Failed to remove item', 'error');
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Error updating cart summary:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to update cart summary',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
+                })
+                .catch(error => {
+                    console.error('Error removing item:', error);
+                    showNotification('Error removing item', 'error');
                 });
-            });
+            }
         }
+ function updateCartSummary() {
+        fetch('/api/cart-summary', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const summary = data.summary;
+                
+                document.getElementById('subtotal').textContent = `₹${summary.subtotal.toFixed(2)}`;
+                document.getElementById('shipping').textContent = summary.shipping === 0 ? 'FREE' : `₹${summary.shipping.toFixed(2)}`;
+                document.getElementById('tax').textContent = `₹${summary.tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `₹${summary.total.toFixed(2)}`;
+                document.getElementById('item-count').textContent = summary.itemCount;
+                document.getElementById('cart-item-count').textContent = document.querySelectorAll('.cart-item').length;
+                
+                // Update shipping color if free
+                const shippingElement = document.getElementById('shipping');
+                if (summary.shipping === 0) {
+                    shippingElement.style.color = '#27ae60';
+                    shippingElement.textContent = 'FREE';
+                } else {
+                    shippingElement.style.color = '';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating cart summary:', error);
+        });
+    }
 
         function updateCartCount() {
             fetch('/api/cart-count', {
@@ -927,11 +911,13 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Update cart count in header if it exists
                     const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count]');
                     cartCountElements.forEach(element => {
                         element.textContent = data.count || 0;
                     });
                     
+                    // Also try to update any cart badge in header
                     const cartBadge = document.querySelector('.cart-badge');
                     if (cartBadge) {
                         cartBadge.textContent = data.count || 0;
@@ -941,13 +927,6 @@
             })
             .catch(error => {
                 console.error('Error updating cart count:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Failed to update cart count',
-                    showConfirmButton: true,
-                    confirmButtonColor: '#D4B896'
-                });
             });
         }
 
@@ -984,9 +963,35 @@
             }
         }
 
-        function proceedToCheckout() {
-            console.log("Redirecting to /user/checkout");
-            window.location.href = '/checkout';
+function proceedToCheckout() {
+    console.log("Redirecting to /user/checkout");
+    window.location.href = '/checkout';
+}
+
+        function showNotification(message, type = 'success') {
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+        
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -996,6 +1001,7 @@
             elements.forEach((element, index) => {
                 element.style.opacity = '0';
                 element.style.transform = 'translateY(30px)';
+
                 setTimeout(() => {
                     element.style.transition = 'all 0.6s ease';
                     element.style.opacity = '1';

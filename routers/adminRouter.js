@@ -2,20 +2,28 @@ const express = require("express");
 const router = express.Router();
 const adminController = require("../controllers/admin/adminController");
 const customerController = require("../controllers/admin/customerController");
-const { userAuth, adminAuth } = require('../middlewares/auth');
 const categoryController = require("../controllers/admin/categoryController");
 const productController = require('../controllers/admin/productController');
-const { upload, uploadMultiple, resizeImages, resizeSingleImage } = require("../middlewares/upload");
+const { upload, uploadMultiple } = require("../middlewares/upload");
+const { adminAuth } = require('../middlewares/auth');
 
+// Import order controller functions
+const { 
+  loadOrders, 
+  viewOrder, 
+  updateOrderStatus, 
+  handleReturnRequest 
+} = require("../controllers/admin/orderController");
 
-const { loadOrders, viewOrder, updateOrderStatus } = require("../controllers/admin/orderController");
 router.get("/pageerror", adminController.pageerror);
 
 // Login
 router.get("/login", adminController.loadLogin);
 router.post("/login", adminController.login);
 router.get("/logout", adminController.logout);
-router.get("/", adminAuth, adminController.loadDashboard);
+
+// Dashboard
+router.get('/', adminAuth, adminController.loadDashboard);
 
 // Customers
 router.get("/customers", adminAuth, customerController.customerInfo);
@@ -34,20 +42,22 @@ router.post("/categories/edit/:id", adminAuth, categoryController.updateCategory
 router.post("/categories/toggle-status", adminAuth, categoryController.toggleCategoryStatus);
 router.post("/categories/toggle-listing", adminAuth, categoryController.toggleCategoryListing);
 
-// Products 
+// Products
 router.get("/products", adminAuth, productController.loadProductPage);
 router.get("/products/add", adminAuth, productController.getAddProduct);
 router.post("/products/add", adminAuth, uploadMultiple, productController.addProduct);
 router.get("/products/edit/:id", adminAuth, productController.getEditProduct);
-router.post("/products/edit/:id", adminAuth, uploadMultiple, productController.updateProductPost);
-router.post("/products/toggle-block", adminAuth, productController.toggleBlockStatus); 
+router.post("/products/update/:id", adminAuth, uploadMultiple, productController.updateProductPost);
+router.post("/products/toggle-block", adminAuth, productController.toggleBlockStatus);
 router.post("/products/delete", adminAuth, productController.DeleteProduct);
 
 
-//orders
+// Orders Route
 router.get("/orders", adminAuth, loadOrders);
-router.get("/orders/detail/:id", adminAuth, viewOrder); 
-router.get("/orders/view/:id", adminAuth, viewOrder);  
+router.get("/orders/detail/:id", adminAuth, viewOrder);
+router.get("/orders/view/:id", adminAuth, viewOrder);
+router.get("/orders/:id", adminAuth, viewOrder);         
 router.post("/orders/update-status", adminAuth, updateOrderStatus);
+router.post("/orders/handle-return", adminAuth, handleReturnRequest);
 
 module.exports = router;

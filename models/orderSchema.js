@@ -3,12 +3,14 @@ const { Schema } = mongoose;
 const { v4: uuidv4 } = require('uuid');
 
 const orderSchema = new Schema({
+    // ADD THIS FIELD if it's missing
     orderId: {
         type: String,
-        default: () => uuidv4(),
-        unique: true
+        default: function() {
+            return uuidv4();
+        }
     },
-    orderedItemes: [{  // Note: Keep the typo if it's already in your database
+    orderedItemes: [{
         product: {
             type: Schema.Types.ObjectId,
             ref: "Product",
@@ -22,7 +24,18 @@ const orderSchema = new Schema({
             type: Number,
             default: 0,
         },
-    }], 
+        status: {
+            type: String,
+            enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Return Request', 'Returned'],
+            default: 'Pending'
+        },
+        cancellationReason: String,
+        cancellationComments: String,
+        cancelledDate: Date,
+        returnReason: String,
+        returnComments: String,
+        returnRequestedDate: Date
+    }],
     totalPrice: {
         type: Number,
         required: true,
@@ -50,7 +63,8 @@ const orderSchema = new Schema({
     status: {
         type: String,
         required: true,
-        enum: ['Pending','Processing','Shipping','Delivered','Return Request','Returned']
+        enum: ['Pending', 'Processing', 'Shipping', 'Shipped', 'Delivered', 'Return Request', 'Returned', 'Cancelled'],
+        default: 'Pending'
     },
     createdOn: {  
         type: Date,
@@ -61,57 +75,17 @@ const orderSchema = new Schema({
         type: Boolean,
         default: false,
     },
-     returnReason: {
-        type: String,
-        default: null
-    },
-    returnComments: {
-        type: String,
-        default: null
-    },
-    returnRequestedDate: {
-        type: Date,
-        default: null
-    },
-    
-    // Cancellation related fields
-    cancellationReason: {
-        type: String,
-        default: null
-    },
-    cancellationComments: {
-        type: String,
-        default: null
-    },
-    cancelledDate: {
-        type: Date,
-        default: null
-    },
-    
-    // Status should include these options
-    status: {
-        type: String,
-        required: true,
-        enum: [
-            'Pending', 
-            'Processing', 
-            'Shipping', 
-            'Shipped',
-            'Delivered', 
-            'Return Request', 
-            'Returned', 
-            'Cancelled'
-        ],
-        default: 'Pending'
-    },
-    
+    returnReason: String,
+    returnComments: String,
+    returnRequestedDate: Date,
+    cancellationReason: String,
+    cancellationComments: String,
+    cancelledDate: Date,
     updatedAt: {
         type: Date,
         default: Date.now
     }
-
 });
-
 
 const Order = mongoose.model("Order", orderSchema);
 module.exports = Order;

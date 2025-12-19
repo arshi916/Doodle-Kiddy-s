@@ -73,7 +73,7 @@ const toggleBlockStatus = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `Customer ${user.name} has been ${user.isBlocked ? 'blocked' : 'unblocked'} successfully!`,
-      isBlocked: user.isBlocked // Add this to return the new state
+      isBlocked: user.isBlocked
     });
   } catch (error) {
     console.error("Error in toggleBlockStatus:", error);

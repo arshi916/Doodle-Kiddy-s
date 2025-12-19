@@ -1,6 +1,4 @@
 const User = require ("../models/userSchema");
-
-
 const userAuth = (req,res,next)=>{
     if(req.session.user){
         User.findById(req.session.user)
@@ -37,9 +35,6 @@ const adminAuth = (req, res, next) => {
         res.redirect("/admin/login");
     }
 };
-
-
-
 const checkAuth = async (req, res, next) => {
   if (!req.session.user) {
     console.log("No session user, redirecting to /login");
@@ -53,14 +48,12 @@ const checkAuth = async (req, res, next) => {
     return res.redirect("/login");
   }
 
-  // Allow admins to continue, even if blocked
   if (user.isAdmin) {
     console.log("Admin user, proceeding:", user._id);
     req.user = user;
     return next();
   }
 
-  // For non-admin users, check if blocked
   if (user.isBlocked) {
     console.log("Non-admin user is blocked, redirecting to /login:", user._id);
     req.session.destroy();
@@ -84,3 +77,16 @@ module.exports ={
     userAuth,
     adminAuth
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -204,6 +204,12 @@ const signup = async (req, res) => {
         if (password.length < 8) {
             return res.render("user/signup", { message: "Password must be at least 8 characters long" });
         }
+          if (/^0+$/.test(phone)) {
+            return res.render("user/signup", { message: "Phone number cannot be all zeros" });
+        }
+        if (/^(\d)\1+$/.test(phone)) {
+            return res.render("user/signup", { message: "Phone number cannot have all identical digits" });
+        }
 
         if (phone.length !== 10 || !/^[0-9]+$/.test(phone)) {
             return res.render("user/signup", { message: "Phone number must be exactly 10 digits" });
@@ -330,26 +336,17 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        
-        req.logout((err) => {
-            if (err) {
-                console.log("Passport logout error:", err);
-            }
-            
-         
-            req.session.destroy((destroyErr) => {
-                if (destroyErr) {
-                    console.log("Session destroy error:", destroyErr.message);
-                }
-                res.redirect('/login');
-            });
+        req.logout(() => {}); // Clear Passport
+
+        req.session.regenerate((err) => {
+            if (err) console.log(err);
+            res.clearCookie('connect.sid_user'); // Only clear user cookie
+            res.redirect('/login');
         });
-    } catch (error) {
-        console.log("Logout error", error);
-        res.redirect("/pageNotFound");
+    } catch (e) {
+        res.redirect('/pageNotFound');
     }
 };
-
 const loadForgotPassword = (req, res) => {
     try {
         res.render("user/forgot-password", { message: null, error: null });
@@ -420,28 +417,102 @@ const loadResetPasswordPage = (req, res) => {
 };
 
 const handleResetPassword = async (req, res) => {
-    const { password, confirm_password } = req.body;
+  const { password, confirm_password } = req.body;
 
-    if (password !== confirm_password) {
-        return res.render("user/reset-password", { message: "Passwords do not match" });
+  // Check if session email exists
+  if (!req.session.userResetEmail) {
+    return res.status(400).json({
+      success: false,
+      message: 'Session expired. Please restart the password reset process.',
+    });
+  }
+
+  // Validate inputs
+  if (!password || !confirm_password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Both password and confirm password are required',
+    });
+  }
+
+  if (password !== confirm_password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Passwords do not match',
+    });
+  }
+
+  // Password complexity validation
+  const alphaLower = /[a-z]/;
+  const alphaUpper = /[A-Z]/;
+  const digit = /\d/;
+  const special = /[!@#$%^&*(),.?":{}|<>]/;
+
+  if (password.length < 8) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must be at least 8 characters long',
+    });
+  }
+  if (!alphaLower.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must include at least one lowercase letter',
+    });
+  }
+  if (!alphaUpper.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must include at least one uppercase letter',
+    });
+  }
+  if (!digit.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must include at least one number',
+    });
+  }
+  if (!special.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password must include at least one special character',
+    });
+  }
+  if (/^(.)\1+$/.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Password cannot be all identical characters',
+    });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.findOneAndUpdate(
+      { email: req.session.userResetEmail },
+      { password: hashed },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found. Please restart the password reset process.',
+      });
     }
 
-    try {
-        const hashed = await bcrypt.hash(password, 10);
-        await User.findOneAndUpdate({ email: req.session.userResetEmail }, { password: hashed });
+    delete req.session.userResetEmail;
 
-        delete req.session.userResetEmail;
-        
-        
-        if (req.headers['content-type'] === 'application/json') {
-            return res.json({ success: true, message: 'Password updated successfully' });
-        }
-        
-        res.redirect("/reset-password?success=true");
-    } catch (error) {
-        console.error("Password reset error", error);
-        res.render("user/reset-password", { message: "Failed to reset password" });
-    }
+    return res.json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to reset password. Please try again.',
+    });
+  }
 };
 const resendForgotOtp = async (req, res) => {
     try {
@@ -609,7 +680,12 @@ const getProducts = async (req, res) => {
 };
 
 const renderShopPage = async (req, res) => {
-  try {
+ try {
+    const userId = req.session.user;
+    let user = null;
+    if (userId) {
+      user = await User.findById(userId).select('name email');
+    }
     const { maxPrice, category, color, search, page = 1, limit = 12 } = req.query;
     
     const activeCategories = await Category.find({
@@ -718,15 +794,21 @@ const renderShopPage = async (req, res) => {
     });
     
     console.log('renderShopPage products:', transformedProducts.length);
-    
-    res.render('user/shop', { 
+res.render('user/shop', { 
       title: 'Shop',
       categories: categories || [],
       products: transformedProducts || [],
       totalProducts: validProducts.length,
       currentPage: Number(page),
-      totalPages: Math.ceil(validProducts.length / limit) || 1
+      totalPages: Math.ceil(totalProducts/ limit) || 1,
+      user: user,
+
+      maxPrice: maxPrice || null,
+      category: category || null,
+      color: color || null,
+      search: search || null
     });
+    
   } catch (error) {
     console.error('Error rendering shop page:', error);
     res.status(500).render('user/error', { 
@@ -948,7 +1030,12 @@ const getProductsForShop = async (req, res) => {
     }
 };
 const loadProductDetail = async (req, res) => {
-    try {
+try {
+    const userId = req.session.user;
+    let user = null;
+    if (userId) {
+      user = await User.findById(userId).select('name email');
+    }
         const productId = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(productId)) {
             return res.status(400).render('user/product', {
@@ -1091,18 +1178,19 @@ const loadProductDetail = async (req, res) => {
         console.log('Product fetched:', product[0]);
         console.log('Related products:', relatedProducts);
 
-        res.render('user/product', {
-            product: product[0],
-            relatedProducts,
-            error: null
-        });
-    } catch (error) {
-        console.error('Error fetching product details:', error);
-        res.status(500).render('user/product', {
-            product: null,
-            relatedProducts: [],
-            error: 'Error loading product details'
-        });
+      res.render('user/product', {
+      product: product[0],
+      relatedProducts,
+      error: null,
+      user: user  // ADD THIS
+    });
+  } catch (error) {
+    res.status(500).render('user/product', {
+      product: null,
+      relatedProducts: [],
+      error: 'Error loading product details',
+      user: null
+    });
     }
 };
 
