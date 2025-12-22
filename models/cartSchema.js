@@ -15,12 +15,12 @@ const cartSchema = new Schema({
         },
         selectedSize: {
             type: String,
-            default: '', // Allow empty string for products without sizes
-            // Remove the enum validation to make it more flexible
+            default: '', 
+            
         },
         selectedColor: {
             type: String,
-            default: '', // FIXED: Allow empty string for products without colors
+            default: '', 
         },
         quantity: {
             type: Number,

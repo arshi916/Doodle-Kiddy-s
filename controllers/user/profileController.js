@@ -11,7 +11,7 @@ const multer = require('multer');
 const path = require('path');
 const { exec } = require('child_process');
 
-// Countries and States data
+
 const countryStateData = {
   "India": [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
@@ -510,7 +510,7 @@ const addAddress = async (req, res) => {
           message: 'Alternative phone number must be exactly 10 digits' 
         });
       }
-      // Check if altPhone is same as primary phone
+      
       if (cleanAltPhone === cleanPhone) {
         return res.status(400).json({ 
           success: false, 
@@ -519,7 +519,7 @@ const addAddress = async (req, res) => {
       }
     }
 
-    // Optional landMark validation
+   
     if (landMark && landMark.trim().length > 100) {
       return res.status(400).json({ 
         success: false, 
@@ -659,7 +659,7 @@ const updateAddress = async (req, res) => {
           message: 'Alternative phone number must be exactly 10 digits' 
         });
       }
-      // Check if altPhone is same as primary phone
+      
       if (cleanAltPhone === cleanPhone) {
         return res.status(400).json({ 
           success: false, 
@@ -668,7 +668,7 @@ const updateAddress = async (req, res) => {
       }
     }
 
-    // Optional landMark validation
+    
     if (landMark && landMark.trim().length > 100) {
       return res.status(400).json({ 
         success: false, 
@@ -862,7 +862,7 @@ const verifyCurrentPassword = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`Generated OTP for password change: ${otp}`); // Log OTP to console
+    console.log(`Generated OTP for password change: ${otp}`); 
     req.session.passwordChangeOtp = otp;
     req.session.passwordChangeOtpExpiry = Date.now() + 5 * 60 * 1000;
     req.session.passwordOtpSentAt = Date.now();
@@ -1114,7 +1114,7 @@ const loadOrders = async (req, res) => {
       });
     }
     
-    // Query orders
+   
     const orders = await Order.find({ address: userId })
       .populate('orderedItemes.product', 'productName productImage finalPrice')
       .sort({ createdOn: -1 })
@@ -1122,7 +1122,7 @@ const loadOrders = async (req, res) => {
 
     console.log('Orders found:', orders ? orders.length : 0);
     
-    // If no orders found
+ 
     if (!orders || orders.length === 0) {
       console.log('No orders found for user');
       return res.json({ 
@@ -1132,17 +1132,17 @@ const loadOrders = async (req, res) => {
       });
     }
 
-    // Log first order to see its structure
+   
     if (orders.length > 0) {
       console.log('First order structure:', JSON.stringify(orders[0], null, 2));
     }
 
-    // Transform orders safely
+   
     const transformedOrders = orders.map((order, index) => {
       try {
         console.log(`Processing order ${index + 1}/${orders.length}`);
         
-        // SAFE handling of orderId
+       
         let orderNumber = 'N/A';
         let orderIdValue = 'N/A';
         
@@ -1158,7 +1158,7 @@ const loadOrders = async (req, res) => {
         
         console.log(`Order ID: ${orderIdValue}, Order Number: ${orderNumber}`);
         
-        // SAFE handling of items
+       
         const items = Array.isArray(order.orderedItemes) 
           ? order.orderedItemes.map(item => {
               const product = item.product || {};
@@ -1175,7 +1175,7 @@ const loadOrders = async (req, res) => {
             })
           : [];
         
-        // SAFE handling of item count
+       
         const itemCount = Array.isArray(order.orderedItemes)
           ? order.orderedItemes.reduce((sum, item) => sum + (item.quantity || 0), 0)
           : 0;
@@ -1195,7 +1195,7 @@ const loadOrders = async (req, res) => {
         };
       } catch (itemError) {
         console.error(`Error processing order ${index}:`, itemError);
-        // Return a safe default for this order
+        
         return {
           _id: order._id || 'unknown',
           orderId: 'ERROR',
@@ -1268,7 +1268,7 @@ const getOrderDetails = async (req, res) => {
       shippingAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
     }
 
-    // FIX: Safely handle orderId
+    
     let orderNumber;
     if (order.orderId && typeof order.orderId === 'string') {
       orderNumber = order.orderId.slice(-8).toUpperCase();
@@ -1668,7 +1668,7 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-// These functions are already in your code - just verify they're exactly like this
+
 const cancelOrderItem = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -1713,7 +1713,7 @@ const cancelOrderItem = async (req, res) => {
 
     const item = order.orderedItemes[itemIndex];
 
-    // Check if item is already cancelled
+  
     if (item.status === 'Cancelled') {
       return res.json({ 
         success: false, 
@@ -1721,7 +1721,7 @@ const cancelOrderItem = async (req, res) => {
       });
     }
 
-    // Restore product stock
+
     if (item.product && item.product._id) {
       await Product.findByIdAndUpdate(
         item.product._id,
@@ -1729,20 +1729,20 @@ const cancelOrderItem = async (req, res) => {
       );
     }
 
-    // Calculate refund amount for this item
+   
     const itemRefund = item.price * item.quantity;
 
-    // Mark item as cancelled
+    
     order.orderedItemes[itemIndex].status = 'Cancelled';
     order.orderedItemes[itemIndex].cancellationReason = reason;
     order.orderedItemes[itemIndex].cancellationComments = comments;
     order.orderedItemes[itemIndex].cancelledDate = new Date();
 
-    // Update order totals
+   
     order.totalPrice -= itemRefund;
     order.finalAmount -= itemRefund;
 
-    // If all items are cancelled, cancel the entire order
+    
     const allItemsCancelled = order.orderedItemes.every(
       item => item.status === 'Cancelled'
     );
@@ -1754,7 +1754,7 @@ const cancelOrderItem = async (req, res) => {
     order.updatedAt = new Date();
     await order.save();
 
-    // Send email notification
+ 
     const user = await User.findById(userId);
     if (user && user.email) {
       try {
@@ -1853,7 +1853,7 @@ const returnOrderItem = async (req, res) => {
 
     const item = order.orderedItemes[itemIndex];
 
-    // Check if item is already returned or has a return request
+   
     if (item.status === 'Return Request' || item.status === 'Returned') {
       return res.json({ 
         success: false, 
@@ -1861,7 +1861,7 @@ const returnOrderItem = async (req, res) => {
       });
     }
 
-    // Check if item is delivered
+  
     if (item.status !== 'Delivered' && order.status !== 'Delivered') {
       return res.json({ 
         success: false, 
@@ -1869,7 +1869,7 @@ const returnOrderItem = async (req, res) => {
       });
     }
 
-    // Check return window (7 days)
+    
     const deliveryDate = order.invoiceDate || order.createdOn;
     const daysSinceDelivery = Math.floor((Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24));
     
@@ -1880,7 +1880,7 @@ const returnOrderItem = async (req, res) => {
       });
     }
 
-    // Mark item for return
+    
     order.orderedItemes[itemIndex].status = 'Return Request';
     order.orderedItemes[itemIndex].returnReason = reason;
     order.orderedItemes[itemIndex].returnComments = comments;
@@ -1889,7 +1889,7 @@ const returnOrderItem = async (req, res) => {
     order.updatedAt = new Date();
     await order.save();
 
-    // Send email notification
+    
     const user = await User.findById(userId);
     if (user && user.email) {
       try {

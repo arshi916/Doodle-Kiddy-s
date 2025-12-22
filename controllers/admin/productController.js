@@ -13,7 +13,7 @@ const addProduct = async (req, res) => {
 
     const imageFiles = req.files || [];
 
-    // Validate images
+    
     if (imageFiles.length < 3) {
       console.log('Image validation failed - count:', imageFiles.length);
       return res.status(400).json({
@@ -47,7 +47,7 @@ const addProduct = async (req, res) => {
       }
     }
 
-    // Process images
+   
     const processedImages = [];
     for (let file of imageFiles) {
       const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.originalname}`;
@@ -88,7 +88,7 @@ const addProduct = async (req, res) => {
 
     console.log('Validating product data...');
 
-    // Validate product name
+   
     if (!productName || productName.trim().length < 3) {
       return res.status(400).json({
         success: false,
@@ -103,7 +103,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate category
+   
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       console.log('Category not found:', category);
@@ -113,7 +113,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate colors
+    
     const colors = Array.isArray(color) ? color : (color ? [color] : []);
     if (colors.length === 0) {
       return res.status(400).json({
@@ -122,7 +122,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate prices
+    
     const regPrice = Number(regularPrice);
     const salePriceNum = Number(salePrice);
     if (isNaN(regPrice) || regPrice <= 0) {
@@ -146,7 +146,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate sizes and stock
+    
     const selectedSizes = sizes ? sizes.split(',').filter(s => s.trim()) : [];
     const validSizes = ["XS", "S", "M", "L", "XL"];
     const seenSizes = new Set();
@@ -180,7 +180,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate description
+   
     if (!description || description.trim().length < 10) {
       return res.status(400).json({
         success: false,
@@ -195,7 +195,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Validate status
+    
     const validStatuses = ["Available", "out of stock", "Discontinued"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -204,7 +204,7 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Check for duplicate product name
+   
     const existingProduct = await Product.findOne({
       productName: { $regex: new RegExp(`^${productName.trim()}$`, 'i') },
       isDeleted: { $ne: true }
@@ -217,7 +217,6 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Create product
     const product = new Product({
       productName: productName.trim(),
       description: description.trim(),
@@ -239,7 +238,7 @@ const addProduct = async (req, res) => {
     const savedProduct = await product.save();
     console.log('Product saved successfully:', savedProduct._id);
 
-    // Set success message in session
+  
     req.session.successMessage = `Product "${productName.trim()}" has been added successfully!`;
 
     return res.status(200).json({
@@ -276,7 +275,7 @@ const loadProductPage = async (req, res) => {
       .sort({ createdAt: -1 });
     products.forEach(p => console.log(`Fetched: ${p.productName}, Quantity: ${p.quantity}`));
 
-    // Get and clear success message
+    
     const successMessage = req.session.successMessage;
     if (successMessage) {
       delete req.session.successMessage;
@@ -420,7 +419,7 @@ const updateProductPost = async (req, res) => {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // === FIXED IMAGE HANDLING ===
+   
     let oldImages = [];
     if (req.body.existingImages) {
       try {
@@ -454,7 +453,7 @@ const updateProductPost = async (req, res) => {
       });
     }
 
-    // Validate product name
+ 
     if (!productName || productName.trim().length < 3) {
       return res.status(400).json({ success: false, message: "Product name must be at least 3 characters long" });
     }
@@ -463,7 +462,7 @@ const updateProductPost = async (req, res) => {
       return res.status(400).json({ success: false, message: "Product name cannot exceed 50 characters" });
     }
 
-    // Check for duplicate product name
+    
     const existingProduct = await Product.findOne({
       productName: { $regex: new RegExp(`^${productName.trim()}$`, 'i') },
       _id: { $ne: productId },
@@ -477,19 +476,19 @@ const updateProductPost = async (req, res) => {
       });
     }
 
-    // Validate category
+    
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return res.status(400).json({ success: false, message: "Please select a valid category" });
     }
 
-    // Validate colors
+   
     const colors = Array.isArray(color) ? color : (color ? [color] : []);
     if (colors.length === 0) {
       return res.status(400).json({ success: false, message: "Please select at least one color" });
     }
 
-    // Validate prices
+   
     const regPrice = Number(regularPrice);
     const salePriceNum = Number(salePrice);
     
@@ -505,7 +504,7 @@ const updateProductPost = async (req, res) => {
       return res.status(400).json({ success: false, message: "Sale price must be less than regular price" });
     }
 
-    // Updated stock management: per color per size
+    
     const stocks = [];
     const selectedSizes = sizes ? sizes.split(',').filter(s => s.trim()) : [];
     const validSizes = ["XS", "S", "M", "L", "XL"];
@@ -534,7 +533,7 @@ const updateProductPost = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please provide stock quantity for at least one color-size combination" });
     }
 
-    // Validate description
+   
     if (!description || description.trim().length < 10) {
       return res.status(400).json({ success: false, message: "Description must be at least 10 characters long" });
     }
@@ -543,13 +542,13 @@ const updateProductPost = async (req, res) => {
       return res.status(400).json({ success: false, message: "Description cannot exceed 1000 characters" });
     }
 
-    // Validate status
+  
     const validStatuses = ["Available", "out of stock", "Discontinued"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: "Please select a valid status" });
     }
 
-    // Update product fields
+    
     product.productName = productName.trim();
     product.description = description.trim();
     product.category = category;
@@ -566,10 +565,10 @@ const updateProductPost = async (req, res) => {
     await product.save();
     console.log('Product updated successfully:', productId);
 
-    // Set success message
+   
     req.session.successMessage = `Product "${productName.trim()}" has been updated successfully!`;
 
-    // Handle response
+    
     const isAjax = req.headers['content-type']?.includes('multipart/form-data') && 
                    (req.headers['accept']?.includes('application/json') || req.headers['x-requested-with'] === 'XMLHttpRequest') ||
                    req.xhr;

@@ -6,14 +6,14 @@ const userMiddleware = async (req, res, next) => {
             const user = await User.findById(req.session.user);
 
             if (user && user.isBlocked) {
-                // destroy session if blocked
+               
                 req.session.destroy((err) => {
                     if (err) {
                         console.error("Session destroy error:", err);
                     }
                     return res.redirect("/login?message=Your account has been blocked by admin");
                 });
-                return; // stop further execution
+                return; 
             }
 
             res.locals.user = user;

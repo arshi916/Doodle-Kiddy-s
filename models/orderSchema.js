@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 const { v4: uuidv4 } = require('uuid');
 
 const orderSchema = new Schema({
-    // ADD THIS FIELD if it's missing
+    
     orderId: {
         type: String,
         default: function() {

@@ -186,7 +186,7 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Find the order and populate items
+
     const order = await Order.findById(orderId).populate('orderedItemes.product');
 
     if (!order) {
@@ -198,26 +198,26 @@ const updateOrderStatus = async (req, res) => {
 
     const oldStatus = order.status;
 
-    // UPDATE OVERALL ORDER STATUS
+   
     order.status = status;
     order.updatedAt = new Date();
 
-    // If marked as Delivered, set invoiceDate
+    
     if (status === 'Delivered' && !order.invoiceDate) {
       order.invoiceDate = new Date();
     }
 
-    // === CRITICAL FIX: UPDATE ALL ITEM STATUSES TOO ===
+  
     if (['Processing', 'Shipping', 'Delivered'].includes(status)) {
       order.orderedItemes.forEach(item => {
-        // Only update item status if it's still in early stage
+
         if (['Pending', 'Processing', 'Shipping'].includes(item.status || 'Pending')) {
-          item.status = status;  // Sync item status with order status
+          item.status = status;  
         }
       });
     }
 
-    // Stock deduction only on first transition from Pending
+    
     if (oldStatus === 'Pending' && ['Processing', 'Shipping', 'Delivered'].includes(status)) {
       for (const item of order.orderedItemes) {
         const product = item.product;
@@ -274,7 +274,7 @@ const handleReturnRequest = async (req, res) => {
       return res.json({ success: false, message: 'Order not found' });
     }
 
-    // === CORRECT VALIDATION: Check for ANY item with 'Return Request' ===
+    
     const returnRequestedItems = order.orderedItemes.filter(
       item => (item.status || '').trim() === 'Return Request'
     );
@@ -286,10 +286,10 @@ const handleReturnRequest = async (req, res) => {
       });
     }
 
-    // ACCEPT RETURN
+    
     if (action === 'accept') {
       for (const item of returnRequestedItems) {
-        // Restore stock
+       
         if (item.product) {
           await Product.findByIdAndUpdate(
             item.product._id,
@@ -297,14 +297,14 @@ const handleReturnRequest = async (req, res) => {
           );
         }
 
-        // Mark item as Returned
+        
         item.status = 'Returned';
         item.returnReason = undefined;
         item.returnComments = undefined;
         item.returnRequestedDate = undefined;
       }
 
-      // Optional: Update overall status if ALL items are returned/cancelled
+     
       const allProcessed = order.orderedItemes.every(
         i => ['Returned', 'Cancelled'].includes(i.status || '')
       );
@@ -320,7 +320,7 @@ const handleReturnRequest = async (req, res) => {
       });
     }
 
-    // REJECT RETURN
+   
     if (action === 'reject') {
       for (const item of returnRequestedItems) {
         item.status = 'Delivered';

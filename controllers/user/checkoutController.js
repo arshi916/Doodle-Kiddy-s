@@ -93,7 +93,7 @@ const processOrder = async (req, res) => {
 
         const cart = await Cart.findOne({ userId }).populate({
     path: 'items.productId',
-    select: 'productName finalPrice productImage quantity status isBlocked'  // ← Fixed!
+    select: 'productName finalPrice productImage quantity status isBlocked' 
 });
 
 if (!cart || cart.items.length === 0) {
@@ -139,7 +139,7 @@ if (!cart || cart.items.length === 0) {
         for (let item of cart.items) {
     const product = item.productId;
 
-    // 1. Check if product is BLOCKED by admin
+    
     if (product.isBlocked === true) {
         return res.json({ 
             success: false, 
@@ -147,7 +147,7 @@ if (!cart || cart.items.length === 0) {
         });
     }
 
-    // 2. Check insufficient stock
+  
     if (product.quantity < item.quantity) {
         return res.json({ 
             success: false, 
@@ -155,7 +155,7 @@ if (!cart || cart.items.length === 0) {
         });
     }
 
-    // 3. Check if marked as "out of stock"
+   
     if (product.status === "out of stock") {
         return res.json({ 
             success: false, 

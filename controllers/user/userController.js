@@ -336,11 +336,11 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        req.logout(() => {}); // Clear Passport
+        req.logout(() => {}); 
 
         req.session.regenerate((err) => {
             if (err) console.log(err);
-            res.clearCookie('connect.sid_user'); // Only clear user cookie
+            res.clearCookie('connect.sid_user');
             res.redirect('/login');
         });
     } catch (e) {
@@ -419,7 +419,7 @@ const loadResetPasswordPage = (req, res) => {
 const handleResetPassword = async (req, res) => {
   const { password, confirm_password } = req.body;
 
-  // Check if session email exists
+  
   if (!req.session.userResetEmail) {
     return res.status(400).json({
       success: false,
@@ -427,7 +427,7 @@ const handleResetPassword = async (req, res) => {
     });
   }
 
-  // Validate inputs
+
   if (!password || !confirm_password) {
     return res.status(400).json({
       success: false,
@@ -442,7 +442,7 @@ const handleResetPassword = async (req, res) => {
     });
   }
 
-  // Password complexity validation
+ 
   const alphaLower = /[a-z]/;
   const alphaUpper = /[A-Z]/;
   const digit = /\d/;
@@ -1182,7 +1182,7 @@ try {
       product: product[0],
       relatedProducts,
       error: null,
-      user: user  // ADD THIS
+      user: user  
     });
   } catch (error) {
     res.status(500).render('user/product', {

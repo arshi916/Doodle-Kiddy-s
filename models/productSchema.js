@@ -1,4 +1,4 @@
-// Updated product schema
+
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
@@ -121,7 +121,7 @@ productSchema.index({ isBlocked: 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ color: 1 }); 
 
-// Pre-save middleware to validate sale price
+
 productSchema.pre('save', function(next) {
   if (this.salePrice >= this.regularPrice) {
     const error = new Error('Sale price must be less than regular price');

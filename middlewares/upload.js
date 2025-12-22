@@ -8,12 +8,12 @@ const ensureDirectoryExists = (dirPath) => {
   }
 };
 
-// Ensure required directories exist
+
 ensureDirectoryExists(path.join(__dirname, '../public/images'));
 ensureDirectoryExists(path.join(__dirname, '../public/uploads/profiles'));
 ensureDirectoryExists(path.join(__dirname, '../Uploads/temp'));
 
-// Storage for general uploads
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = path.join(__dirname, '../Uploads/temp');
@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
   }
 });
 
-// Memory storage for profile images and multiple uploads (better for processing with Sharp)
+
 const memoryStorage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -38,16 +38,16 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Profile image upload (single file, memory storage)
+
 const profileUpload = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024, 
   },
   fileFilter: fileFilter
 }).single('profileImage');
 
-// Profile upload middleware with error handling
+
 const profileUploadMiddleware = (req, res, next) => {
   profileUpload(req, res, function (err) {
     const isAjax = req.xhr || req.headers.accept.includes('json');
@@ -93,26 +93,26 @@ const profileUploadMiddleware = (req, res, next) => {
   });
 };
 
-// General single upload
+
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 5 * 1024 * 1024, 
   },
   fileFilter: fileFilter
 });
 
-// Multiple file upload for products
+
 const uploadMultiple = multer({
   storage: memoryStorage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-    files: 4 // Allow up to 4 files
+    fileSize: 5 * 1024 * 1024,
+    files: 4 
   },
   fileFilter: fileFilter
 }).array('productImage', 4);
 
-// Multiple upload middleware with error handling
+
 const uploadMultipleMiddleware = (req, res, next) => {
   uploadMultiple(req, res, function (err) {
     const isAjax = req.xhr || req.headers.accept.includes('json');
@@ -169,7 +169,7 @@ const uploadMultipleMiddleware = (req, res, next) => {
   });
 };
 
-// Placeholder for image resizing (to be implemented if needed)
+
 const resizeImages = (req, res, next) => {
   console.log('Resize middleware called, files:', req.files ? req.files.length : 0);
   next();

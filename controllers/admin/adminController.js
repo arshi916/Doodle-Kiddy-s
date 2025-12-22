@@ -10,7 +10,7 @@ const pageerror = async (req, res) => {
 };
 
 const loadLogin = (req, res) => {      
-    console.log('Session on loadLogin:', req.session); // Debug
+    console.log('Session on loadLogin:', req.session); 
     if (req.session.admin) {         
         return res.redirect("/admin"); 
     }      
@@ -39,12 +39,12 @@ const login = async (req, res) => {
     }
 
     req.session.admin = admin._id;
-    console.log('Session set after login:', req.session); // Debug
+    console.log('Session set after login:', req.session); 
     res.redirect("/admin");
 };
 
 const loadDashboard = async (req, res) => {
-    console.log('Session on loadDashboard:', req.session); // Debug
+    console.log('Session on loadDashboard:', req.session); 
     if (req.session.admin) {
         try {
             res.render("admin/admin-dashboard", {
@@ -63,7 +63,7 @@ const logout = async (req, res) => {
     try {
         req.session.regenerate((err) => {
             if (err) console.log(err);
-            res.clearCookie('connect.sid_admin'); // Only clear admin cookie
+            res.clearCookie('connect.sid_admin'); 
             res.redirect('/admin/login');
         });
     } catch (e) {
