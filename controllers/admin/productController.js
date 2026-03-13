@@ -260,10 +260,27 @@ const loadProductPage = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
 
-    const query = {
-      isDeleted: { $ne: true },
-      ...(search && { productName: { $regex: search, $options: "i" } }),
+    
+    let query = {
+      isDeleted: { $ne: true }
     };
+
+  
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      
+      const searchRegex = new RegExp(
+        searchTerm.split(/\s+/).join('\\s*'), 
+        'i'
+      );
+
+    
+      query.$or = [
+        { productName: { $regex: searchRegex } },
+        { description: { $regex: searchRegex } },
+        { brand: { $regex: searchRegex } }
+      ];
+    }
 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
@@ -273,7 +290,8 @@ const loadProductPage = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
-    products.forEach(p => console.log(`Fetched: ${p.productName}, Quantity: ${p.quantity}`));
+
+    console.log(`Search: "${search}", Found: ${products.length} products`);
 
     
     const successMessage = req.session.successMessage;

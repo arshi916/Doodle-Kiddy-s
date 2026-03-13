@@ -255,7 +255,7 @@ const removeFromCart = async (req, res) => {
         // }
 
         cart.items.splice(itemIndex, 1);
-        await cart.save();
+        await cart.save(); 
 
         const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 

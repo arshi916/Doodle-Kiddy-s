@@ -156,25 +156,31 @@
         </div>
         
         <div class="flex items-center space-x-4">
-          <form method="GET" action="/admin/products" class="flex items-center space-x-3">
-            <div class="relative">
-              <input name="search" value="<%= search %>" type="text" placeholder="Search products..." 
-                     class="pl-10 pr-4 py-2 w-64 border border-stone-400 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-200 shadow-sm"/>
-              <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            
-            <% if (search) { %>
-              <a href="/admin/products" class="px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 text-sm font-medium shadow-sm">
-                Clear
-              </a>
-            <% } %>
-            
-            <button type="submit" class="px-4 py-2 bg-gradient-to-r from-stone-600 to-stone-700 text-white rounded-xl hover:from-stone-700 hover:to-stone-800 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md">
-              Search
-            </button>
-          </form>
+         <form method="GET" action="/admin/products" class="flex items-center space-x-3">
+  <div class="relative">
+    <input 
+      name="search" 
+      value="<%= search ? search.trim() : '' %>" 
+      type="text" 
+      placeholder="Search products..." 
+      class="pl-10 pr-4 py-2 w-64 border border-stone-400 rounded-xl focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-all duration-200 shadow-sm"
+      onkeyup="this.value = this.value.replace(/\s+/g, ' ')"
+    />
+    <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  </div>
+  
+  <% if (search && search.trim()) { %>
+    <a href="/admin/products" class="px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors duration-200 text-sm font-medium shadow-sm">
+      Clear
+    </a>
+  <% } %>
+  
+  <button type="submit" class="px-4 py-2 bg-gradient-to-r from-stone-600 to-stone-700 text-white rounded-xl hover:from-stone-700 hover:to-stone-800 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md">
+    Search
+  </button>
+</form>
         </div>
       </div>
     </header>

@@ -1286,6 +1286,8 @@ const getOrderDetails = async (req, res) => {
       status: order.status || 'Pending',
       createdOn: order.createdOn,
       invoiceDate: order.invoiceDate,
+      paymentMethord:order.paymentMethord,
+      paymentStatus :order.paymentStatus ||'pending',
       items: (order.orderedItemes || []).map(item => {
         const product = item.product || {};
         return {

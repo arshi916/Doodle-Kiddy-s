@@ -91,14 +91,19 @@ const processOrder = async (req, res) => {
             userId
         });
 
-        const cart = await Cart.findOne({ userId }).populate({
-    path: 'items.productId',
-    select: 'productName finalPrice productImage quantity status isBlocked' 
-});
+        if (!paymentMethod) {
+            return res.json({ success: false, message: 'Please select a payment method' });
+        }
 
-if (!cart || cart.items.length === 0) {
-    return res.json({ success: false, message: 'Your cart is empty' });
-}
+        const cart = await Cart.findOne({ userId }).populate({
+            path: 'items.productId',
+            select: 'productName finalPrice productImage quantity status isBlocked' 
+        });
+
+        if (!cart || cart.items.length === 0) {
+            return res.json({ success: false, message: 'Your cart is empty' });
+        }
+
         const user = await User.findById(userId);
         if (!user) {
             return res.json({ success: false, message: 'User not found' });
@@ -137,32 +142,29 @@ if (!cart || cart.items.length === 0) {
         }
 
         for (let item of cart.items) {
-    const product = item.productId;
+            const product = item.productId;
 
-    
-    if (product.isBlocked === true) {
-        return res.json({ 
-            success: false, 
-            message: `${product.productName} is currently unavailable for purchase.` 
-        });
-    }
+            if (product.isBlocked === true) {
+                return res.json({ 
+                    success: false, 
+                    message: `${product.productName} is currently unavailable for purchase.` 
+                });
+            }
 
-  
-    if (product.quantity < item.quantity) {
-        return res.json({ 
-            success: false, 
-            message: `${product.productName} has insufficient stock. Only ${product.quantity} left (you requested ${item.quantity}).` 
-        });
-    }
+            if (product.quantity < item.quantity) {
+                return res.json({ 
+                    success: false, 
+                    message: `${product.productName} has insufficient stock. Only ${product.quantity} left (you requested ${item.quantity}).` 
+                });
+            }
 
-   
-    if (product.status === "out of stock") {
-        return res.json({ 
-            success: false, 
-            message: `${product.productName} is currently out of stock.` 
-        });
-    }
-}
+            if (product.status === "out of stock") {
+                return res.json({ 
+                    success: false, 
+                    message: `${product.productName} is currently out of stock.` 
+                });
+            }
+        }
 
         const subtotal = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
         const shippingCost = subtotal > 2500 ? 0 : 99;
@@ -171,6 +173,15 @@ if (!cart || cart.items.length === 0) {
         const totalPrice = subtotal + shippingCost + tax;
         const finalAmount = totalPrice - discount;
 
+        // Determine payment status based on payment method
+        let paymentStatus = 'Pending';
+        if (paymentMethod === 'Cash on Delivery') {
+            paymentStatus = 'Pending';
+        } else if (paymentMethod === 'Razorpay') {
+            paymentStatus = 'Completed'; // You can change this based on actual payment verification
+        }
+
+        // Create order data with payment method
         const orderData = {
             orderedItemes: cart.items.map(item => ({
                 product: item.productId._id,
@@ -182,6 +193,8 @@ if (!cart || cart.items.length === 0) {
             finalAmount: finalAmount,
             address: userId,
             selectedAddressId: addressId,
+            paymentMethod: paymentMethod, // ADD THIS
+            paymentStatus: paymentStatus, // ADD THIS
             invoiceDate: new Date(),
             status: 'Pending',
             createdOn: new Date(),
@@ -193,6 +206,7 @@ if (!cart || cart.items.length === 0) {
         const order = new Order(orderData);
         const savedOrder = await order.save();
 
+        // Update product quantities
         for (let item of cart.items) {
             const product = await Product.findById(item.productId._id);
             product.quantity -= item.quantity;
@@ -204,7 +218,17 @@ if (!cart || cart.items.length === 0) {
             await product.save();
         }
 
+        // Clear cart
         await Cart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
+
+        // Send order confirmation email
+        try {
+            const selectedAddressData = user.addresses.find(addr => addr._id.toString() === addressId);
+            await sendOrderConfirmationEmail(user, savedOrder, selectedAddressData, cart.items);
+        } catch (emailError) {
+            console.error('Error sending order confirmation email:', emailError);
+            // Don't fail the order if email fails
+        }
 
         console.log('Order created successfully:', savedOrder._id);
 
@@ -245,7 +269,18 @@ const orderSuccess = async (req, res) => {
             return res.redirect('/');
         }
 
-        let shippingAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
+        // Get the selected address from the order
+        let shippingAddress = null;
+        if (order.selectedAddressId) {
+            shippingAddress = user.addresses.find(addr => 
+                addr._id.toString() === order.selectedAddressId.toString()
+            );
+        }
+        
+        // Fallback to default address if not found
+        if (!shippingAddress) {
+            shippingAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
+        }
         
         if (!shippingAddress) {
             shippingAddress = {
@@ -263,7 +298,8 @@ const orderSuccess = async (req, res) => {
             orderId: order.orderId,
             totalAmount: order.finalAmount,
             orderStatus: order.status,
-            paymentMethod: 'cod', 
+            paymentMethod: order.paymentMethod || 'Cash on Delivery', // UPDATE THIS
+            paymentStatus: order.paymentStatus || 'Pending', // ADD THIS
             items: order.orderedItemes.map(item => ({
                 productName: item.product ? item.product.productName : 'Product not found',
                 quantity: item.quantity,

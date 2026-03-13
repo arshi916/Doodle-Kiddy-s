@@ -538,9 +538,8 @@ const resendForgotOtp = async (req, res) => {
 
 const getProducts = async (req, res) => {
     try {
-        const { maxPrice, category, color, search, page = 1, limit = 9 } = req.query;
+        const { maxPrice, category, color, search, page = 1, limit = 9, sort } = req.query;
 
-    
         const activeCategories = await Category.find({
             isListed: true,
             isDeleted: { $ne: true }
@@ -553,12 +552,11 @@ const getProducts = async (req, res) => {
             return res.json({ success: true, products: [], totalProducts: 0 });
         }
 
- 
         const query = {
             isDeleted: { $ne: true },
             isBlocked: { $ne: true },
             status: 'Available',
-            quantity: { $gt: 0 }, 
+            quantity: { $gt: 0 },
             category: { $in: activeCategoryIds }
         };
 
@@ -569,8 +567,8 @@ const getProducts = async (req, res) => {
         if (category) {
             const categories = category.split(',').map(c => c.trim());
             const requestedCategoryDocs = await Category.find({
-                name: { $in: categories.map(c => new RegExp(`^${c}$`, 'i')) }, 
-                isListed: true, 
+                name: { $in: categories.map(c => new RegExp(`^${c}$`, 'i')) },
+                isListed: true,
                 isDeleted: { $ne: true }
             });
             const requestedCategoryIds = requestedCategoryDocs.map(cat => cat._id);
@@ -578,12 +576,7 @@ const getProducts = async (req, res) => {
             if (requestedCategoryIds.length > 0) {
                 query.category = { $in: requestedCategoryIds };
             } else {
-                console.warn('No matching active categories found for:', categories);
-                return res.json({
-                    success: true,
-                    products: [],
-                    totalProducts: 0
-                });
+                return res.json({ success: true, products: [], totalProducts: 0 });
             }
         }
 
@@ -599,75 +592,104 @@ const getProducts = async (req, res) => {
             ];
         }
 
-        console.log('getProducts query:', JSON.stringify(query, null, 2));
+        console.log('Query:', JSON.stringify(query, null, 2));
 
-        
-        const totalProducts = await Product.countDocuments(query);
-
-        if (totalProducts === 0) {
-            console.log('No products found for query');
-        }
-
-       
-        const products = await Product.find(query)
-            .populate({
-                path: 'category',
-                match: { isListed: true, isDeleted: { $ne: true } },
-                select: 'name description categoryOffer'
-            })
-            .skip((Number(page) - 1) * Number(limit))
-            .limit(Number(limit))
-            .lean();
-
-      
-        const validProducts = products.filter(product => 
-            product.category !== null && product.quantity > 0
-        );
-
-       
-        const transformedProducts = validProducts.map(product => {
-            let finalPrice = product.salePrice;
-            let discountPercent = 0;
-
-            if (product.productOffer > 0) {
-                finalPrice = finalPrice - (finalPrice * product.productOffer / 100);
-                discountPercent = product.productOffer;
-            }
-
-            if (product.category?.categoryOffer > 0) {
-                const categoryDiscount = product.salePrice - (product.salePrice * product.category.categoryOffer / 100);
-                if (categoryDiscount < finalPrice) {
-                    finalPrice = categoryDiscount;
-                    discountPercent = product.category.categoryOffer;
+        // Create aggregation pipeline for sorting
+        const pipeline = [
+            { $match: query },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
+            },
+            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: true } },
+            {
+                $match: {
+                    'categoryData.isListed': true,
+                    'categoryData.isDeleted': { $ne: true }
+                }
+            },
+            {
+                $addFields: {
+                    effectiveDiscount: {
+                        $max: ['$productOffer', { $ifNull: ['$categoryData.categoryOffer', 0] }]
+                    },
+                    productNameLowercase: { $toLower: '$productName' }
+                }
+            },
+            {
+                $addFields: {
+                    finalPrice: {
+                        $round: [
+                            {
+                                $multiply: [
+                                    '$salePrice',
+                                    { $subtract: [1, { $divide: ['$effectiveDiscount', 100] }] }
+                                ]
+                            },
+                            0
+                        ]
+                    }
                 }
             }
+        ];
 
-            return {
-                _id: product._id,
-                productName: product.productName,
-                description: product.description,
-                category: {
-                    _id: product.category._id,
-                    name: product.category.name
-                },
-                finalPrice: Math.round(finalPrice),
-                originalPrice: product.regularPrice,
-                discountPercent: Math.round(discountPercent) || 0,
-                quantity: product.quantity,
-                color: product.color || [],
-                size: product.size || [],
-                productImage: product.productImage || [],
-                status: product.status,
-                returnPolicy: product.returnPolicy
-            };
+        // Add sorting
+        if (sort) {
+            const [sortField, sortDirection] = sort.split('-');
+            const sortStage = {};
+            
+            if (sortField === 'name') {
+                sortStage.productNameLowercase = sortDirection === 'asc' ? 1 : -1;
+            } else if (sortField === 'price') {
+                sortStage.finalPrice = sortDirection === 'asc' ? 1 : -1;
+            }
+            
+            if (Object.keys(sortStage).length > 0) {
+                pipeline.push({ $sort: sortStage });
+            }
+        }
+
+        // Count total products
+        const countPipeline = [...pipeline];
+        countPipeline.push({ $count: 'total' });
+        const countResult = await Product.aggregate(countPipeline);
+        const totalProducts = countResult[0]?.total || 0;
+
+        // Add pagination
+        pipeline.push({ $skip: (Number(page) - 1) * Number(limit) });
+        pipeline.push({ $limit: Number(limit) });
+
+        // Final projection
+        pipeline.push({
+            $project: {
+                _id: 1,
+                productName: 1,
+                description: 1,
+                category: { _id: '$categoryData._id', name: '$categoryData.name' },
+                finalPrice: 1,
+                originalPrice: '$regularPrice',
+                discountPercent: '$effectiveDiscount',
+                quantity: 1,
+                color: 1,
+                size: 1,
+                productImage: 1,
+                status: 1,
+                returnPolicy: 1
+            }
         });
 
-        console.log('getProducts products:', transformedProducts.length);
+        const products = await Product.aggregate(pipeline);
+
+        console.log('Products found:', products.length);
 
         res.json({
             success: true,
-            products: transformedProducts,
-            totalProducts: validProducts.length
+            products,
+            totalProducts
         });
     } catch (error) {
         console.error('Error fetching products:', error);
@@ -907,7 +929,7 @@ const getProductsForShop = async (req, res) => {
             ];
         }
 
-        console.log('Match query:', JSON.stringify(matchQuery, null, 2)); 
+        console.log('Match query:', JSON.stringify(matchQuery, null, 2));
 
         const pipeline = [
             { $match: matchQuery },
@@ -932,7 +954,6 @@ const getProductsForShop = async (req, res) => {
                     effectiveDiscount: {
                         $max: ['$productOffer', { $ifNull: ['$categoryData.categoryOffer', 0] }]
                     },
-                    
                     productNameLowercase: { $toLower: '$productName' }
                 }
             },
@@ -954,9 +975,9 @@ const getProductsForShop = async (req, res) => {
             ...(maxPrice ? [{ $match: { finalPrice: { $lte: Number(maxPrice) } }}] : []),
             {
                 $project: {
-                    _id: 1, 
+                    _id: 1,
                     productName: 1,
-                    productNameLowercase: 1, 
+                    productNameLowercase: 1,
                     description: 1,
                     category: { _id: '$categoryData._id', name: '$categoryData.name' },
                     finalPrice: 1,
@@ -972,13 +993,12 @@ const getProductsForShop = async (req, res) => {
             }
         ];
 
-       
+        // IMPORTANT: Sort handling
         if (sort) {
             const [sortField, sortDirection] = sort.split('-');
             const sortStage = {};
             
             if (sortField === 'name') {
-           
                 sortStage.productNameLowercase = sortDirection === 'asc' ? 1 : -1;
                 console.log('Applying name sort:', sortStage);
             } else if (sortField === 'price') {
@@ -992,7 +1012,6 @@ const getProductsForShop = async (req, res) => {
         }
 
         const countPipeline = [...pipeline];
-       
         const sortIndex = countPipeline.findIndex(stage => stage.$sort);
         if (sortIndex !== -1) {
             countPipeline.splice(sortIndex);
@@ -1001,22 +1020,21 @@ const getProductsForShop = async (req, res) => {
         
         const countResult = await Product.aggregate(countPipeline);
         const totalProducts = countResult[0]?.total || 0;
-        console.log('Total products matched:', totalProducts); 
+        console.log('Total products matched:', totalProducts);
 
         pipeline.push({ $skip: (Number(page) - 1) * Number(limit) });
         pipeline.push({ $limit: Number(limit) });
-
         
         pipeline.push({
             $project: {
-                productNameLowercase: 0 
+                productNameLowercase: 0
             }
         });
 
         const products = await Product.aggregate(pipeline);
-        console.log('Products found:', products.length); 
+        console.log('Products found:', products.length);
         if (products.length > 0) {
-            console.log('First few product names (sorted):', products.slice(0, 5).map(p => p.productName)); 
+            console.log('First few product names (sorted):', products.slice(0, 5).map(p => p.productName));
         }
 
         res.json({
@@ -1384,9 +1402,17 @@ module.exports = {
     loadProductDetail,
     searchProducts,
     getSearchSuggestions,
-      getProductOptions,
-
-  
-    
-    
+      getProductOptions,  
 };
+
+
+
+
+
+
+
+
+
+
+
+

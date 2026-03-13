@@ -71,6 +71,17 @@ const orderSchema = new Schema({
         default: Date.now,
         required: true,
     },
+     paymentMethod: {
+        type: String,
+        enum: ['Cash on Delivery', 'Razorpay', 'Credit Card', 'Debit Card', 'UPI', 'Net Banking'],
+        required: true,
+        default: 'Cash on Delivery'
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
+        default: 'Pending'
+    },
     couponApplied: {
         type: Boolean,
         default: false,

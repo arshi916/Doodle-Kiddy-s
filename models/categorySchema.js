@@ -43,7 +43,7 @@ const categorySchema = new Schema({
   timestamps: true 
 });
 
-categorySchema.index({ name: 1 });
+
 categorySchema.index({ isListed: 1 });
 
 categorySchema.pre('save', function(next) {
