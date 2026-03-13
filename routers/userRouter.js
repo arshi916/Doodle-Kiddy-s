@@ -109,7 +109,6 @@ router.get('/order-success', checkoutController.orderSuccess);
 
 // Orders routes
 router.get('/profile', userAuth, profileController.loadProfile);
-router.get('/profile/addresses', userAuth, profileController.loadAddresses);
 router.get('/profile/orders', userAuth, profileController.loadOrders);
 router.get('/profile/order/:id', userAuth, profileController.getOrderDetails);
 router.post('/profile/cancel-order', userAuth, profileController.cancelOrder);

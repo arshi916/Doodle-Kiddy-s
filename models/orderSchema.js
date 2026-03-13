@@ -73,9 +73,9 @@ const orderSchema = new Schema({
     },
      paymentMethod: {
         type: String,
-        enum: ['Cash on Delivery', 'Razorpay', 'Credit Card', 'Debit Card', 'UPI', 'Net Banking'],
+        enum: ['cod', 'razorpay', 'card', 'upi', 'netbanking'],
         required: true,
-        default: 'Cash on Delivery'
+        default: 'cod'
     },
     paymentStatus: {
         type: String,
