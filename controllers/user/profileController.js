@@ -10,6 +10,7 @@ const fs = require("fs");
 const multer = require('multer');
 const path = require('path');
 const { exec } = require('child_process');
+const PDFDocument = require('pdfkit');
 
 
 const countryStateData = {
@@ -1099,6 +1100,7 @@ const changePassword = async (req, res) => {
 
 const Order = require("../../models/orderSchema");
 
+
 const loadOrders = async (req, res) => {
   try {
     const userId = req.session.user;
@@ -1328,116 +1330,7 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
-const generateInvoice = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const orderId = req.params.id;
 
-        const order = await Order.findOne({ _id: orderId, address: userId })
-            .populate('orderedItemes.product', 'productName productImage finalPrice description')
-            .lean();
-
-        if (!order) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
-        }
-
-        const user = await User.findById(userId).lean();
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const latexContent = `
-            \\documentclass[a4paper,12pt]{article}
-            \\usepackage[utf8]{inputenc}
-            \\usepackage{geometry}
-            \\geometry{a4paper, margin=1in}
-            \\usepackage{fancyhdr}
-            \\usepackage{lastpage}
-            \\usepackage{graphicx}
-            \\usepackage{array}
-            \\usepackage{booktabs}
-            \\usepackage{colortbl}
-            \\usepackage{xcolor}
-            \\pagestyle{fancy}
-            \\fancyhf{}
-            \\fancyhead[L]{Invoice}
-            \\fancyhead[R]{Order #${order.orderId.slice(-8).toUpperCase()}}
-            \\fancyfoot[C]{Page \\thepage\\ of \\pageref{LastPage}}
-            \\fancyfoot[R]{Generated on ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}}
-            \\begin{document}
-
-            \\begin{center}
-            \\textbf{\\Large Kids Fashion Store}\\\\
-            \\small Online Shopping Platform\\\\ 
-            \\today
-            \\end{center}
-
-            \\vspace{1cm}
-
-            \\begin{tabular}{p{3cm} p{8cm}}
-            \\textbf{Billed to:} & \\textbf{Shipping Address:} \\\\
-            ${user.name} & ${order.shippingAddress ? order.shippingAddress.name : user.name} \\\\
-            ${user.email} & ${order.shippingAddress ? order.shippingAddress.address : ''} \\\\
-            ${user.phone} & ${order.shippingAddress ? `${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.zipCode}` : ''} \\\\
-            & ${order.shippingAddress ? order.shippingAddress.phone : user.phone} \\\\
-            \\end{tabular}
-
-            \\vspace{1cm}
-
-            \\begin{table}[h]
-            \\centering
-            \\begin{tabular}{p{4cm} p{2cm} p{2cm} p{2cm}}
-            \\toprule
-            \\rowcolor{lightgray} \\textbf{Product Name} & \\textbf{Quantity} & \\textbf{Price (₹)} & \\textbf{Total (₹)} \\\\
-            \\midrule
-            ${order.orderedItemes.map(item => `
-                ${item.product.productName} & ${item.quantity} & ${item.price.toFixed(2)} & ${(item.price * item.quantity).toFixed(2)} \\\\
-            `).join('')}
-            \\midrule
-            \\rowcolor{lightgray} \\textbf{Subtotal} & & & ${order.totalPrice.toFixed(2)} \\\\
-            \\rowcolor{lightgray} \\textbf{Discount} & & & ${order.discount.toFixed(2)} \\\\
-            \\rowcolor{lightgray} \\textbf{Total} & & & \\textbf{${order.finalAmount.toFixed(2)}} \\\\
-            \\bottomrule
-            \\end{tabular}
-            \\end{table}
-
-            \\vspace{1cm}
-
-            \\textbf{Order Status:} ${order.status}\\\\
-            \\textbf{Order Date:} ${new Date(order.createdOn).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}
-
-            \\end{document}
-        `;
-
-        const tempDir = path.join(__dirname, '../../temp');
-        if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-        }
-
-        const latexFilePath = path.join(tempDir, `invoice_${orderId}.tex`);
-        fs.writeFileSync(latexFilePath, latexContent);
-
-        const pdfFilePath = path.join(tempDir, `invoice_${orderId}.pdf`);
-        exec(`latexmk -pdf -output-directory=${tempDir} ${latexFilePath}`, (error) => {
-            if (error) {
-                console.error('Error generating PDF:', error);
-                return res.status(500).json({ success: false, message: 'Error generating invoice' });
-            }
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename=invoice_${orderId}.pdf`);
-            res.sendFile(pdfFilePath, () => {
-                
-                fs.unlinkSync(latexFilePath);
-                fs.unlinkSync(pdfFilePath);
-            });
-        });
-
-    } catch (error) {
-        console.error("Error generating invoice:", error);
-        res.status(500).json({ success: false, message: 'Error generating invoice' });
-    }
-};
 
 
 const returnOrder = async (req, res) => {
@@ -1952,7 +1845,271 @@ const returnOrderItem = async (req, res) => {
     });
   }
 };
+const generateInvoice = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const orderId = req.params.id;
 
+    const order = await Order.findOne({ _id: orderId, address: userId })
+      .populate('orderedItemes.product', 'productName productImage')
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const user = await User.findById(userId).lean();
+    let shippingAddress = null;
+
+    if (order.selectedAddressId && user.addresses) {
+      shippingAddress = user.addresses.find(
+        addr => addr._id.toString() === order.selectedAddressId.toString()
+      );
+    }
+    if (!shippingAddress && user.addresses && user.addresses.length > 0) {
+      shippingAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
+    }
+
+    const orderNumber = order.orderId
+      ? String(order.orderId).slice(-8).toUpperCase()
+      : order._id.toString().slice(-8).toUpperCase();
+
+    const paymentMap = {
+      cod: 'COD', razorpay: 'Razorpay',
+      card: 'Card', upi: 'UPI', netbanking: 'Net Banking'
+    };
+    const paymentDisplay = paymentMap[order.paymentMethod] || order.paymentMethod || 'N/A';
+
+    const doc = new PDFDocument({ margin: 0, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice_${orderNumber}.pdf`);
+    doc.pipe(res);
+
+    // ── Helper: draw a single line of text at exact x,y, no wrapping ever ──
+    const drawText = (text, x, y, size, color, bold = false) => {
+      doc.fontSize(size)
+         .fillColor(color)
+         .font(bold ? 'Helvetica-Bold' : 'Helvetica')
+         .text(String(text), x, y, { lineBreak: false });
+    };
+
+    // ── Helper: truncate text to fit within maxChars ──
+    const trunc = (str, maxChars) => {
+      str = String(str || '');
+      return str.length > maxChars ? str.slice(0, maxChars - 1) + '…' : str;
+    };
+
+    // ── Page layout constants ──
+    const PW = 595;   // A4 width
+    const ML = 45;    // margin left
+    const MR = 45;    // margin right
+    const CW = PW - ML - MR;  // content width = 505
+
+    let Y = 0;  // current Y — we control this entirely
+
+    // ═══════════════════════════════════════════════
+    // HEADER BAND
+    // ═══════════════════════════════════════════════
+    doc.rect(0, 0, PW, 80).fill('#D4B896');
+    drawText('Kids Fashion Store', ML, 20, 20, '#ffffff', true);
+    drawText('Your one-stop kids fashion destination', ML, 48, 9, '#fff8f0');
+    drawText('INVOICE', PW - MR - 70, 28, 14, '#ffffff', true);
+    Y = 95;
+
+    // ═══════════════════════════════════════════════
+    // ORDER DETAILS (left) + CUSTOMER DETAILS (right)
+    // Two completely separate columns with a fixed gap
+    // ═══════════════════════════════════════════════
+    const COL1_X = ML;           // left col starts at 45
+    const COL1_W = 240;          // left col width
+    const COL2_X = ML + 270;     // right col starts at 315 (30px gap)
+    const COL2_W = CW - 270;     // right col width ~235
+
+    const LBL_W   = 82;   // label width in left col
+    const LBL_GAP = 6;    // gap between label and value
+    const ROW_H   = 16;   // exact row height
+
+    // Section headings
+    drawText('Order Details', COL1_X, Y, 10, '#D4B896', true);
+    drawText('Customer Details', COL2_X, Y, 10, '#D4B896', true);
+    Y += 14;
+
+    // Left col rows — label+value on same line, strictly within COL1_W
+    const leftRows = [
+      ['Order No.',   `#${orderNumber}`],
+      ['Date',        new Date(order.createdOn).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                      })],
+      ['Payment',     paymentDisplay],       // now max 10 chars — no wrapping
+      ['Pay Status',  order.paymentStatus || 'Pending'],
+      ['Order Status',order.status],
+    ];
+
+    // Right col rows
+    const rightRows = [
+      ['Name',  trunc(user.name  || 'N/A', 28)],
+      ['Email', trunc(user.email || 'N/A', 32)],
+      ['Phone', trunc(user.phone || 'N/A', 16)],
+    ];
+
+    // Draw both columns independently — right col uses its own Y counter
+    const leftStartY  = Y;
+    const rightStartY = Y;
+
+    leftRows.forEach(([label, value], i) => {
+      const rowY = leftStartY + i * ROW_H;
+      drawText(label,  COL1_X,                  rowY, 8, '#888888');
+      drawText(':',    COL1_X + LBL_W,          rowY, 8, '#888888');
+      drawText(trunc(value, 22), COL1_X + LBL_W + LBL_GAP + 4, rowY, 8, '#333333');
+    });
+
+    rightRows.forEach(([label, value], i) => {
+      const rowY = rightStartY + i * ROW_H;
+      drawText(label,  COL2_X,             rowY, 8, '#888888');
+      drawText(':',    COL2_X + 38,        rowY, 8, '#888888');
+      drawText(value,  COL2_X + 38 + 6,   rowY, 8, '#333333');
+    });
+
+    // Advance Y past whichever column is taller
+    Y += Math.max(leftRows.length, rightRows.length) * ROW_H + 14;
+
+    // Thin separator
+    doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#dddddd').lineWidth(0.5).stroke();
+    Y += 12;
+
+    // ═══════════════════════════════════════════════
+    // SHIPPING ADDRESS
+    // ═══════════════════════════════════════════════
+    if (shippingAddress) {
+      drawText('Shipping Address', ML, Y, 10, '#D4B896', true);
+      Y += 14;
+
+      const addrLines = [
+        trunc(shippingAddress.name || '', 40),
+        trunc(shippingAddress.address || '', 50),
+        trunc(`${shippingAddress.city || ''}, ${shippingAddress.state || ''} - ${shippingAddress.zipCode || shippingAddress.pincode || ''}`, 50),
+        `Phone: ${trunc(shippingAddress.phone || '', 15)}`,
+      ].filter(l => l.trim());
+
+      addrLines.forEach(line => {
+        drawText(line, ML, Y, 8, '#555555');
+        Y += ROW_H;
+      });
+      Y += 8;
+    }
+
+    // Separator
+    doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
+    Y += 12;
+
+    // ═══════════════════════════════════════════════
+    // ITEMS TABLE
+    // ═══════════════════════════════════════════════
+    drawText('Order Items', ML, Y, 10, '#D4B896', true);
+    Y += 14;
+
+    // Table column config — must sum to CW (505)
+    const TC = [
+      { label: '#',          x: ML,      w: 18  },
+      { label: 'Product',    x: ML + 22, w: 200 },
+      { label: 'Qty',        x: ML + 226,w: 35,  align: 'center' },
+      { label: 'Unit Price', x: ML + 265,w: 80,  align: 'right'  },
+      { label: 'Total',      x: ML + 349,w: 75,  align: 'right'  },
+      { label: 'Status',     x: ML + 428,w: 77               },
+    ];
+
+    const TH = 18;  // table header height
+    const TR = 18;  // table row height
+
+    // Header background
+    doc.rect(ML, Y, CW, TH).fill('#D4B896');
+
+    TC.forEach(col => {
+      doc.fontSize(8).fillColor('#ffffff').font('Helvetica-Bold');
+      if (col.align === 'right') {
+        doc.text(col.label, col.x, Y + 5, { width: col.w, align: 'right', lineBreak: false });
+      } else if (col.align === 'center') {
+        doc.text(col.label, col.x, Y + 5, { width: col.w, align: 'center', lineBreak: false });
+      } else {
+        doc.text(col.label, col.x, Y + 5, { lineBreak: false });
+      }
+    });
+    Y += TH + 2;
+
+    // Data rows
+    (order.orderedItemes || []).forEach((item, index) => {
+      const product   = item.product  || {};
+      const qty       = item.quantity || 1;
+      const unitPrice = item.price    || 0;
+      const total     = unitPrice * qty;
+      const status    = trunc(item.status || order.status || '', 12);
+      const name      = trunc(product.productName || 'Product', 32);
+
+      doc.rect(ML, Y, CW, TR).fill(index % 2 === 0 ? '#f9f5f0' : '#ffffff');
+
+      doc.fontSize(8).fillColor('#333333').font('Helvetica');
+      doc.text(String(index + 1),             TC[0].x, Y + 5, { lineBreak: false });
+      doc.text(name,                           TC[1].x, Y + 5, { lineBreak: false });
+      doc.text(String(qty),                    TC[2].x, Y + 5, { width: TC[2].w, align: 'center', lineBreak: false });
+      doc.text(`Rs.${unitPrice.toFixed(2)}`,   TC[3].x, Y + 5, { width: TC[3].w, align: 'right',  lineBreak: false });
+      doc.text(`Rs.${total.toFixed(2)}`,       TC[4].x, Y + 5, { width: TC[4].w, align: 'right',  lineBreak: false });
+      doc.text(status,                         TC[5].x, Y + 5, { lineBreak: false });
+
+      Y += TR;
+    });
+
+    // Table bottom border
+    doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
+    Y += 16;
+
+    // ═══════════════════════════════════════════════
+    // ORDER SUMMARY
+    // ═══════════════════════════════════════════════
+    const SX = PW - MR - 180;  // summary block starts here
+    const VX = PW - MR - 5;    // value right-edge
+
+    const summaryRows = [
+      { label: 'Subtotal:', value: `Rs.${(order.totalPrice || 0).toFixed(2)}`,  color: '#333333', bold: false },
+      { label: 'Discount:', value: `- Rs.${(order.discount || 0).toFixed(2)}`,  color: '#e74c3c', bold: false },
+    ];
+
+    summaryRows.forEach(row => {
+      drawText(row.label, SX, Y, 9, '#555555', row.bold);
+      doc.fontSize(9).fillColor(row.color).font('Helvetica')
+         .text(row.value, SX, Y, { width: 180, align: 'right', lineBreak: false });
+      Y += 16;
+    });
+
+    doc.moveTo(SX, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
+    Y += 8;
+
+    drawText('Total:', SX, Y, 11, '#D4B896', true);
+    doc.fontSize(11).fillColor('#D4B896').font('Helvetica-Bold')
+       .text(`Rs.${(order.finalAmount || 0).toFixed(2)}`, SX, Y, { width: 180, align: 'right', lineBreak: false });
+    Y += 40;
+
+    // ═══════════════════════════════════════════════
+    // FOOTER
+    // ═══════════════════════════════════════════════
+    doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
+    Y += 10;
+
+    doc.fontSize(8).fillColor('#aaaaaa').font('Helvetica')
+       .text('Thank you for shopping with Kids Fashion Store!',
+             ML, Y, { width: CW, align: 'center', lineBreak: false });
+    Y += 12;
+    doc.text('For any queries, please contact our support team.',
+             ML, Y, { width: CW, align: 'center', lineBreak: false });
+
+    doc.end();
+
+  } catch (error) {
+    console.error('Invoice generation error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: 'Error generating invoice' });
+    }
+  }
+};
 module.exports = {
   loadProfile,
   updateProfile,
@@ -1978,5 +2135,6 @@ module.exports = {
   cancelOrder,
     cancelOrderItem,    
   returnOrderItem,  
-   checkPhoneDuplicate 
+   checkPhoneDuplicate ,
+      generateInvoice,
 };

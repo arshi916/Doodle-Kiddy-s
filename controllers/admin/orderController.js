@@ -121,21 +121,7 @@ const viewOrder = async (req, res) => {
       shippingAddress = user.addresses[0];
     }
 
-    if (order.status === 'Pending') {
-      for (const item of order.orderedItemes) {
-        const product = await Product.findById(item.product);
-        if (product && product.quantity >= item.quantity) {
-          product.quantity -= item.quantity;
-          await product.save();
-        } else {
-          throw new Error(`Insufficient stock for product ${item.product}`);
-        }
-      }
-      order.status = 'Processing';
-      order.updatedAt = new Date();
-      await order.save();
-    }
-
+   
     if (req.xhr || req.headers.accept.indexOf('json') > -1) {
       return res.json({ 
         success: true, 

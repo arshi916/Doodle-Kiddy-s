@@ -3082,13 +3082,15 @@ function loadOrders() {
                             </div>
 
                             <div class="order-actions">
-                                <button class="btn btn-outline" onclick="showOrderDetails('${order._id}')">
-                                    <i class="fas fa-eye"></i> View Details
-                                </button>
-                                <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
-                                    <i class="fas fa-file-pdf"></i> Download Invoice
-                                </button>
-                            </div>
+    <button class="btn btn-outline" onclick="showOrderDetails('${order._id}')">
+        <i class="fas fa-eye"></i> View Details
+    </button>
+    ${order.status === 'Delivered' ? `
+        <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
+            <i class="fas fa-file-pdf"></i> Download Invoice
+        </button>
+    ` : ''}
+</div>
                         </div>
                     `;
                 }).join('');
@@ -3307,12 +3309,29 @@ function showOrderDetails(orderId) {
                     </div>
                     ${generateOrderTimeline(order.status, order.createdOn)}
 
-                    <!-- Order Actions -->
-                    <div class="order-actions" style="margin-top: 25px; display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
-                            <i class="fas fa-file-pdf"></i> Download Invoice
-                        </button>
-                    </div>
+                 <!-- Order Actions -->
+<div class="order-actions" style="margin-top: 25px; display: flex; gap: 12px; flex-wrap: wrap;">
+    ${order.status === 'Delivered' ? `
+        <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
+            <i class="fas fa-file-pdf"></i> Download Invoice
+        </button>
+    ` : `
+        <div style="
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(212,184,150,0.08);
+            border: 1px dashed #D4B896;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #999;
+        ">
+            <i class="fas fa-file-pdf" style="color: #D4B896;"></i>
+            Invoice available after delivery
+        </div>
+    `}
+</div>
                 </div>
             `;
 

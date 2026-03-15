@@ -113,5 +113,6 @@ router.post('/profile/cancel-order', userAuth, profileController.cancelOrder);
 router.post('/profile/return-order', userAuth, profileController.returnOrder);
 router.post('/profile/cancel-order-item', userAuth, profileController.cancelOrderItem);
 router.post('/profile/return-order-item', userAuth, profileController.returnOrderItem);
+router.get('/profile/generate-invoice/:id', userAuth, profileController.generateInvoice);
 
 module.exports = router; 
