@@ -6,7 +6,7 @@ const path = require("path");
 const MongoStore = require("connect-mongo");
 const session = require('express-session');
 const passport = require('./config/passport');
-
+const userMiddleware =require("./middlewares/userMiddleware")
 const userRouter = require('./routers/userRouter');
 const adminRouter = require("./routers/adminRouter");
 const StatusCodes = require('./config/statusCodes');
@@ -42,9 +42,10 @@ app.use((req, res, next) => {
     }
 });
 
-// ONLY USER SESSION GETS PASSPORT
+
 app.use(passport.initialize());
-app.use(passport.session()); // ← ONLY for user
+app.use(passport.session()); 
+app.use(userMiddleware)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

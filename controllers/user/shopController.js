@@ -13,7 +13,12 @@ const renderShopPage = async (req, res) => {
     const userId = req.session.user;
     let user = null;
     if (userId) {
-      user = await User.findById(userId).select('name email');
+      userData= await User.findById(userId)
+      if(userData && userData.isBlocked){
+        req.session.destroy()
+        return res.redirect("/login")
+      }
+      user=userData
     }
     const { maxPrice, category, color, search, page = 1, limit = 12 } = req.query;
     

@@ -7,7 +7,6 @@ const { profileUpload } = require("../middlewares/upload");
 const cartController = require("../controllers/user/cartController");
 const checkoutController = require("../controllers/user/checkoutController");
 const multer = require('multer');
-1
 const { userAuth } = require("../middlewares/auth");
 const upload = multer();
 
@@ -27,7 +26,6 @@ router.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/login?error=auth_failed",
-    failureFlash: true,
   }),
   (req, res) => {
     try {
@@ -98,13 +96,13 @@ router.get('/api/cart-summary', cartController.getCartSummary);
 router.get('/api/product-details/:productId', cartController.getProductDetails);
 
 
-router.get('/checkout', checkoutController.loadCheckout);
+router.get('/checkout',userAuth,  checkoutController.loadCheckout);
 
 router.post('/user/checkout/address', upload.none(), checkoutController.addAddressCheckout);
 router.get('/user/checkout/address/:id', checkoutController.getAddressCheckout);
 router.put('/user/checkout/address/:id', upload.none(), checkoutController.updateAddressCheckout);
 router.delete('/user/checkout/address/:id', checkoutController.deleteAddressCheckout);
-router.post('/checkout/process', upload.none(), checkoutController.processOrder);
+router.post('/checkout/process',userAuth,  upload.none(), checkoutController.processOrder);
 router.get('/order-success', checkoutController.orderSuccess);
 
 // Orders routes

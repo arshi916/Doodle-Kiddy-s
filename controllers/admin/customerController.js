@@ -53,6 +53,7 @@ const customerInfo = async (req, res) => {
 
 const toggleBlockStatus = async (req, res) => {
   try {
+    console.log("REQ BODY:", req.body)
     const userId = req.body.userId;
     const user = await User.findById(userId);
     if (!user) {

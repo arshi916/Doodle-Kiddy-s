@@ -80,7 +80,7 @@ const loadOrders = async (req, res) => {
       };
     });
 
-    res.render("user/orders", {
+    res.render("user/profile/orders", {
       user: await User.findById(userId).lean(),
       orders: transformedOrders
     });

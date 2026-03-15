@@ -77,10 +77,29 @@ const loadCheckout = async (req, res) => {
 
 const processOrder = async (req, res) => {
     try {
+
         const userId = req.session.user;
+
         if (!userId) {
             return res.json({ success: false, message: 'Please login to continue' });
         }
+
+       
+        const user = await User.findById(userId);
+
+        if(!user){
+            return res.json({success:false,message:"User not found"})
+        }
+
+      if (user.isBlocked) {
+    req.session.destroy();
+
+    return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked by admin"
+    });
+}
+
 
         const { selectedAddress, paymentMethod, orderNotes } = req.body;
         
@@ -104,10 +123,6 @@ const processOrder = async (req, res) => {
             return res.json({ success: false, message: 'Your cart is empty' });
         }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.json({ success: false, message: 'User not found' });
-        }
 
         let addressId;
 

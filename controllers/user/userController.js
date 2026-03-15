@@ -703,11 +703,16 @@ const getProducts = async (req, res) => {
 
 const renderShopPage = async (req, res) => {
  try {
-    const userId = req.session.user;
+     const userId = req.session.user;
     let user = null;
-    if (userId) {
-      user = await User.findById(userId).select('name email');
-    }
+  if (userId) {
+        userData= await User.findById(userId)
+        if(userData && userData.isBlocked){
+          req.session.destroy()
+          return res.redirect("/login")
+        }
+        user=userData
+      }
     const { maxPrice, category, color, search, page = 1, limit = 12 } = req.query;
     
     const activeCategories = await Category.find({

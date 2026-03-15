@@ -1421,7 +1421,7 @@
 
 document.getElementById('checkout-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     if (!validateForm()) {
         showAlert('error', 'Error', 'Please fill in all required fields correctly');
         return;
@@ -1430,17 +1430,15 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     const placeOrderBtn = document.getElementById('place-order-btn');
     const btnText = placeOrderBtn.querySelector('.btn-text');
     const loading = placeOrderBtn.querySelector('.loading');
-    
-    // Show loading state
+
     placeOrderBtn.disabled = true;
     btnText.style.display = 'none';
     loading.style.display = 'flex';
 
-    // Collect form data
     const formData = new FormData();
-    
+
     const currentMode = document.getElementById('new-address').classList.contains('show') ? 'new' : 'saved';
-    
+
     if (currentMode === 'saved') {
         const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked');
         if (selectedAddress) {
@@ -1456,10 +1454,10 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         formData.append('zipCode', document.getElementById('zipCode').value);
         formData.append('country', document.getElementById('country').value);
     }
-    
+
     const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
     formData.append('paymentMethod', selectedPayment ? selectedPayment.value : 'cod');
-    
+
     const orderNotes = document.getElementById('orderNotes').value;
     if (orderNotes) {
         formData.append('orderNotes', orderNotes);
@@ -1471,30 +1469,59 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         formData.append('expiryDate', document.getElementById('expiryDate').value);
         formData.append('cvv', document.getElementById('cvv').value);
     }
+
     fetch('/checkout/process', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(async response => {
+
+        if (response.status === 403) {
+            const data = await response.json();
+
+            showAlert('error','Blocked',data.message);
+
+            setTimeout(()=>{
+                window.location.href="/login";
+            },2000);
+
+            return;
+        }
+
+        return response.json();
+
+    })
     .then(data => {
+
+        if (!data) return;
+
         if (data.success) {
+
             showAlert('success', 'Success!', data.message);
-            
+
             setTimeout(() => {
                 window.location.href = '/order-success';
             }, 2000);
+
         } else {
+
             throw new Error(data.message || 'Failed to place order');
+
         }
+
     })
     .catch(error => {
+
         console.error('Error placing order:', error);
-        showAlert('error', 'Error', error.message || 'Error placing order. Please try again.');
-        
+
+        showAlert('error','Error',error.message);
+
         placeOrderBtn.disabled = false;
         btnText.style.display = 'inline';
         loading.style.display = 'none';
+
     });
+
 });
 function validateForm() {
     let isValid = true;
@@ -1634,51 +1661,6 @@ function validateForm() {
             e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
         });
 
-        document.getElementById('checkout-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (!validateForm()) {
-                showAlert('error', 'Error', 'Please fill in all required fields correctly');
-                return;
-            }
-
-            const placeOrderBtn = document.getElementById('place-order-btn');
-            const btnText = placeOrderBtn.querySelector('.btn-text');
-            const loading = placeOrderBtn.querySelector('.loading');
-            
-            placeOrderBtn.disabled = true;
-            btnText.style.display = 'none';
-            loading.style.display = 'flex';
-
-            setTimeout(() => {
-                const formData = new FormData(this);
-                
-                fetch('/user/checkout', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('success', 'Success!', 'Order placed successfully!');
-                        setTimeout(() => {
-                            window.location.href = `/order-confirmation/${data.orderId}`;
-                        }, 2000);
-                    } else {
-                        throw new Error(data.message || 'Failed to place order');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error placing order:', error);
-                    showAlert('error', 'Error', error.message || 'Error placing order. Please try again.');
-                    
-                    placeOrderBtn.disabled = false;
-                    btnText.style.display = 'inline';
-                    loading.style.display = 'none';
-                });
-            }, 2000);
-        });
-
         function showAlert(type, title, text) {
             Swal.fire({
                 icon: type,
@@ -1737,4 +1719,3 @@ function validateForm() {
     </script>
 </body>
 </html>
-
