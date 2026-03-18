@@ -29,6 +29,8 @@ const loadSignup = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
+
 const loadHomepage = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -347,6 +349,8 @@ const logout = async (req, res) => {
         res.redirect('/pageNotFound');
     }
 };
+
+
 const loadForgotPassword = (req, res) => {
     try {
         res.render("user/forgot-password", { message: null, error: null });
@@ -827,7 +831,7 @@ res.render('user/shop', {
       products: transformedProducts || [],
       totalProducts: validProducts.length,
       currentPage: Number(page),
-      totalPages: Math.ceil(totalProducts/ limit) || 1,
+      totalPages: Math.ceil(totalProducts/ Number(limit)),
       user: user,
 
       maxPrice: maxPrice || null,

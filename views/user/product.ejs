@@ -273,7 +273,7 @@
                 <!-- Quantity and Add to Cart -->
                 <div class="flex items-center gap-4">
                     <label class="text-base font-semibold text-gray-900" for="quantity">Quantity:</label>
-                    <input class="w-16 border border-gray-300 rounded text-base text-center py-1 focus:outline-none focus:ring-1 focus:ring-yellow-400" id="quantity" min="1" max="<%= product.quantity %>" type="number" value="1">
+                    <input class="w-16 border border-gray-300 rounded text-base text-center py-1 focus:outline-none focus:ring-1 focus:ring-yellow-400" id="quantity" min="1" max="<%= product.quantity > 5 ? 5 : product.quantity %>" type="number" value="1">
                     <button class="bg-gray-900 text-white text-base font-semibold py-2 px-6 rounded hover:bg-yellow-400 hover:text-gray-900 transition <%= product.quantity === 0 ? 'opacity-50 cursor-not-allowed' : '' %>" <%= product.quantity === 0 ? 'disabled' : '' %> onclick="addToCart()">
                         Add to Cart
                     </button>

@@ -651,7 +651,11 @@
                         <div class="quantity-controls">
                             <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', -1)">-</button>
                             <span class="qty-display" id="qty-<%= item.productId._id %>"><%= item.quantity %></span>
-                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', 1)">+</button>
+                   <button class="qty-btn"
+onclick="updateQuantity('<%= item.productId._id %>', 1)"
+<%= item.quantity >= 5 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : '' %>>
++
+</button>
                         </div>
                         <button class="remove-btn" onclick="removeItem('<%= item.productId._id %>')">
                             <i class="fas fa-trash"></i>

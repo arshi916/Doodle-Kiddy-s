@@ -9,13 +9,15 @@ const pageerror = async (req, res) => {
     });
 };
 
+
+
 const loadLogin = (req, res) => {      
-    console.log('Session on loadLogin:', req.session); 
     if (req.session.admin) {         
         return res.redirect("/admin"); 
     }      
     res.render("admin/admin-login", { message: null });
 };    
+
 
 const login = async (req, res) => {
     const { email, password } = req.body;

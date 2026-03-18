@@ -94,6 +94,13 @@ const addToCart = async (req, res) => {
 
         const newQty = existingIndex > -1 ? cart.items[existingIndex].quantity + quantity : quantity;
 
+        if(newQty>5){
+            return res.status(400).json({
+                success:false,
+                message:"Maximum 5 quantity allowed per product"
+            })
+        }
+
         if (newQty > product.quantity) {
             return res.status(400).json({ success: false, message: `Only ${product.quantity} items in stock` });
         }
@@ -194,6 +201,12 @@ const updateCartQuantity = async (req, res) => {
             return res.status(404).json({ success: false, message: "Item or cart not found" });
         }
 
+        if(quantity>5){
+            return res.status(400).json({
+                success:false,
+                message:"maximum 5 quantity allowed per product"
+            })
+        }
         if (quantity > product.quantity) {
             return res.status(400).json({ success: false, message: `Only ${product.quantity} items in stock` });
         }
@@ -248,7 +261,7 @@ const removeFromCart = async (req, res) => {
         }
 
     
-        const product = await Product.findById(productId);
+        // const product = await Product.findById(productId);
         // if (product) {
         //     product.quantity += cart.items[itemIndex].quantity;
         //     await product.save();

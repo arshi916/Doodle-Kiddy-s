@@ -963,25 +963,14 @@
             <div class="products-grid" id="productsGrid">
                 <!-- Products will be dynamically inserted here -->
             </div>
-            <div class="pagination flex items-center justify-center gap-4 mt-8">
-  <!-- Previous Button -->
-  <a href="?page=<%= currentPage - 1 %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= category ? '&category=' + category : '' %><%= color ? '&color=' + color : '' %><%= search ? '&search=' + search : '' %>"
-     class="pagination-btn px-6 py-3 rounded-xl font-medium transition-all <%= currentPage <= 1 ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-stone-600 text-white hover:bg-stone-700' %>"
-     <%= currentPage <= 1 ? 'onclick="return false;"' : '' %>>
+            <div class="pagination" id="paginationContainer" style="display:none;">
+  <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">
     Previous
-  </a>
-
-  <!-- Page Info -->
-  <span class="pagination-info text-gray-700 font-medium">
-    Page <%= currentPage %> of <%= totalPages %>
-  </span>
-
-  <!-- Next Button -->
-  <a href="?page=<%= currentPage + 1 %><%= maxPrice ? '&maxPrice=' + maxPrice : '' %><%= category ? '&category=' + category : '' %><%= color ? '&color=' + color : '' %><%= search ? '&search=' + search : '' %>"
-     class="pagination-btn px-6 py-3 rounded-xl font-medium transition-all <%= currentPage >= totalPages ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-stone-600 text-white hover:bg-stone-700' %>"
-     <%= currentPage >= totalPages ? 'onclick="return false;"' : '' %>>
+  </button>
+  <span class="pagination-info" id="pageInfo"></span>
+  <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">
     Next
-  </a>
+  </button>
 </div>
         </section>
     </main>
@@ -1547,14 +1536,38 @@ function confirmSelection(productId, productName, price) {
 
 // Update Pagination
 function updatePagination() {
-    const paginationInfo = document.querySelector('.pagination-info');
-    if (paginationInfo) {
-        paginationInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+    const container = document.getElementById('paginationContainer');
+    const prevBtn   = document.getElementById('prevBtn');
+    const nextBtn   = document.getElementById('nextBtn');
+    const pageInfo  = document.getElementById('pageInfo');
+
+    // Hide entirely if only 1 page
+    if (totalPages <= 1) {
+        container.style.display = 'none';
+        return;
     }
+
+    container.style.display = 'flex';
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    // Previous button
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.style.opacity  = currentPage <= 1 ? '0.5' : '1';
+    prevBtn.style.cursor   = currentPage <= 1 ? 'not-allowed' : 'pointer';
+
+    // Next button
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.style.opacity  = currentPage >= totalPages ? '0.5' : '1';
+    nextBtn.style.cursor   = currentPage >= totalPages ? 'not-allowed' : 'pointer';
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
+function changePage(direction) {
+    const newPage = currentPage + direction;
+    if (newPage < 1 || newPage > totalPages) return;
+    currentPage = newPage;
+    fetchProducts();
+    document.querySelector('.products-section').scrollIntoView({ behavior: 'smooth' });
+}document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, initializing...');
     fetchCategories();
     fetchProducts();

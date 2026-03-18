@@ -7,9 +7,6 @@ const path = require('path');
 
 const addProduct = async (req, res) => {
   try {
-    console.log('Add Product Request received');
-    console.log('Request body:', req.body);
-    console.log('Files received:', req.files);
 
     const imageFiles = req.files || [];
 
