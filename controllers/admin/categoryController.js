@@ -1,5 +1,5 @@
-const mongoose = require("mongoose"); 
-const Category = require("../../models/categorySchema");  
+import mongoose from "mongoose"; 
+import Category from "../../models/categorySchema.js";  
 
 const loadCategories = async (req, res) => {
   try {
@@ -408,12 +408,98 @@ const toggleCategoryStatus = async (req, res) => {
   } 
 };   
 
-module.exports = {   
+const addCategoryOffer = async (req, res) => {
+  try {
+    const { categoryId, discount, title, startDate, endDate } = req.body;
+
+    if (!categoryId || !discount || !title || !startDate || !endDate) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "All fields are required" 
+      });
+    }
+
+    const category = await Category.findById(categoryId);
+    if (!category || category.isDeleted) {
+      return res.status(404).json({ success: false, message: "Category not found" });
+    }
+
+    // Optional: Only allow offers on listed categories
+    if (!category.isListed) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot apply offer to unlisted category" 
+      });
+    }
+
+    category.categoryOffer = {
+      title: title.trim(),
+      discount: Number(discount),
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      isActive: true
+    };
+
+    await category.save();
+
+    res.json({
+      success: true,
+      message: `Offer applied successfully to "${category.name}"`,
+    });
+
+  } catch (err) {
+    console.error("Add category offer error:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+const getListedCategories = async (req, res) => {
+  try {
+    const categories = await Category.find({ 
+      isListed: true, 
+      isDeleted: false 
+    }).select("name _id categoryOffer").sort({ name: 1 });
+
+    res.json({ success: true, categories });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to fetch categories" });
+  }
+};
+const removeCategoryOffer = async (req, res) => {
+  try {
+    const { categoryId } = req.body;
+
+    const category = await Category.findById(categoryId);
+    if (!category || category.isDeleted) {
+      return res.status(404).json({ success: false, message: 'Category not found.' });
+    }
+
+    category.categoryOffer = {
+      title: '',
+      discount: 0,
+      startDate: null,
+      endDate: null,
+      isActive: false
+    };
+
+    await category.save();
+
+    res.json({ success: true, message: `Offer removed from "${category.name}".` });
+  } catch (err) {
+    console.error('removeCategoryOffer error:', err);
+    res.status(500).json({ success: false, message: 'Something went wrong.' });
+  }
+};
+
+export default{   
   loadCategories,   
   loadAddCategory,   
   addCategory,   
   loadEditCategory,   
   updateCategory,   
   toggleCategoryListing,
-  toggleCategoryStatus  
+  toggleCategoryStatus,
+  addCategoryOffer,
+   removeCategoryOffer,
+  getListedCategories
 };

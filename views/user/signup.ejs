@@ -224,9 +224,22 @@
           <%= message %>
         </div>
       <% } %>
+<!-- Referral Code (optional) -->
 
       <form id="signform" method="POST" action="/signup">
         
+         <div class="form-group">
+        <label for="referredBy">Referral Code <span style="color:#999;font-size:12px;">(Optional)</span></label>
+        <input 
+            type="text" 
+            id="referredBy" 
+            name="referredBy" 
+            placeholder="Enter referral code if you have one"
+            style="text-transform:uppercase;"
+            maxlength="12"
+        >
+        <div id="referral-feedback" style="font-size:12px;margin-top:5px;"></div>
+    </div>
 
         <div class="form-group">
           <label for="name">Full Name</label>
@@ -297,6 +310,29 @@
   </div>
 
   <script>
+ 
+document.getElementById('referredBy').addEventListener('input', async function () {
+    const code     = this.value.trim().toUpperCase();
+    const feedback = document.getElementById('referral-feedback');
+    this.value     = code;
+
+    if (code.length < 5) { feedback.textContent = ''; return; }
+
+    try {
+        const res  = await fetch(`/api/referral/validate?code=${code}`);
+        const data = await res.json();
+        if (data.valid) {
+            feedback.textContent = '✅ ' + data.message;
+            feedback.style.color = '#27ae60';
+        } else {
+            feedback.textContent = '❌ ' + (data.message || 'Invalid referral code');
+            feedback.style.color = '#e74c3c';
+        }
+    } catch (e) {
+        feedback.textContent = '';
+    }
+});
+
     const nameid = document.getElementById("name")
     const emailid = document.getElementById("email")
     const phoneid = document.getElementById("phone")
@@ -396,6 +432,13 @@
         }
       });
     });
-  </script>
+
+   const urlParams  = new URLSearchParams(window.location.search);
+const refCode    = urlParams.get('ref');
+if (refCode) {
+    const input = document.getElementById('referredBy');
+    if (input) input.value = refCode.toUpperCase();
+}
+</script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-const Product = require("../../models/productSchema");
-const Category = require("../../models/categorySchema");
-const sharp = require("sharp");
-const fs = require("fs");
-const multer = require('multer');
-const path = require('path');
+import Product from"../../models/productSchema.js";
+import Category from "../../models/categorySchema.js";
+import sharp from "sharp";
+import fs from "fs";
+import multer from 'multer';
+import path from 'path';
 
 const addProduct = async (req, res) => {
   try {
@@ -617,7 +617,7 @@ const updateProductPost = async (req, res) => {
   }
 };
 
-const DeleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => {
   try {
     const { productsId } = req.body;
     if (!productsId) {
@@ -683,8 +683,50 @@ const toggleBlockStatus = async (req, res) => {
     });
   }
 };
+const getListedProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ isDeleted: { $ne: true }, isBlocked: false })
+      .select('productName productOffer')
+      .sort({ productName: 1 });
+    res.json({ success: true, products });
+  } catch (error) {
+    res.json({ success: false, message: 'Failed to load products' });
+  }
+};
 
-module.exports = {
+const addProductOffer = async (req, res) => {
+  try {
+    const { productId, discount } = req.body;
+    const discountNum = Number(discount);
+
+    if (!productId || isNaN(discountNum) || discountNum < 0 || discountNum > 90) {
+      return res.json({ success: false, message: 'Invalid product or discount value (0–90%).' });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) return res.json({ success: false, message: 'Product not found.' });
+
+    if (discountNum === 0) {
+      // Remove offer — restore sale price to original or regularPrice - 1
+      product.productOffer = 0;
+      product.salePrice = product.regularPrice - 1;
+      await product.save();
+      return res.json({ success: true, message: `Offer removed from "${product.productName}".` });
+    }
+
+    const discountedPrice = product.regularPrice - Math.floor(product.regularPrice * discountNum / 100);
+    product.productOffer = discountNum;
+    product.salePrice    = discountedPrice;
+    await product.save();
+
+    res.json({ success: true, message: `${discountNum}% offer applied to "${product.productName}". New sale price: ₹${discountedPrice}` });
+  } catch (error) {
+    console.error('addProductOffer error:', error);
+    res.json({ success: false, message: 'Something went wrong.' });
+  }
+};
+
+export default {
   loadProductPage,
   addProduct,
   getAddProduct,
@@ -692,6 +734,8 @@ module.exports = {
   loadProducts,
   getEditProduct,
   updateProductPost,
-  DeleteProduct,
+  deleteProduct,
   toggleBlockStatus,
+   getListedProducts,  
+  addProductOffer, 
 };

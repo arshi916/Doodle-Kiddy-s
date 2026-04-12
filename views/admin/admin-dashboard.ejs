@@ -113,13 +113,7 @@
         <span class="font-medium">Categories</span>
       </a>
 
-      <!-- Offers -->
-      <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
-        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-        </svg>
-        <span class="font-medium">Offers</span>
-      </a>
+     
 
       <!-- Coupons -->
       <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
@@ -140,7 +134,7 @@
 
       <!-- Logout -->
       <div class="pt-4 mt-4 border-t border-stone-200">
-        <a href="/admin/logout" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 group">
+        <a href="#" onclick="showLogoutModal(event)" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 group">
           <svg class="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
           </svg>
@@ -632,6 +626,28 @@
     </main>
   </div>
 </div>
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 mb-2">Log out?</h2>
+    <p class="text-gray-500 text-sm mb-6">Are you sure you want to log out of the admin panel?</p>
+    <div class="flex gap-3 justify-center">
+      <button onclick="closeLogoutModal()" 
+              class="px-6 py-2.5 border border-stone-300 text-gray-600 rounded-xl hover:bg-stone-50 font-medium transition-all duration-200">
+        Cancel
+      </button>
+      <a href="/admin/logout" 
+         class="px-6 py-2.5 bg-gradient-to-r from-stone-600 to-amber-800 text-white rounded-xl hover:opacity-90 font-medium transition-all duration-200">
+        Yes, log out
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- Enhanced Interactive Scripts -->
 <script>
@@ -755,6 +771,22 @@
     setTimeout(() => {
       showNotification('Low stock alert for Running Shoes', 'warning');
     }, 15000);
+  });
+
+    function showLogoutModal(e) {
+    e.preventDefault();
+    document.getElementById('logout-modal').style.display = 'flex';
+  }
+  function closeLogoutModal() {
+    document.getElementById('logout-modal').style.display = 'none';
+  }
+  // Close on backdrop click
+  document.getElementById('logout-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeLogoutModal();
+  });
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLogoutModal();
   });
 </script>
 

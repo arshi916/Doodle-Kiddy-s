@@ -1,4 +1,4 @@
-const User = require("../../models/userSchema");
+import User from "../../models/userSchema.js";
 
 const countryStateData = {
   "India": [
@@ -391,7 +391,7 @@ const setDefaultAddress = async (req, res) => {
   }
 };
 
-module.exports = {
+export  {
   loadAddresses,
   addAddress,
   updateAddress,

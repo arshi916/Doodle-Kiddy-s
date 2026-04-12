@@ -1,17 +1,20 @@
-const User = require("../../models/userSchema");
-const Category = require("../../models/categorySchema");
-const Product = require("../../models/productSchema");
-const env = require("dotenv").config();
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcrypt");
-const mongoose = require('mongoose');
-const sharp = require("sharp");
-const fs = require("fs");
-const multer = require('multer');
-const path = require('path');
-const { exec } = require('child_process');
-const PDFDocument = require('pdfkit');
-
+import User from "../../models/userSchema.js";
+import Category from "../../models/categorySchema.js";
+import Product from "../../models/productSchema.js";
+import Order from "../../models/orderSchema.js";
+import dotenv from "dotenv";
+dotenv.config();
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+import sharp from "sharp";
+import fs from "fs";
+import multer from "multer";
+import path from "path";
+import { exec } from "child_process";
+import PDFDocument from "pdfkit";
+import Wallet from "../../models/walletSchema.js";
+import { creditWallet } from "./walletController.js";
 
 const countryStateData = {
   "India": [
@@ -1046,7 +1049,7 @@ const changePassword = async (req, res) => {
     delete req.session.passwordOtpSentAt;
 
     try {
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
           user: process.env.NODEMAILER_EMAIL,
@@ -1098,7 +1101,7 @@ const changePassword = async (req, res) => {
   }
 };
 
-const Order = require("../../models/orderSchema");
+
 
 
 const loadOrders = async (req, res) => {
@@ -1118,7 +1121,7 @@ const loadOrders = async (req, res) => {
     
    
     const orders = await Order.find({ address: userId })
-      .populate('orderedItemes.product', 'productName productImage finalPrice')
+      .populate('orderedItems.product', 'productName productImage finalPrice')
       .sort({ createdOn: -1 })
       .lean();
 
@@ -1161,8 +1164,8 @@ const loadOrders = async (req, res) => {
         console.log(`Order ID: ${orderIdValue}, Order Number: ${orderNumber}`);
         
        
-        const items = Array.isArray(order.orderedItemes) 
-          ? order.orderedItemes.map(item => {
+        const items = Array.isArray(order.orderedItems) 
+          ? order.orderedItems.map(item => {
               const product = item.product || {};
               return {
                 productId: product._id || null,
@@ -1178,8 +1181,8 @@ const loadOrders = async (req, res) => {
           : [];
         
        
-        const itemCount = Array.isArray(order.orderedItemes)
-          ? order.orderedItemes.reduce((sum, item) => sum + (item.quantity || 0), 0)
+        const itemCount = Array.isArray(order.orderedItems)
+          ? order.orderedItems.reduce((sum, item) => sum + (item.quantity || 0), 0)
           : 0;
         
         return {
@@ -1247,7 +1250,7 @@ const getOrderDetails = async (req, res) => {
       _id: orderId, 
       address: userId 
     })
-      .populate('orderedItemes.product', 'productName productImage finalPrice description')
+      .populate('orderedItems.product', 'productName productImage finalPrice description')
       .lean();
 
     if (!order) {
@@ -1290,7 +1293,7 @@ const getOrderDetails = async (req, res) => {
       invoiceDate: order.invoiceDate,
       paymentMethord:order.paymentMethord,
       paymentStatus :order.paymentStatus ||'pending',
-      items: (order.orderedItemes || []).map(item => {
+      items: (order.orderedItems || []).map(item => {
         const product = item.product || {};
         return {
           itemId: item._id ? item._id.toString() : null,
@@ -1390,7 +1393,7 @@ const returnOrder = async (req, res) => {
     const user = await User.findById(userId);
     if (user && user.email) {
       try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.NODEMAILER_EMAIL,
@@ -1463,7 +1466,7 @@ const cancelOrder = async (req, res) => {
     const order = await Order.findOne({ 
       _id: orderId, 
       address: userId 
-    }).populate('orderedItemes.product');
+    }).populate('orderedItems.product');
 
     if (!order) {
       return res.json({ 
@@ -1481,7 +1484,7 @@ const cancelOrder = async (req, res) => {
     }
 
   
-    for (const item of order.orderedItemes) {
+    for (const item of order.orderedItems) {
       if (item.product && item.product._id) {
         await Product.findByIdAndUpdate(
           item.product._id,
@@ -1497,11 +1500,19 @@ const cancelOrder = async (req, res) => {
     order.updatedAt = new Date();
 
     await order.save();
+    if (order.paymentMethod !== 'cod') {
+    await creditWallet(
+        userId,
+        order.finalAmount,
+        `Refund for cancelled order #${String(order.orderId).slice(-8).toUpperCase()}`,
+        order._id
+    );
+}
 
     const user = await User.findById(userId);
     if (user && user.email) {
       try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.NODEMAILER_EMAIL,
@@ -1579,7 +1590,7 @@ const cancelOrderItem = async (req, res) => {
     const order = await Order.findOne({ 
       _id: orderId, 
       address: userId 
-    }).populate('orderedItemes.product');
+    }).populate('orderedItems.product');
 
     if (!order) {
       return res.json({ 
@@ -1595,7 +1606,7 @@ const cancelOrderItem = async (req, res) => {
       });
     }
 
-    const itemIndex = order.orderedItemes.findIndex(
+    const itemIndex = order.orderedItems.findIndex(
       item => item._id.toString() === itemId
     );
 
@@ -1606,7 +1617,7 @@ const cancelOrderItem = async (req, res) => {
       });
     }
 
-    const item = order.orderedItemes[itemIndex];
+    const item = order.orderedItems[itemIndex];
 
   
     if (item.status === 'Cancelled') {
@@ -1628,17 +1639,17 @@ const cancelOrderItem = async (req, res) => {
     const itemRefund = item.price * item.quantity;
 
     
-    order.orderedItemes[itemIndex].status = 'Cancelled';
-    order.orderedItemes[itemIndex].cancellationReason = reason;
-    order.orderedItemes[itemIndex].cancellationComments = comments;
-    order.orderedItemes[itemIndex].cancelledDate = new Date();
+    order.orderedItems[itemIndex].status = 'Cancelled';
+    order.orderedItems[itemIndex].cancellationReason = reason;
+    order.orderedItems[itemIndex].cancellationComments = comments;
+    order.orderedItems[itemIndex].cancelledDate = new Date();
 
    
     order.totalPrice -= itemRefund;
     order.finalAmount -= itemRefund;
 
     
-    const allItemsCancelled = order.orderedItemes.every(
+    const allItemsCancelled = order.orderedItems.every(
       item => item.status === 'Cancelled'
     );
 
@@ -1649,11 +1660,18 @@ const cancelOrderItem = async (req, res) => {
     order.updatedAt = new Date();
     await order.save();
 
- 
+ if (order.paymentMethod !== 'cod' && order.paymentMethod !== 'Cash on Delivery') {
+    await creditWallet(
+        userId,
+        itemRefund,
+        `Refund for cancelled item in order #${String(order.orderId).slice(-8).toUpperCase()}`,
+        order._id
+    );
+}
     const user = await User.findById(userId);
     if (user && user.email) {
       try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.NODEMAILER_EMAIL,
@@ -1726,7 +1744,7 @@ const returnOrderItem = async (req, res) => {
     const order = await Order.findOne({ 
       _id: orderId, 
       address: userId 
-    }).populate('orderedItemes.product');
+    }).populate('orderedItems.product');
 
     if (!order) {
       return res.json({ 
@@ -1735,7 +1753,7 @@ const returnOrderItem = async (req, res) => {
       });
     }
 
-    const itemIndex = order.orderedItemes.findIndex(
+    const itemIndex = order.orderedItems.findIndex(
       item => item._id.toString() === itemId
     );
 
@@ -1746,7 +1764,7 @@ const returnOrderItem = async (req, res) => {
       });
     }
 
-    const item = order.orderedItemes[itemIndex];
+    const item = order.orderedItems[itemIndex];
 
    
     if (item.status === 'Return Request' || item.status === 'Returned') {
@@ -1776,10 +1794,10 @@ const returnOrderItem = async (req, res) => {
     }
 
     
-    order.orderedItemes[itemIndex].status = 'Return Request';
-    order.orderedItemes[itemIndex].returnReason = reason;
-    order.orderedItemes[itemIndex].returnComments = comments;
-    order.orderedItemes[itemIndex].returnRequestedDate = new Date();
+    order.orderedItems[itemIndex].status = 'Return Request';
+    order.orderedItems[itemIndex].returnReason = reason;
+    order.orderedItems[itemIndex].returnComments = comments;
+    order.orderedItems[itemIndex].returnRequestedDate = new Date();
 
     order.updatedAt = new Date();
     await order.save();
@@ -1788,7 +1806,7 @@ const returnOrderItem = async (req, res) => {
     const user = await User.findById(userId);
     if (user && user.email) {
       try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: process.env.NODEMAILER_EMAIL,
@@ -1851,7 +1869,7 @@ const generateInvoice = async (req, res) => {
     const orderId = req.params.id;
 
     const order = await Order.findOne({ _id: orderId, address: userId })
-      .populate('orderedItemes.product', 'productName productImage')
+      .populate('orderedItems.product', 'productName productImage')
       .lean();
 
     if (!order) {
@@ -2037,7 +2055,7 @@ const generateInvoice = async (req, res) => {
     Y += TH + 2;
 
     // Data rows
-    (order.orderedItemes || []).forEach((item, index) => {
+    (order.orderedItems || []).forEach((item, index) => {
       const product   = item.product  || {};
       const qty       = item.quantity || 1;
       const unitPrice = item.price    || 0;
@@ -2110,7 +2128,7 @@ const generateInvoice = async (req, res) => {
     }
   }
 };
-module.exports = {
+export default {
   loadProfile,
   updateProfile,
   updateAvatar,
@@ -2130,7 +2148,7 @@ module.exports = {
   resendPasswordOtp,
     loadOrders,
   getOrderDetails,
-  generateInvoice,
+
     returnOrder,
   cancelOrder,
     cancelOrderItem,    

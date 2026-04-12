@@ -1,83 +1,115 @@
-require('dotenv').config();
+import dotenv from "dotenv";
+dotenv.config();
 
-const express = require('express');
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+
+import MongoStore from "connect-mongo";
+import session from "express-session";
+
+import passport from "./config/passport.js";
+import userMiddleware from "./middlewares/userMiddleware.js";
+
+import userRouter from "./routers/userRouter.js";
+import adminRouter from "./routers/adminRouter.js";
+
+import StatusCodes from "./config/statusCodes.js";
+import db from "./config/db.js";
+
+// __dirname fix for ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const path = require("path");
-const MongoStore = require("connect-mongo");
-const session = require('express-session');
-const passport = require('./config/passport');
-const userMiddleware =require("./middlewares/userMiddleware")
-const userRouter = require('./routers/userRouter');
-const adminRouter = require("./routers/adminRouter");
-const StatusCodes = require('./config/statusCodes');
-const db = require('./config/db');
+
+// DB connection
 db();
 
-// USER SESSION (with Passport)\
+// USER SESSION
 const userSession = session({
-    name: 'connect.sid_user',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { secure: false, httpOnly: true, maxAge: 72*60*60*1000, path: '/' }
+  name: "connect.sid_user",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 72 * 60 * 60 * 1000,
+    path: "/",
+  },
 });
 
-// ADMIN SESSION (NO Passport)
+// ADMIN SESSION
 const adminSession = session({
-    name: 'connect.sid_admin',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: { secure: false, httpOnly: true, maxAge: 72*60*60*1000, path: '/admin' }
+  name: "connect.sid_admin",
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 72 * 60 * 60 * 1000,
+    path: "/", 
+  },
 });
 
-// APPLY CORRECT SESSION
+// APPLY SESSION
 app.use((req, res, next) => {
-    if (req.path.startsWith('/admin')) {
-        adminSession(req, res, next);
-    } else {
-        userSession(req, res, next);
-    }
+  if (req.path.startsWith("/admin")) {
+    adminSession(req, res, next);
+  } else {
+    userSession(req, res, next);
+  }
 });
-
-
-app.use(passport.initialize());
-app.use(passport.session()); 
-app.use(userMiddleware)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(userMiddleware);
 
-app.post('/clear-popup-message', (req, res) => {
-    delete req.session.popupMessage;
-    res.sendStatus(200);
+
+
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// clear popup
+app.post("/clear-popup-message", (req, res) => {
+  delete req.session.popupMessage;
+  res.sendStatus(200);
 });
 
-app.use('/', userRouter);
-app.use('/admin', adminRouter);
+// routes
+app.use("/", userRouter);
+app.use("/admin", adminRouter);
 
+// 404
 app.use((req, res) => {
-    res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Route not found' });
+  res.status(StatusCodes.NOT_FOUND).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
+// error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Something went wrong!',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+  console.error(err.stack);
+  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+    success: false,
+    message: "Something went wrong!",
+    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+  });
 });
 
 app.listen(process.env.PORT, () => {
-    console.log('Server Running on port', process.env.PORT);
+  console.log("Server Running on port", process.env.PORT);
 });
 
-module.exports = app;
+export default app;

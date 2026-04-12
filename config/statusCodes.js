@@ -10,5 +10,5 @@ const StatusCodes = {
   
 };
 
-module.exports = StatusCodes;
+export default StatusCodes;
 

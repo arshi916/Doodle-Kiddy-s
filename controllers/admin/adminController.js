@@ -1,6 +1,6 @@
-const User = require("../../models/userSchema"); 
-const mongoose = require("mongoose"); 
-const bcrypt = require("bcrypt");  
+import User from "../../models/userSchema.js"; 
+import mongoose from "mongoose"; 
+import bcrypt from "bcrypt";  
 
 const pageerror = async (req, res) => {
     res.render("admin/admin-error", {
@@ -72,7 +72,7 @@ const logout = async (req, res) => {
         res.redirect('/pageerror');
     }
 };
-module.exports = {     
+export default {     
     loadLogin,
     login,
     loadDashboard,

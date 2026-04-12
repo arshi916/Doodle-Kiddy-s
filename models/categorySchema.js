@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const categorySchema = new Schema({
@@ -20,12 +20,13 @@ const categorySchema = new Schema({
     type: Boolean,
     default: true
   },
-  categoryOffer: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100
-  },
+ categoryOffer: {
+  title: { type: String, default: '' },
+  discount: { type: Number, default: 0 },
+  startDate: { type: Date },
+  endDate: { type: Date },
+  isActive: { type: Boolean, default: false }
+},
   createdAt: {
     type: Date,
     default: Date.now
@@ -52,4 +53,4 @@ categorySchema.pre('save', function(next) {
 });
 
 const Category = mongoose.model("Category", categorySchema);
-module.exports = Category;
+export default Category;

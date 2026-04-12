@@ -1,5 +1,5 @@
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const productSchema = new Schema({
@@ -33,11 +33,10 @@ const productSchema = new Schema({
     required: true,
     min: 0
   },
-  productOffer: { 
-    type: Number, 
-    default: 0,
-    min: 0
-  },
+productOffer: {
+  type: Number,
+  default: 0
+},
   quantity: { 
     type: Number, 
     default: 0,
@@ -131,4 +130,4 @@ productSchema.pre('save', function(next) {
 });
 
 const Product = mongoose.model("Product", productSchema);
-module.exports = Product;
+export default Product;

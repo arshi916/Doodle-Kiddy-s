@@ -1,11 +1,12 @@
-const Order = require("../../models/orderSchema");
-const User = require("../../models/userSchema");
-const Product = require("../../models/productSchema");
-const nodemailer = require("nodemailer");
-const env = require("dotenv").config();
-const { exec } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import Order from "../../models/orderSchema.js";
+import User from "../../models/userSchema.js";
+import Product from "../../models/productSchema.js";
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
+import { exec } from "child_process";
+import path from "path";
+import fs from "fs";
 
 const loadOrders = async (req, res) => {
   try {
@@ -534,7 +535,7 @@ const generateInvoice = async (req, res) => {
   }
 };
 
-module.exports = {
+export default {
   loadOrders,
   getOrderDetails,
   cancelOrder,

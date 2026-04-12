@@ -1,4 +1,4 @@
-const mongoosw = require ("mongoose");
+import mongoose from"mongoose";
 const {Schema} = mongoose;
 
 const couponSchema = new mongoose.Schema({
@@ -6,11 +6,11 @@ const couponSchema = new mongoose.Schema({
         type:String,
         required : true,
         unique : true,
+        uppercase : true,
     },
     createdOn : {
         type:Date,
         default : Date.now,
-        required :true
     },
     expireOn:{
         type:Date,
@@ -28,12 +28,11 @@ const couponSchema = new mongoose.Schema({
         type:Boolean,
         default:true,
     },
-    userId:[{
+    userBy:[{
         type:mongoose.Schema.Types.ObjectId,
         ref : "User"
     }]
 })
 
-const Coupon = mongoose .model('Coupon',couponSchema);
-
-module.exports = Coupon;
+const Coupon = mongoose.model('Coupon', couponSchema);
+export default Coupon;

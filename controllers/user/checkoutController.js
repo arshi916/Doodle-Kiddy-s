@@ -1,71 +1,67 @@
-const User = require("../../models/userSchema");
-const Category = require("../../models/categorySchema");
-const Product = require("../../models/productSchema");
-const Cart = require("../../models/cartSchema");
-const Order = require("../../models/orderSchema");
-const env = require("dotenv").config();
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcrypt");
-const mongoose = require('mongoose');
+import User     from "../../models/userSchema.js";
+import Category  from "../../models/categorySchema.js";
+import Product   from "../../models/productSchema.js";
+import Cart      from "../../models/cartSchema.js";
+import Order     from "../../models/orderSchema.js";
+import Coupon    from "../../models/couponSchema.js";
+import { getOrCreateWallet, debitWallet } from "../user/walletController.js";
+import dotenv    from "dotenv";
+dotenv.config();
+import { createTransport } from "nodemailer";
+import bcrypt      from "bcrypt";
+import mongoose    from "mongoose";
 
 const countryStateData = {
-  "India": [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
-    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
-    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", 
-    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
-    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", 
-    "Delhi", "Jammu and Kashmir", "Ladakh", "Puducherry", "Chandigarh", 
-    "Dadra and Nagar Haveli and Daman and Diu", "Lakshadweep", "Andaman and Nicobar Islands"
-  ]
+    "India": [
+        "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+        "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+        "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+        "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu",
+        "Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
+        "Delhi","Jammu and Kashmir","Ladakh","Puducherry","Chandigarh",
+        "Dadra and Nagar Haveli and Daman and Diu","Lakshadweep","Andaman and Nicobar Islands"
+    ]
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const loadCheckout = async (req, res) => {
     try {
-        console.log("User session:", req.session.user); 
         const userId = req.session.user;
-        if (!userId) {
-            console.log("No session, redirecting to /login");
-            return res.redirect('/login');
-        }
+        if (!userId) return res.redirect('/login');
+
         const user = await User.findById(userId).lean();
-        if (!user) {
-            return res.redirect('/login');
-        }
+        if (!user)  return res.redirect('/login');
 
         let cart = await Cart.findOne({ userId }).populate({
-            path: 'items.productId',
+            path:   'items.productId',
             select: 'productName finalPrice productImage'
         });
 
-        if (!cart || cart.items.length === 0) {
-            console.log("Cart empty, redirecting to /cart");
-            return res.redirect('/cart');
-        }
+        if (!cart || cart.items.length === 0) return res.redirect('/cart');
 
         const baseUrl = req.protocol + '://' + req.get('host') + '/images/';
         const transformedCart = {
-            _id: cart._id,
+            _id:    cart._id,
             userId: cart.userId,
-            items: cart.items.map(item => ({
-                _id: item._id,
-                productId: item.productId._id,
-                productName: item.productId.productName,
-                price: item.price,
-                quantity: item.quantity,
-                totalPrice: item.totalPrice,
-                productImage: item.productId.productImage[0] ? baseUrl + item.productId.productImage[0] : null
+            items:  cart.items.map(item => ({
+                _id:          item._id,
+                productId:    item.productId._id,
+                productName:  item.productId.productName,
+                price:        item.price,
+                quantity:     item.quantity,
+                totalPrice:   item.totalPrice,
+                productImage: item.productId.productImage[0]
+                    ? baseUrl + item.productId.productImage[0]
+                    : null
             })),
-            totalQuantity: cart.items.reduce((sum, item) => sum + item.quantity, 0)
+            totalQuantity: cart.items.reduce((s, i) => s + i.quantity, 0)
         };
 
-        console.log("items passed to checkout", transformedCart.items);
-        
-        res.render('user/checkout', { 
-            cart: transformedCart, 
-            user: user,
-            addresses: user.addresses || [],
-            countries: Object.keys(countryStateData),
+        res.render('user/checkout', {
+            cart:             transformedCart,
+            user:             user,
+            addresses:        user.addresses || [],
+            countries:        Object.keys(countryStateData),
             countryStateData: JSON.stringify(countryStateData)
         });
     } catch (error) {
@@ -75,459 +71,461 @@ const loadCheckout = async (req, res) => {
 };
 
 
+const sendOrderConfirmationEmail = async (user, order, address, items) => {
+  const transporter = createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.NODEMAILER_EMAIL,
+            pass: process.env.NODEMAILER_PASSWORD,
+        },
+    });
+
+    const itemRows = items.map(item => `
+        <tr>
+            <td style="padding:8px;border-bottom:1px solid #eee;">${item.productId?.productName || 'Product'}</td>
+            <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+            <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${(item.totalPrice || 0).toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    await transporter.sendMail({
+        from: process.env.NODEMAILER_EMAIL,
+        to: user.email,
+        subject: `Order Confirmed! #${String(order.orderId || order._id).slice(-8).toUpperCase()}`,
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                <h2 style="color:#D4B896;">Order Confirmed! 🎉</h2>
+                <p>Hi ${user.name}, your order has been placed successfully.</p>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f8f8f8;">
+                            <th style="padding:8px;text-align:left;">Product</th>
+                            <th style="padding:8px;">Qty</th>
+                            <th style="padding:8px;text-align:right;">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itemRows}</tbody>
+                </table>
+                <p style="margin-top:16px;"><strong>Total: ₹${order.finalAmount.toFixed(2)}</strong></p>
+                <p>Payment: ${order.paymentMethod} | Status: ${order.paymentStatus}</p>
+                ${address ? `<p>Shipping to: ${address.address}, ${address.city}, ${address.state} - ${address.zipCode}</p>` : ''}
+                <p style="color:#888;font-size:12px;">Thank you for shopping with Doodle Kiddys!</p>
+            </div>
+        `,
+    });
+};
+
 const processOrder = async (req, res) => {
     try {
-
         const userId = req.session.user;
+        if (!userId) return res.json({ success: false, message: 'Please login to continue' });
 
-        if (!userId) {
-            return res.json({ success: false, message: 'Please login to continue' });
-        }
-
-       
         const user = await User.findById(userId);
+        if (!user)  return res.json({ success: false, message: 'User not found' });
 
-        if(!user){
-            return res.json({success:false,message:"User not found"})
+        if (user.isBlocked) {
+            req.session.destroy();
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been blocked by admin"
+            });
         }
 
-      if (user.isBlocked) {
-    req.session.destroy();
-
-    return res.status(403).json({
-        success: false,
-        message: "Your account has been blocked by admin"
-    });
-}
-
-
-        const { selectedAddress, paymentMethod, orderNotes } = req.body;
-        
-        console.log('Order processing data:', {
-            selectedAddress,
-            paymentMethod,
-            orderNotes,
-            userId
-        });
+        const { selectedAddress, paymentMethod, orderNotes, couponCode } = req.body;
 
         if (!paymentMethod) {
             return res.json({ success: false, message: 'Please select a payment method' });
         }
 
         const cart = await Cart.findOne({ userId }).populate({
-            path: 'items.productId',
-            select: 'productName finalPrice productImage quantity status isBlocked' 
+            path:   'items.productId',
+            select: 'productName finalPrice productImage quantity status isBlocked'
         });
 
         if (!cart || cart.items.length === 0) {
             return res.json({ success: false, message: 'Your cart is empty' });
         }
 
-
+        // ── Resolve address ───────────────────────────────────────────────────
         let addressId;
-
         if (selectedAddress) {
-            const foundAddress = user.addresses.find(addr => addr._id.toString() === selectedAddress);
-            if (!foundAddress) {
-                return res.json({ success: false, message: 'Selected address not found' });
-            }
+            const found = user.addresses.find(a => a._id.toString() === selectedAddress);
+            if (!found) return res.json({ success: false, message: 'Selected address not found' });
             addressId = selectedAddress;
         } else {
             const { addressType, firstName, phone, address, city, state, zipCode, country } = req.body;
-            
             if (!firstName || !phone || !address || !city || !state || !zipCode || !country) {
                 return res.json({ success: false, message: 'Please provide complete address information' });
             }
-
             const newAddress = {
                 addressType: addressType || 'Home',
                 name: firstName,
                 phone: phone.replace(/\D/g, ''),
-                address,
-                city,
-                state,
-                zipCode,
-                country,
-                isDefault: user.addresses.length === 0 
+                address, city, state, zipCode, country,
+                isDefault: user.addresses.length === 0
             };
-
             user.addresses.push(newAddress);
             await user.save();
             addressId = newAddress._id;
         }
 
+        // ── Stock validation ──────────────────────────────────────────────────
         for (let item of cart.items) {
             const product = item.productId;
-
-            if (product.isBlocked === true) {
-                return res.json({ 
-                    success: false, 
-                    message: `${product.productName} is currently unavailable for purchase.` 
-                });
+            if (product.isBlocked) {
+                return res.json({ success: false, message: `${product.productName} is currently unavailable.` });
             }
-
             if (product.quantity < item.quantity) {
-                return res.json({ 
-                    success: false, 
-                    message: `${product.productName} has insufficient stock. Only ${product.quantity} left (you requested ${item.quantity}).` 
+                return res.json({
+                    success: false,
+                    message: `${product.productName} has insufficient stock. Only ${product.quantity} left.`
                 });
             }
-
             if (product.status === "out of stock") {
-                return res.json({ 
-                    success: false, 
-                    message: `${product.productName} is currently out of stock.` 
+                return res.json({ success: false, message: `${product.productName} is currently out of stock.` });
+            }
+        }
+
+        // ── Calculate totals ──────────────────────────────────────────────────
+        const subtotal    = cart.items.reduce((s, i) => s + i.totalPrice, 0);
+        const shipping    = subtotal > 2500 ? 0 : 99;
+        const tax         = subtotal * 0.18;
+        const totalPrice  = subtotal + shipping + tax;
+
+        // ── Coupon validation ─────────────────────────────────────────────────
+        let discount      = 0;
+        let couponApplied = false;
+        let appliedCoupon = null;
+
+        if (couponCode && couponCode.trim()) {
+            const coupon = await Coupon.findOne({ name: couponCode.trim().toUpperCase() });
+
+            if (!coupon) {
+                return res.json({ success: false, message: 'Invalid coupon code' });
+            }
+            if (!coupon.islist) {
+                return res.json({ success: false, message: 'This coupon is no longer active' });
+            }
+            if (new Date() > new Date(coupon.expireOn)) {
+                return res.json({ success: false, message: 'This coupon has expired' });
+            }
+            if (coupon.userBy.map(id => id.toString()).includes(userId.toString())) {
+                return res.json({ success: false, message: 'You have already used this coupon' });
+            }
+            if (subtotal < coupon.minimumPrice) {
+                return res.json({
+                    success: false,
+                    message: `Minimum order value of ₹${coupon.minimumPrice.toFixed(2)} required for this coupon`
+                });
+            }
+
+            discount      = coupon.offerPrice;
+            couponApplied = true;
+            appliedCoupon = coupon;
+        }
+
+        const finalAmount = Math.max(0, totalPrice - discount);
+
+        // ── Wallet payment validation ─────────────────────────────────────────
+        if (paymentMethod === 'wallet') {
+            const wallet = await getOrCreateWallet(userId);
+            if (wallet.balance < finalAmount) {
+                return res.json({
+                    success: false,
+                    message: `Insufficient wallet balance. Available: ₹${wallet.balance.toFixed(2)}, Required: ₹${finalAmount.toFixed(2)}`
                 });
             }
         }
 
-        const subtotal = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
-        const shippingCost = subtotal > 2500 ? 0 : 99;
-        const tax = subtotal * 0.18; 
-        const discount = 0; 
-        const totalPrice = subtotal + shippingCost + tax;
-        const finalAmount = totalPrice - discount;
-
-        // Determine payment status based on payment method
+        // ── Determine payment status ──────────────────────────────────────────
         let paymentStatus = 'Pending';
-        if (paymentMethod === 'Cash on Delivery') {
-            paymentStatus = 'Pending';
-        } else if (paymentMethod === 'Razorpay') {
-            paymentStatus = 'Completed'; // You can change this based on actual payment verification
-        }
+        if (paymentMethod === 'wallet')                                       paymentStatus = 'Completed';
+        else if (paymentMethod === 'Cash on Delivery' || paymentMethod === 'cod') paymentStatus = 'Pending';
+        else if (paymentMethod === 'razorpay')                                paymentStatus = 'Completed';
 
-        // Create order data with payment method
+        // ── Create order ──────────────────────────────────────────────────────
         const orderData = {
-            orderedItemes: cart.items.map(item => ({
-                product: item.productId._id,
+            orderedItems: cart.items.map(item => ({
+                product:  item.productId._id,
                 quantity: item.quantity,
-                price: item.price
+                price:    item.price
             })),
-            totalPrice: totalPrice,
-            discount: discount,
-            finalAmount: finalAmount,
-            address: userId,
+            totalPrice,
+            discount,
+            finalAmount,
+            address:           userId,
             selectedAddressId: addressId,
-            paymentMethod: paymentMethod, // ADD THIS
-            paymentStatus: paymentStatus, // ADD THIS
-            invoiceDate: new Date(),
-            status: 'Pending',
-            createdOn: new Date(),
-            couponApplied: false
+            paymentMethod,
+            paymentStatus,
+            invoiceDate:   new Date(),
+            status:        'Pending',
+            createdOn:     new Date(),
+            couponApplied
         };
 
-        console.log('Creating order with data:', orderData);
-
-        const order = new Order(orderData);
+        const order      = new Order(orderData);
         const savedOrder = await order.save();
 
-        // Update product quantities
+        // ── Mark coupon as used ───────────────────────────────────────────────
+        if (couponApplied && appliedCoupon) {
+            await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+                $push: { userBy: userId }
+            });
+        }
+
+        // ── Debit wallet if wallet payment ────────────────────────────────────
+        if (paymentMethod === 'wallet') {
+            await debitWallet(
+                userId,
+                finalAmount,
+                `Payment for order #${String(savedOrder.orderId || savedOrder._id).slice(-8).toUpperCase()}`,
+                savedOrder._id
+            );
+        }
+
+        // ── Deduct stock ──────────────────────────────────────────────────────
         for (let item of cart.items) {
             const product = await Product.findById(item.productId._id);
             product.quantity -= item.quantity;
-
-            if (product.quantity === 0) {
-                product.status = "out of stock";
-            }
-
+            if (product.quantity === 0) product.status = "out of stock";
             await product.save();
         }
 
-        // Clear cart
+        // ── Clear cart ────────────────────────────────────────────────────────
         await Cart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
 
-        // Send order confirmation email
+        // ── Confirmation email (best-effort) ──────────────────────────────────
         try {
-            const selectedAddressData = user.addresses.find(addr => addr._id.toString() === addressId);
+            const selectedAddressData = user.addresses.find(
+                a => a._id.toString() === addressId.toString()
+            );
             await sendOrderConfirmationEmail(user, savedOrder, selectedAddressData, cart.items);
         } catch (emailError) {
             console.error('Error sending order confirmation email:', emailError);
-            // Don't fail the order if email fails
         }
 
-        console.log('Order created successfully:', savedOrder._id);
-
-        res.json({ 
-            success: true, 
-            message: 'Order placed successfully!',
-            orderId: savedOrder._id,
+        return res.json({
+            success:     true,
+            message:     'Order placed successfully!',
+            orderId:     savedOrder._id,
             orderNumber: savedOrder.orderId || savedOrder._id.toString().slice(-8).toUpperCase()
         });
 
     } catch (error) {
         console.error("Error processing order:", error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error placing order. Please try again.',
-            error: error.message
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Error placing order. Please try again.'
         });
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const orderSuccess = async (req, res) => {
     try {
         const userId = req.session.user;
-        if (!userId) {
-            return res.redirect('/login');
-        }
+        if (!userId) return res.redirect('/login');
 
+        // ── Fetch the most recent order for this user ─────────────────────
         const order = await Order.findOne({ address: userId })
-            .populate('orderedItemes.product', 'productName productImage finalPrice')
-            .sort({ createdOn: -1 });
-        
-        if (!order) {
-            return res.redirect('/');
-        }
+            .sort({ createdOn: -1 })
+            .populate('orderedItems.product', 'productName productImage finalPrice')
+            .lean();
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.redirect('/');
-        }
+        if (!order) return res.redirect('/');
 
-        // Get the selected address from the order
+        const user = await User.findById(userId).lean();
+        if (!user)  return res.redirect('/');
+
+        // ── Resolve shipping address ──────────────────────────────────────
         let shippingAddress = null;
         if (order.selectedAddressId) {
-            shippingAddress = user.addresses.find(addr => 
-                addr._id.toString() === order.selectedAddressId.toString()
+            shippingAddress = user.addresses.find(
+                a => a._id.toString() === order.selectedAddressId.toString()
             );
         }
-        
-        // Fallback to default address if not found
         if (!shippingAddress) {
-            shippingAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
+            shippingAddress = user.addresses.find(a => a.isDefault) || user.addresses[0];
         }
-        
         if (!shippingAddress) {
             shippingAddress = {
-                name: user.name || 'Customer',
-                address: 'Address not found',
-                city: 'N/A',
-                state: 'N/A',
-                zipCode: 'N/A',
-                phone: user.phone || 'N/A'
+                name: user.name || 'Customer', address: 'Address not found',
+                city: 'N/A', state: 'N/A', zipCode: 'N/A', phone: user.phone || 'N/A'
             };
         }
 
+        // ── Transform order ───────────────────────────────────────────────
+        const rawItems = order.orderedItems || order.orderedItemes || [];
+
         const transformedOrder = {
-            _id: order._id,
-            orderId: order.orderId,
-            totalAmount: order.finalAmount,
-            orderStatus: order.status,
-            paymentMethod: order.paymentMethod || 'Cash on Delivery', // UPDATE THIS
-            paymentStatus: order.paymentStatus || 'Pending', // ADD THIS
-            items: order.orderedItemes.map(item => ({
-                productName: item.product ? item.product.productName : 'Product not found',
-                quantity: item.quantity,
-                totalPrice: item.price * item.quantity,
-                productImage: item.product && item.product.productImage ? item.product.productImage[0] : null
+            _id:           order._id,
+            orderId:       order.orderId,
+            totalAmount:   order.finalAmount,
+            orderStatus:   order.status,
+            paymentMethod: order.paymentMethod || 'Cash on Delivery',
+            paymentStatus: order.paymentStatus || 'Pending',
+            discount:      order.discount || 0,
+            couponApplied: order.couponApplied || false,
+            items: rawItems.map(item => ({
+                productName:  item.product ? item.product.productName : 'Product',
+                quantity:     item.quantity,
+                totalPrice:   item.price * item.quantity,
+                productImage: item.product?.productImage?.[0] || null
             })),
             createdOn: order.createdOn,
             shippingAddress: {
-                name: shippingAddress.name,
+                name:    shippingAddress.name,
                 address: shippingAddress.address,
-                city: shippingAddress.city,
-                state: shippingAddress.state,
+                city:    shippingAddress.city,
+                state:   shippingAddress.state,
                 zipCode: shippingAddress.zipCode,
-                phone: shippingAddress.phone
+                phone:   shippingAddress.phone
             }
         };
 
-        console.log('Transformed order for success page:', transformedOrder);
-
-        res.render('user/order-success', { 
-            order: transformedOrder,
+        res.render('user/order-success', {
+            order:       transformedOrder,
             orderNumber: order.orderId || order._id.toString().slice(-8).toUpperCase()
         });
+
     } catch (error) {
-        console.log("Error loading order success page:", error);
+        console.error("Error loading order success page:", error);
         res.redirect('/');
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const addAddressCheckout = async (req, res) => {
     try {
         const userId = req.session.user;
         const { addressType, name, phone, address, city, state, zipCode, country, isDefault } = req.body;
 
-        if (!name || !phone || !address || !city || !state || !zipCode || !country) {
+        if (!name || !phone || !address || !city || !state || !zipCode || !country)
             return res.json({ success: false, message: 'All fields are required' });
-        }
 
-        if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) {
+        if (!/^\d{10}$/.test(phone.replace(/\D/g, '')))
             return res.json({ success: false, message: 'Please enter a valid 10-digit phone number' });
-        }
 
-        if (!/^\d{5,6}$/.test(zipCode)) {
+        if (!/^\d{5,6}$/.test(zipCode))
             return res.json({ success: false, message: 'Please enter a valid zip code' });
-        }
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.json({ success: false, message: 'User not found' });
-        }
+        if (!user) return res.json({ success: false, message: 'User not found' });
 
         const makeDefault = user.addresses.length === 0 || isDefault === 'true';
-
-        if (makeDefault) {
-            user.addresses.forEach(addr => addr.isDefault = false);
-        }
+        if (makeDefault) user.addresses.forEach(a => a.isDefault = false);
 
         const newAddress = {
             addressType: addressType || 'Home',
-            name,
-            phone: phone.replace(/\D/g, ''),
-            address,
-            city,
-            state,
-            zipCode,
-            country,
+            name, phone: phone.replace(/\D/g, ''),
+            address, city, state, zipCode, country,
             isDefault: makeDefault
         };
-
         user.addresses.push(newAddress);
         await user.save();
 
-        res.json({ 
-            success: true, 
-            message: 'Address added successfully',
-            addressId: newAddress._id,
-            address: newAddress
-        });
+        res.json({ success: true, message: 'Address added successfully', addressId: newAddress._id, address: newAddress });
     } catch (error) {
         console.error("Error adding address in checkout:", error);
         res.json({ success: false, message: 'Error adding address' });
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const updateAddressCheckout = async (req, res) => {
     try {
-        const userId = req.session.user;
+        const userId    = req.session.user;
         const addressId = req.params.id;
         const { addressType, name, phone, address, city, state, zipCode, country, isDefault } = req.body;
 
-        if (!name || !phone || !address || !city || !state || !zipCode || !country) {
+        if (!name || !phone || !address || !city || !state || !zipCode || !country)
             return res.json({ success: false, message: 'All fields are required' });
-        }
 
-        if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) {
+        if (!/^\d{10}$/.test(phone.replace(/\D/g, '')))
             return res.json({ success: false, message: 'Please enter a valid 10-digit phone number' });
-        }
 
-        if (!/^\d{5,6}$/.test(zipCode)) {
+        if (!/^\d{5,6}$/.test(zipCode))
             return res.json({ success: false, message: 'Please enter a valid zip code' });
-        }
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.json({ success: false, message: 'User not found' });
-        }
+        if (!user) return res.json({ success: false, message: 'User not found' });
 
-        const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
-        if (addressIndex === -1) {
-            return res.json({ success: false, message: 'Address not found' });
-        }
+        const idx = user.addresses.findIndex(a => a._id.toString() === addressId);
+        if (idx === -1) return res.json({ success: false, message: 'Address not found' });
 
-        if (isDefault === 'true') {
-            user.addresses.forEach(addr => addr.isDefault = false);
-        }
+        if (isDefault === 'true') user.addresses.forEach(a => a.isDefault = false);
 
-        user.addresses[addressIndex] = {
-            ...user.addresses[addressIndex],
+        user.addresses[idx] = {
+            ...user.addresses[idx],
             addressType: addressType || 'Home',
-            name,
-            phone: phone.replace(/\D/g, ''),
-            address,
-            city,
-            state,
-            zipCode,
-            country,
+            name, phone: phone.replace(/\D/g, ''),
+            address, city, state, zipCode, country,
             isDefault: isDefault === 'true'
         };
-
         await user.save();
 
-        res.json({ 
-            success: true, 
-            message: 'Address updated successfully',
-            address: user.addresses[addressIndex]
-        });
+        res.json({ success: true, message: 'Address updated successfully', address: user.addresses[idx] });
     } catch (error) {
         console.error("Error updating address in checkout:", error);
         res.json({ success: false, message: 'Error updating address' });
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const deleteAddressCheckout = async (req, res) => {
     try {
-        const userId = req.session.user;
+        const userId    = req.session.user;
         const addressId = req.params.id;
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.json({ success: false, message: 'User not found' });
-        }
+        if (!user) return res.json({ success: false, message: 'User not found' });
 
-        const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === addressId);
-        if (addressIndex === -1) {
-            return res.json({ success: false, message: 'Address not found' });
-        }
+        const idx = user.addresses.findIndex(a => a._id.toString() === addressId);
+        if (idx === -1) return res.json({ success: false, message: 'Address not found' });
 
-        const wasDefault = user.addresses[addressIndex].isDefault;
-        user.addresses.splice(addressIndex, 1);
-
-        if (wasDefault && user.addresses.length > 0) {
-            user.addresses[0].isDefault = true;
-        }
+        const wasDefault = user.addresses[idx].isDefault;
+        user.addresses.splice(idx, 1);
+        if (wasDefault && user.addresses.length > 0) user.addresses[0].isDefault = true;
 
         await user.save();
-
-        res.json({ 
-            success: true, 
-            message: 'Address deleted successfully'
-        });
+        res.json({ success: true, message: 'Address deleted successfully' });
     } catch (error) {
         console.error("Error deleting address in checkout:", error);
         res.json({ success: false, message: 'Error deleting address' });
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const getAddressCheckout = async (req, res) => {
     try {
-        const userId = req.session.user;
+        const userId    = req.session.user;
         const addressId = req.params.id;
 
         const user = await User.findById(userId);
-        if (!user) {
-            return res.json({ success: false, message: 'User not found' });
-        }
+        if (!user) return res.json({ success: false, message: 'User not found' });
 
-        const address = user.addresses.find(addr => addr._id.toString() === addressId);
-        if (!address) {
-            return res.json({ success: false, message: 'Address not found' });
-        }
+        const address = user.addresses.find(a => a._id.toString() === addressId);
+        if (!address)  return res.json({ success: false, message: 'Address not found' });
 
-        res.json({ 
-            success: true, 
-            address
-        });
+        res.json({ success: true, address });
     } catch (error) {
         console.error("Error getting address in checkout:", error);
         res.json({ success: false, message: 'Error getting address' });
     }
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
 const getStatesCheckout = async (req, res) => {
     try {
         const { country } = req.query;
-        const states = countryStateData[country] || [];
-        res.json({ success: true, states });
+        res.json({ success: true, states: countryStateData[country] || [] });
     } catch (error) {
         console.error("Error getting states in checkout:", error);
         res.json({ success: false, states: [] });
     }
 };
 
-module.exports = {
+export default {
     loadCheckout,
     processOrder,
     addAddressCheckout,
@@ -535,5 +533,6 @@ module.exports = {
     deleteAddressCheckout,
     getAddressCheckout,
     getStatesCheckout,
-    orderSuccess
+    orderSuccess,
+    sendOrderConfirmationEmail
 };

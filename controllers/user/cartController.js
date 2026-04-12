@@ -1,15 +1,17 @@
-const User = require("../../models/userSchema");
-const Category = require("../../models/categorySchema");
-const Product = require("../../models/productSchema");
-const Cart = require("../../models/cartSchema");
-const env = require("dotenv").config();
-const nodemailer = require("nodemailer");
-const bcrypt = require("bcrypt");
-const mongoose = require('mongoose');
-const sharp = require("sharp");
-const fs = require("fs");
-const multer = require('multer');
-const path = require('path');
+import User from "../../models/userSchema.js";
+import Category from "../../models/categorySchema.js";
+import Product from "../../models/productSchema.js";
+import Cart from "../../models/cartSchema.js";
+import Wishlist from "../../models/wishlistSchema.js"; 
+import dotenv from "dotenv";
+dotenv.config();
+import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+import sharp from "sharp";
+import fs from "fs";
+import multer from "multer";
+import path from "path";
 
 const loadCart = async (req, res) => {
     try {
@@ -88,9 +90,11 @@ const addToCart = async (req, res) => {
         let cart = await Cart.findOne({ userId });
         if (!cart) cart = new Cart({ userId, items: [] });
 
-        const existingIndex = cart.items.findIndex(i =>
-            i.productId.toString() === productId.toString()
-        );
+      const existingIndex = cart.items.findIndex(i =>
+    i.productId.toString() === productId.toString() &&
+    i.selectedSize === (selectedSize || '') &&
+    i.selectedColor === (selectedColor || '')
+);
 
         const newQty = existingIndex > -1 ? cart.items[existingIndex].quantity + quantity : quantity;
 
@@ -114,18 +118,25 @@ const addToCart = async (req, res) => {
 
         if (existingIndex > -1) {
             cart.items[existingIndex].quantity = newQty;
-            cart.items[existingIndex].totalPrice = newQty * finalPrice;
+cart.items[existingIndex].totalPrice = newQty * finalPrice;
+cart.items[existingIndex].selectedSize = selectedSize || cart.items[existingIndex].selectedSize;
+cart.items[existingIndex].selectedColor = selectedColor || cart.items[existingIndex].selectedColor;
         } else {
-            cart.items.push({
-                productId,
-                quantity,
-                price: finalPrice,
-                totalPrice: finalPrice * quantity,
-            });
+          cart.items.push({
+    productId,
+    quantity,
+    price: finalPrice,
+    totalPrice: finalPrice * quantity,
+    selectedSize: selectedSize || '',
+    selectedColor: selectedColor || '',
+});
         }
 
         await cart.save();
-
+await Wishlist.updateOne(
+  { userId },
+  { $pull: { products: { productId } } }
+);
         const totalItems = cart.items.reduce((sum, i) => sum + i.quantity, 0);
         res.json({ success: true, message: "Added to cart", cartCount: totalItems });
     } catch (error) {
@@ -385,7 +396,7 @@ const debugCartImages = async (req, res) => {
     }
 };
 
-module.exports = {
+export default{
     loadCart,
     addToCart,
     updateCartQuantity,
@@ -395,3 +406,20 @@ module.exports = {
     debugCartImages,
     getProductDetails
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

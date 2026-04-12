@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 const { Schema } = mongoose;
-const { v4: uuidv4 } = require('uuid');
 
 const orderSchema = new Schema({
     
@@ -10,7 +10,7 @@ const orderSchema = new Schema({
             return uuidv4();
         }
     },
-    orderedItemes: [{
+   orderedItems: [{
         product: {
             type: Schema.Types.ObjectId,
             ref: "Product",
@@ -73,7 +73,7 @@ const orderSchema = new Schema({
     },
      paymentMethod: {
         type: String,
-        enum: ['cod', 'razorpay', 'card', 'upi', 'netbanking'],
+        enum: ['cod', 'razorpay', 'card', 'upi', 'netbanking','wallet'],
         required: true,
         default: 'cod'
     },
@@ -99,4 +99,4 @@ const orderSchema = new Schema({
 });
 
 const Order = mongoose.model("Order", orderSchema);
-module.exports = Order;
+export default Order;

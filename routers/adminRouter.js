@@ -1,19 +1,24 @@
-const express = require("express");
-const router = express.Router();
-const adminController = require("../controllers/admin/adminController");
-const customerController = require("../controllers/admin/customerController");
-const categoryController = require("../controllers/admin/categoryController");
-const productController = require('../controllers/admin/productController');
-const { upload, uploadMultiple } = require("../middlewares/upload");
-const { adminAuth } = require('../middlewares/auth');
+import express from "express"
+import adminController from '../controllers/admin/adminController.js'
+import customerController from "../controllers/admin/customerController.js";
+import categoryController from "../controllers/admin/categoryController.js";
+import productController from "../controllers/admin/productController.js";
+import { upload, uploadMultipleMiddleware } from "../middlewares/upload.js";
+import couponController from "../controllers/admin/couponController.js";
+import offerController from "../controllers/admin/offerController.js";
+import { adminAuth } from "../middlewares/auth.js";
 
-// Import order controller functions
-const { 
+// ✅ Named imports only — matches your export { } at bottom of orderController.js
+import { 
   loadOrders, 
   viewOrder, 
   updateOrderStatus, 
-  handleReturnRequest 
-} = require("../controllers/admin/orderController");
+  handleReturnRequest,
+  approveReturn,
+  getOrderStats
+} from "../controllers/admin/orderController.js";
+
+const router = express.Router();
 
 router.get("/pageerror", adminController.pageerror);
 
@@ -41,23 +46,36 @@ router.post("/categories/add", adminAuth, categoryController.addCategory);
 router.post("/categories/edit/:id", adminAuth, categoryController.updateCategory);
 router.post("/categories/toggle-status", adminAuth, categoryController.toggleCategoryStatus);
 router.post("/categories/toggle-listing", adminAuth, categoryController.toggleCategoryListing);
+router.post('/categories/add-offer', adminAuth, categoryController.addCategoryOffer);
+router.get("/categories/listed", adminAuth, categoryController.getListedCategories);
+router.post('/categories/remove-offer', adminAuth, categoryController.removeCategoryOffer);
 
 // Products
 router.get("/products", adminAuth, productController.loadProductPage);
 router.get("/products/add", adminAuth, productController.getAddProduct);
-router.post("/products/add", adminAuth, uploadMultiple, productController.addProduct);
+router.post("/products/add", adminAuth, uploadMultipleMiddleware, productController.addProduct);
 router.get("/products/edit/:id", adminAuth, productController.getEditProduct);
-router.post("/products/update/:id", adminAuth, uploadMultiple, productController.updateProductPost);
+router.post("/products/update/:id", adminAuth, uploadMultipleMiddleware, productController.updateProductPost);
 router.post("/products/toggle-block", adminAuth, productController.toggleBlockStatus);
-router.post("/products/delete", adminAuth, productController.DeleteProduct);
+router.post("/products/delete", adminAuth, productController.deleteProduct);
+router.get("/products/listed", adminAuth, productController.getListedProducts);
+router.post("/products/add-offer", adminAuth, productController.addProductOffer);
 
-
-// Orders Route
+// Orders — ⚠️ specific routes MUST come before /orders/:id
 router.get("/orders", adminAuth, loadOrders);
+router.get("/orders/stats", adminAuth, getOrderStats);        // ✅ before /:id
 router.get("/orders/detail/:id", adminAuth, viewOrder);
 router.get("/orders/view/:id", adminAuth, viewOrder);
-router.get("/orders/:id", adminAuth, viewOrder);         
 router.post("/orders/update-status", adminAuth, updateOrderStatus);
 router.post("/orders/handle-return", adminAuth, handleReturnRequest);
+router.post("/orders/approve-return", adminAuth, approveReturn);
+router.get("/orders/:id", adminAuth, viewOrder);              // ✅ wildcard last
 
-module.exports = router;
+// Coupons
+router.get("/coupons", adminAuth, couponController.loadCoupons);
+router.post("/coupons/add", adminAuth, couponController.addCoupon);
+router.post("/coupons/edit/:id", adminAuth, couponController.editCoupon);
+router.post("/coupons/toggle", adminAuth, couponController.toggleCoupon);
+router.post("/coupons/delete", adminAuth, couponController.deleteCoupon);
+
+export default router;

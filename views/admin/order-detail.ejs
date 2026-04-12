@@ -48,30 +48,80 @@
 
 <div class="flex h-screen">
   <!-- Sidebar -->
-  <aside class="w-64 bg-white shadow-xl border-r border-gray-200">
-    <div class="p-6 border-b border-gray-200">
+   <aside class="w-64 bg-white shadow-2xl border-r border-stone-300">
+    <div class="p-6">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-700 rounded-xl flex items-center justify-center">
-          <span class="text-white font-bold text-xl">A</span>
+        <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+          </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-800">AdminHub</h2>
+        <h2 class="text-xl font-bold bg-gradient-to-r from-stone-600 to-amber-800 bg-clip-text text-transparent">AdminHub</h2>
       </div>
     </div>
-    <nav class="p-4 space-y-2">
-      <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-amber-50 rounded-xl transition">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6"/></svg>
-        Dashboard
+    
+    <nav class="mt-2 px-4 space-y-1">
+      <a href="/admin" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6" />
+        </svg>
+        <span class="font-medium">Dashboard</span>
       </a>
-      <a href="/admin/orders" class="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-amber-100 to-orange-100 text-amber-900 rounded-xl font-semibold shadow-sm">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        Orders
+
+      <a href="/admin/customers" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+        </svg>
+        <span class="font-medium">Customers</span>
       </a>
-      <a href="/admin/products" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition">
-        Products
+
+      <a href="/admin/products" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0H4m0 0v6a2 2 0 002 2h12a2 2 0 002-2v-6" />
+        </svg>
+        <span class="font-medium">Products</span>
       </a>
-      <a href="/admin/customers" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition">
-        Customers
+
+      <a href="/admin/orders" class="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-stone-200 to-amber-100 text-stone-800 rounded-xl shadow-sm">
+        <svg class="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span class="font-semibold">Orders</span>
       </a>
+
+      <a href="/admin/categories" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+        <span class="font-medium">Categories</span>
+      </a>
+
+
+      <!-- Coupons -->
+      <a href="/admin/coupons" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+        </svg>
+        <span class="font-medium">Coupons</span>
+      </a>
+
+      <!-- Settings -->
+      <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="font-medium">Settings</span>
+      </a>
+      
+      <div class="pt-4 mt-4 border-t border-stone-200">
+        <a href="#" onclick="showLogoutModal(event)" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 group">
+          <svg class="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
+          </svg>
+          <span class="font-medium">Logout</span>
+        </a>
+      </div>
     </nav>
   </aside>
 
@@ -84,8 +134,7 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
           </a>
           <h1 class="text-2xl font-bold text-gray-800">Order Details</h1>
-          <span class="status-badge bg-amber-100 text-amber-800">#<%= order.orderId %></span>
-        </div>
+<span class="status-badge bg-amber-100 text-amber-800">#<%= String(order.orderId).slice(-8).toUpperCase() %></span>        </div>
         <button onclick="printOrder()" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl hover:shadow-lg transition font-medium text-sm">
           Print Order
         </button>
@@ -100,8 +149,9 @@
             <div class="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">ID</div>
             <div>
               <p class="text-gray-600 text-xs">Order ID</p>
-              <p class="font-bold text-lg">#<%= order.orderId %></p>
-            </div>
+<p class="font-bold text-lg">
+  #<%= String(order.orderId).slice(-8).toUpperCase() %>
+</p>          </div>
           </div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg p-5 hover-lift border border-gray-100">
@@ -118,7 +168,7 @@
             <div class="w-11 h-11 bg-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">Items</div>
             <div>
               <p class="text-gray-600 text-xs">Items</p>
-              <p class="font-bold text-xl"><%= order.orderedItemes?.length || 0 %></p>
+              <p class="font-bold text-xl"><%= order.orderedItems?.length || 0 %></p>
             </div>
           </div>
         </div>
@@ -143,8 +193,8 @@
           <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
             <h3 class="text-xl font-bold text-gray-800 mb-5">Order Items</h3>
             <div class="space-y-5">
-              <% if (order.orderedItemes && order.orderedItemes.length > 0) { %>
-                <% order.orderedItemes.forEach(item => { %>
+              <% if (order.orderedItems && order.orderedItems.length > 0) { %>
+                <% order.orderedItems.forEach(item => { %>
                   <div class="flex gap-5 p-5 bg-gray-50 rounded-xl border border-gray-200">
                     <% const img = item.product?.productImage?.[0] ? `/images/${item.product.productImage[0]}` : '/images/placeholder.jpg'; %>
                     <img src="<%= img %>" alt="<%= item.product?.productName %>" class="product-image" onerror="this.src='/images/placeholder.jpg'">
@@ -218,54 +268,90 @@
               </span>
             </div>
 
-            <% 
-  // Check if ANY item has status 'Return Request'
-  const hasReturnRequest = order.orderedItemes.some(item => 
+    <%
+  // Handles both order-level and item-level return requests
+  const hasItemReturnRequest = order.orderedItems.some(item =>
     (item.status || '').trim() === 'Return Request'
   );
+  const hasOrderReturnRequest = order.status === 'Return Request';
+  const showReturnPanel = hasItemReturnRequest || hasOrderReturnRequest;
 %>
 
-<% if (hasReturnRequest) { %>
+<% if (showReturnPanel) { %>
   <div class="p-5 bg-red-50 border-2 border-red-200 rounded-xl mb-6">
-    <p class="font-bold text-red-800 mb-4 text-sm">
-      <i class="fas fa-exclamation-triangle mr-2"></i>
-      Return Request Pending for Item(s)
+    <p class="font-bold text-red-800 mb-3 text-sm flex items-center gap-2">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      Return Request Pending
     </p>
-    
-    <!-- Optional: Show which items -->
-    <div class="mb-4 text-sm text-red-700">
-      Items with return request:
-      <ul class="list-disc list-inside ml-4 mt-2">
-        <% order.orderedItemes.forEach(item => { %>
-          <% if ((item.status || '').trim() === 'Return Request') { %>
-            <li>
-              <%= item.product?.productName || 'Product' %> 
-              (Qty: <%= item.quantity %>)
-              <% if (item.returnReason) { %> - Reason: <%= item.returnReason %><% } %>
-            </li>
-          <% } %>
-        <% }) %>
-      </ul>
-    </div>
+
+    <% if (hasOrderReturnRequest && !hasItemReturnRequest) { %>
+      <p class="text-sm text-red-700 mb-4">Full order return requested.</p>
+    <% } else { %>
+      <div class="mb-4 text-sm text-red-700">
+        Items requesting return:
+        <ul class="list-disc list-inside ml-3 mt-1 space-y-1">
+          <% order.orderedItems.forEach(item => { %>
+            <% if ((item.status || '').trim() === 'Return Request') { %>
+              <li>
+                <strong><%= item.product?.productName || 'Product' %></strong>
+                (Qty: <%= item.quantity %>)
+                <% if (item.returnReason) { %> — <em><%= item.returnReason %></em><% } %>
+              </li>
+            <% } %>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
 
     <div class="grid grid-cols-2 gap-3">
-      <button onclick="handleReturnRequest('<%= order._id %>', 'accept')" 
+      <button onclick="handleReturnRequest('<%= order._id %>', 'accept')"
               class="py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
-        <i class="fas fa-check mr-2"></i> Accept Return
+        ✓ Accept Return
       </button>
-      <button onclick="handleReturnRequest('<%= order._id %>', 'reject')" 
+      <button onclick="handleReturnRequest('<%= order._id %>', 'reject')"
               class="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
-        <i class="fas fa-times mr-2"></i> Reject Return
+        ✗ Reject Return
       </button>
     </div>
   </div>
 <% } %>
 
-            <select id="statusSelect" class="w-full p-3 border border-gray-300 rounded-xl text-sm mb-4">
-              <% ['Pending','Processing','Shipping','Delivered','Return Request','Returned','Cancelled'].forEach(s => { %>
-                <option value="<%= s %>" <%= order.status === s ? 'selected' : '' %>><%= s %></option>
-              <% }) %>
-            </select>
+
+
+           <%
+  const isDelivered = ['Delivered', 'Return Request', 'Returned'].includes(order.status);
+  const isFinal = ['Returned', 'Cancelled'].includes(order.status);
+  // Options disabled after delivery (can't go back to earlier states)
+  const disabledIfDelivered = ['Pending', 'Processing', 'Shipping'];
+%>
+<select id="statusSelect" 
+        class="w-full p-3 border border-gray-300 rounded-xl text-sm mb-4 <%= isFinal ? 'opacity-50 cursor-not-allowed' : '' %>"
+        <%= isFinal ? 'disabled' : '' %>>
+  <% const allStatuses = ['Pending','Processing','Shipping','Delivered','Return Request','Returned','Cancelled']; %>
+  <% allStatuses.forEach(s => { %>
+    <%
+      let isDisabled = false;
+      // Once delivered or further, can't go back to pre-delivery states
+      if (isDelivered && disabledIfDelivered.includes(s)) isDisabled = true;
+      // Once fully final (Returned/Cancelled), disable all
+      if (isFinal) isDisabled = true;
+    %>
+    <option value="<%= s %>" 
+            <%= order.status === s ? 'selected' : '' %>
+            <%= isDisabled ? 'disabled' : '' %>
+            class="<%= isDisabled ? 'text-gray-300' : '' %>">
+      <%= s %>
+    </option>
+  <% }) %>
+</select>
+
+<% if (isFinal) { %>
+  <p class="text-xs text-gray-400 text-center mb-4">
+    This order is <%= order.status.toLowerCase() %> — no further status changes allowed.
+  </p>
+<% } %>
             
             <button onclick="updateOrderStatus()" class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl font-bold hover:shadow-xl transition text-sm">
               Update Status
@@ -285,69 +371,38 @@
     </main>
   </div>
 </div>
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1" />
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 mb-2">Log out?</h2>
+    <p class="text-gray-500 text-sm mb-6">Are you sure you want to log out of the admin panel?</p>
+    <div class="flex gap-3 justify-center">
+      <button onclick="closeLogoutModal()" 
+              class="px-6 py-2.5 border border-stone-300 text-gray-600 rounded-xl hover:bg-stone-50 font-medium transition-all duration-200">
+        Cancel
+      </button>
+      <a href="/admin/logout" 
+         class="px-6 py-2.5 bg-gradient-to-r from-stone-600 to-amber-800 text-white rounded-xl hover:opacity-90 font-medium transition-all duration-200">
+        Yes, log out
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- SINGLE WORKING SCRIPT -->
 <script>
-  async function handleReturnRequest(orderId, action) {
-    // Remove the line outside — pass orderId as parameter
-
-    const result = await Swal.fire({
-      title: action === 'accept' ? 'Accept Return Request?' : 'Reject Return Request?',
-      text: action === 'accept' 
-        ? 'The item(s) will be marked as returned and stock will be restored.' 
-        : 'The return request will be rejected and order stays Delivered.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: action === 'accept' ? '#10b981' : '#ef4444',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Yes, ' + (action === 'accept' ? 'Accept' : 'Reject'),
-      cancelButtonText: 'Cancel'
-    });
-
-    if (!result.isConfirmed) return;
-
-    // Get the button that was clicked
-    const btn = event.target.closest('button');
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" class="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8v4h-4a4 4 0 00-4 4h4z" class="opacity-75"></path></svg>';
-
-    try {
-      const res = await fetch('/admin/orders/handle-return', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, action })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Success!',
-          text: data.message || `Return request ${action}ed successfully.`,
-          timer: 2000,
-          showConfirmButton: false
-        }).then(() => location.reload());
-      } else {
-        throw new Error(data.message || 'Operation failed');
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Something went wrong. Please try again.'
-      });
-      btn.innerHTML = original;
-      btn.disabled = false;
-    }
-  }
-
+  // ─── Update Order Status ───────────────────────────────────────
   async function updateOrderStatus() {
-    const status = document.getElementById('statusSelect').value;
+    const statusSelect = document.getElementById('statusSelect');
+    const status = statusSelect.value;
     const orderId = '<%= order._id %>';
 
-    const btn = event.target;
+    const btn = document.querySelector('button[onclick="updateOrderStatus()"]');
     const original = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = 'Updating...';
@@ -359,9 +414,19 @@
         body: JSON.stringify({ orderId, status })
       });
       const data = await res.json();
+
       if (data.success) {
-        Swal.fire('Updated!', data.message, 'success').then(() => location.reload());
-      } else throw new Error(data.message);
+        await Swal.fire({
+          icon: 'success',
+          title: 'Updated!',
+          text: data.message,
+          timer: 2000,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        throw new Error(data.message || 'Update failed');
+      }
     } catch (err) {
       Swal.fire('Error', err.message, 'error');
       btn.innerHTML = original;
@@ -369,7 +434,77 @@
     }
   }
 
-  function printOrder() { window.print(); }
+  // ─── Handle Return Request (Accept / Reject) ───────────────────
+  async function handleReturnRequest(orderId, action) {
+    const result = await Swal.fire({
+      title: action === 'accept' ? 'Accept Return?' : 'Reject Return?',
+      text: action === 'accept'
+        ? 'Items will be marked returned and stock restored. Refund credited to wallet.'
+        : 'Return request will be rejected. Order stays as Delivered.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: action === 'accept' ? '#10b981' : '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: action === 'accept' ? 'Yes, Accept' : 'Yes, Reject',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // find the clicked button safely
+    const btns = document.querySelectorAll(`button[onclick*="${action}"]`);
+    const btn = btns[btns.length - 1];
+    const original = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Processing...'; }
+
+    try {
+      const res = await fetch('/admin/orders/handle-return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, action })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Done!',
+          text: data.message,
+          timer: 2500,
+          showConfirmButton: false
+        });
+        location.reload();
+      } else {
+        throw new Error(data.message || 'Operation failed');
+      }
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+      if (btn) { btn.innerHTML = original; btn.disabled = false; }
+    }
+  }
+
+  // ─── Print ─────────────────────────────────────────────────────
+  function printOrder() {
+    window.print();
+  }
+
+  // ─── Logout Modal ──────────────────────────────────────────────
+  function showLogoutModal(e) {
+    e.preventDefault();
+    document.getElementById('logout-modal').style.display = 'flex';
+  }
+
+  function closeLogoutModal() {
+    document.getElementById('logout-modal').style.display = 'none';
+  }
+
+  document.getElementById('logout-modal').addEventListener('click', function (e) {
+    if (e.target === this) closeLogoutModal();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeLogoutModal();
+  });
 </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-const User = require("../../models/userSchema");
-const bcrypt = require('bcrypt');
+import User from "../../models/userSchema.js";
+import bcrypt from 'bcrypt';
 const customerInfo = async (req, res) => {
   try {
     let search = req.query.search || "";
@@ -149,7 +149,7 @@ const deleteCustomer = async (req, res) => {
   }
 };
 
-module.exports = {
+export default{
   customerInfo,
   toggleBlockStatus,
   addCustomer,

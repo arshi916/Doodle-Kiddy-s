@@ -1,22 +1,30 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-const ensureDirectoryExists = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+import fsPromises from 'fs/promises';
+const ensureDirectoryExists = async (dirPath) => {
+  try {
+    await fsPromises.mkdir(dirPath, { recursive: true });
+  } catch (err) {
+    console.error(err);
   }
 };
 
-
 ensureDirectoryExists(path.join(__dirname, '../public/images'));
 ensureDirectoryExists(path.join(__dirname, '../public/uploads/profiles'));
-ensureDirectoryExists(path.join(__dirname, '../Uploads/temp'));
+ensureDirectoryExists(path.join(__dirname, '../public/uploads/temp'));
 
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../Uploads/temp');
+const uploadPath = path.join(__dirname, '../public/uploads/temp');
     ensureDirectoryExists(uploadPath);
     cb(null, uploadPath);
   },
@@ -50,7 +58,7 @@ const profileUpload = multer({
 
 const profileUploadMiddleware = (req, res, next) => {
   profileUpload(req, res, function (err) {
-    const isAjax = req.xhr || req.headers.accept.includes('json');
+const isAjax = req.xhr || (req.headers.accept && req.headers.accept.includes('json'));
     if (err instanceof multer.MulterError) {
       console.log('Multer error:', err.message);
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -180,10 +188,10 @@ const resizeSingleImage = (req, res, next) => {
   next();
 };
 
-module.exports = {
+export {
   upload,
-  profileUpload: profileUploadMiddleware,
-  uploadMultiple: uploadMultipleMiddleware,
+  profileUpload as profileUploadMiddleware,
+  uploadMultiple as  uploadMultipleMiddleware,
   resizeImages,
   resizeSingleImage
 };

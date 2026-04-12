@@ -171,6 +171,14 @@
             opacity: 0.6;
             pointer-events: none;
         }
+        .wishlist-main-btn.active i,
+.wishlist-main-btn.active span {
+    color: #ef4444 !important;
+}
+
+button.active i.fas {
+    color: #ef4444 !important;
+}
     </style>
 </head>
 
@@ -281,10 +289,12 @@
                 
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-6 text-base text-gray-600">
-                    <button class="flex items-center space-x-1 hover:text-yellow-400" onclick="toggleWishlist(this, '<%= product.productName %>')">
-                        <i class="far fa-heart"></i>
-                        <span>Wishlist</span>
-                    </button>
+              <button id="wishlistBtn" 
+        class="wishlist-main-btn flex items-center gap-2 transition-colors duration-200" 
+        onclick="toggleWishlist(this, '<%= product.productName %>', '<%= product._id %>')"
+        style="background:none; border:none; cursor:pointer; font-size:1rem;">
+    <i id="wishlistIcon" class="far fa-heart" style="font-size:1.2rem;"></i>
+</button>
                     <button class="flex items-center space-x-1 hover:text-yellow-400">
                         <i class="fas fa-exchange-alt"></i>
                         <span>Compare</span>
@@ -356,7 +366,7 @@
                                 <a href="/product/<%= relatedProduct._id %>">
                                     <img alt="<%= relatedProduct.productName %>" class="w-full h-40 object-contain mb-2" loading="lazy" src="/images/<%= relatedProduct.productImage[0] %>">
                                 </a>
-                                <button aria-label="Add to wishlist" class="absolute top-2 right-2 text-gray-400 hover:text-yellow-400 text-base" onclick="event.preventDefault(); toggleWishlist(this, '<%= relatedProduct.productName %>')">
+                                <button aria-label="Add to wishlist" class="absolute top-2 right-2 text-gray-400 hover:text-yellow-400 text-base" onclick="event.preventDefault(); toggleWishlist(this, '<%= relatedProduct.productName %>', '<%= relatedProduct._id %>')">
                                     <i class="far fa-heart"></i>
                                 </button>
                             </div>
@@ -577,20 +587,88 @@
             button.classList.add('selected');
         }
 
-        function toggleWishlist(button, productName) {
-            button.classList.toggle('active');
-            const icon = button.querySelector('i');
-            if (button.classList.contains('active')) {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-                showNotification(`Added ${productName} to wishlist`, 'success');
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
-                showNotification(`Removed ${productName} from wishlist`, 'success');
-            }
-        }
+     function toggleWishlist(button, productName, productId) {
+    const isLoggedIn = '<%= locals.user ? "yes" : "no" %>' === 'yes';
+    if (!isLoggedIn) {
+        showNotification('Please login to add to wishlist', 'error');
+        setTimeout(() => { window.location.href = '/login'; }, 1500);
+        return;
+    }
 
+    if (!productId) {
+        showNotification('Invalid product', 'error');
+        return;
+    }
+
+    const isActive = button.classList.contains('active');
+    const url = isActive ? `/removeWishlist/${productId}` : `/addWishlist/${productId}`;
+
+    // Try to get icon by ID first, then fallback to querySelector
+    const icon = document.getElementById('wishlistIcon') || button.querySelector('i');
+    const text = document.getElementById('wishlistText') || button.querySelector('span');
+
+    button.disabled = true;
+
+    fetch(url, { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        button.disabled = false;
+
+        const makeRed = () => {
+            button.classList.add('active');
+            if (icon) {
+                icon.className = 'fas fa-heart';
+                icon.setAttribute('style', 'font-size:1.2rem; color:#ef4444;');
+            }
+            if (text) text.style.color = '#ef4444';
+        };
+
+        const makeGrey = () => {
+            button.classList.remove('active');
+            if (icon) {
+                icon.className = 'far fa-heart';
+                icon.setAttribute('style', 'font-size:1.2rem; color:#666;');
+            }
+            if (text) text.style.color = '#666';
+        };
+
+        if (data.success) {
+            if (!isActive) {
+                makeRed();
+                showNotification('Added to wishlist ❤️', 'success');
+            } else {
+                makeGrey();
+                showNotification('Removed from wishlist', 'success');
+            }
+        } else if (data.message === 'Already in Wishlist') {
+            makeRed();
+        } else {
+            showNotification(data.message || 'Could not update wishlist', 'error');
+        }
+    })
+    .catch((err) => {
+        button.disabled = false;
+        console.error('Wishlist error:', err);
+        showNotification('Something went wrong', 'error');
+    });
+}
+<% if (locals.user) { %>
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch('/api/wishlist-ids');
+        const data = await res.json();
+        if (data.success && data.productIds.includes('<%= product._id.toString() %>')) {
+            const btn = document.getElementById('wishlistBtn');
+            const icon = document.getElementById('wishlistIcon');
+            const text = document.getElementById('wishlistText');
+            if (btn) btn.classList.add('active');
+            if (icon) icon.setAttribute('style', 'font-size:1.2rem; color:#ef4444;');
+            if (icon) icon.className = 'fas fa-heart';
+            if (text) text.style.color = '#ef4444';
+        }
+    } catch(e) { console.error('Wishlist load error:', e); }
+});
+<% } %>
         function changeMainImage(src) {
             const mainImage = document.getElementById('mainImage');
             const zoomedImageResult = document.getElementById('zoomedImageResult');
