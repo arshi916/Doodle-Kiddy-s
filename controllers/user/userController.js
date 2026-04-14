@@ -225,7 +225,7 @@ console.log('Searching for referralCode:', user.referredBy?.trim().toUpperCase()
                         $push:  { redeemedUsers: saveUserData._id },
                         $set:   { redeemed: true }
                     },
-                    { new: true }  // return updated document
+                    { new: true }  
                 );
                 
                 console.log('Updated referrer redeemedUsers length:', 
@@ -289,10 +289,14 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const findUser = await User.findOne({ isAdmin: 0, email });
-        if (!findUser) return res.render("user/login", { message: "User not found" });
-        if (findUser.isBlocked) return res.render("user/login", { message: "User is blocked by Admin" });
+        if (!findUser) return res.render("user/login",
+             { message: "User not found" });
+        if (findUser.isBlocked)
+             return res.render("user/login",
+             { message: "User is blocked by Admin" });
         const passwordMatch = await bcrypt.compare(password, findUser.password);
-        if (!passwordMatch) return res.render("user/login", { message: "Incorrect password" });
+        if (!passwordMatch) return res.render("user/login", 
+            { message: "Incorrect password" });
         req.session.user = findUser._id;
         res.redirect("/");
     } catch (error) {

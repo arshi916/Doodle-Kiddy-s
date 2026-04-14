@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Report - AdminHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass-effect { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(101,67,33,0.15); }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .stat-card { background: linear-gradient(135deg,#ffffff 0%,#f8fafc 100%); border:1px solid #e2e8f0; transition: all 0.3s ease; }
+    .stat-card:hover { border-color:#8B7355; box-shadow:0 8px 25px rgba(139,115,85,0.1); }
+    .filter-btn { transition: all 0.2s ease; }
+    .filter-btn.active { background: linear-gradient(135deg,#78716c,#92400e); color:white; box-shadow: 0 4px 12px rgba(139,115,85,0.3); }
+    .table-row:hover { background: #fdf8f3; }
+    @media print {
+      aside, header, .no-print { display: none !important; }
+      main { padding: 0 !important; }
+      .print-full { width: 100% !important; }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-stone-100 to-amber-50 min-h-screen">
+<div class="flex h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-2xl border-r border-stone-300 flex-shrink-0">
+    <div class="p-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
+        </div>
+        <h2 class="text-xl font-bold bg-gradient-to-r from-stone-600 to-amber-800 bg-clip-text text-transparent">AdminHub</h2>
+      </div>
+    </div>
+    <nav class="mt-2 px-4 space-y-1">
+      <a href="/admin" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M13 5v6h6"/></svg>
+        <span class="font-medium">Dashboard</span>
+      </a>
+      <a href="/admin/customers" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+        <span class="font-medium">Customers</span>
+      </a>
+      <a href="/admin/products" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0H4m0 0v6a2 2 0 002 2h12a2 2 0 002-2v-6"/></svg>
+        <span class="font-medium">Products</span>
+      </a>
+      <a href="/admin/orders" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span class="font-medium">Orders</span>
+      </a>
+      <a href="/admin/categories" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        <span class="font-medium">Categories</span>
+      </a>
+      <!-- Sales Report - Active -->
+      <a href="/admin/sales-report" class="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-stone-200 to-amber-100 text-stone-800 rounded-xl shadow-sm">
+        <svg class="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="font-semibold">Sales Report</span>
+      </a>
+      <a href="/admin/coupons" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 rounded-xl transition-all duration-200 group">
+        <svg class="w-5 h-5 text-stone-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+        <span class="font-medium">Coupons</span>
+      </a>
+      <div class="pt-4 mt-4 border-t border-stone-200">
+        <a href="#" onclick="showLogoutModal(event)" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1"/></svg>
+          <span class="font-medium">Logout</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="glass-effect shadow-lg border-b border-stone-300 px-6 py-4 no-print">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-4">
+          <h1 class="text-2xl font-bold text-gray-800">Sales Report</h1>
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+            Analytics
+          </span>
+        </div>
+        <div class="flex items-center gap-3">
+          <img src="https://i.pravatar.cc/36" alt="Admin" class="w-9 h-9 rounded-full border-2 border-stone-300"/>
+          <div class="hidden md:block">
+            <p class="text-sm font-medium text-gray-700">Admin User</p>
+            <p class="text-xs text-gray-500">Administrator</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Filter Card -->
+      <div class="bg-white rounded-2xl shadow-xl border border-stone-200 mb-6 fade-in no-print">
+        <div class="p-5 border-b border-stone-100 bg-gradient-to-r from-stone-100 to-amber-50 rounded-t-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h10a1 1 0 010 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h6a1 1 0 010 2H4a1 1 0 01-1-1z"/></svg>
+            </div>
+            <h3 class="text-base font-semibold text-gray-800">Report Filters</h3>
+          </div>
+        </div>
+        <div class="p-5">
+          <!-- Quick Filter Buttons -->
+          <div class="flex flex-wrap gap-2 mb-5">
+            <button onclick="setFilter('today')" id="btn-today" class="filter-btn px-4 py-2 rounded-xl border border-stone-300 text-sm font-medium text-gray-700 hover:border-stone-500">Today</button>
+            <button onclick="setFilter('week')" id="btn-week" class="filter-btn px-4 py-2 rounded-xl border border-stone-300 text-sm font-medium text-gray-700 hover:border-stone-500">This Week</button>
+            <button onclick="setFilter('month')" id="btn-month" class="filter-btn px-4 py-2 rounded-xl border border-stone-300 text-sm font-medium text-gray-700 hover:border-stone-500 active">This Month</button>
+            <button onclick="setFilter('year')" id="btn-year" class="filter-btn px-4 py-2 rounded-xl border border-stone-300 text-sm font-medium text-gray-700 hover:border-stone-500">This Year</button>
+            <button onclick="setFilter('custom')" id="btn-custom" class="filter-btn px-4 py-2 rounded-xl border border-stone-300 text-sm font-medium text-gray-700 hover:border-stone-500">Custom Range</button>
+          </div>
+
+          <!-- Custom Date Range -->
+          <div id="custom-range" class="hidden mb-5 p-4 bg-stone-50 rounded-xl border border-stone-200">
+            <div class="flex flex-wrap gap-4 items-end">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">From Date</label>
+                <input type="date" id="startDate" class="px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-400 focus:border-transparent"/>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">To Date</label>
+                <input type="date" id="endDate" class="px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-stone-400 focus:border-transparent"/>
+              </div>
+              <button onclick="applyCustomFilter()" class="px-5 py-2 bg-gradient-to-r from-stone-600 to-amber-800 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                Apply Filter
+              </button>
+            </div>
+          </div>
+
+          <!-- Generate + Download Buttons -->
+          <div class="flex flex-wrap gap-3 items-center justify-between">
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="filter-label">Showing: This Month</span>
+            </div>
+            <div class="flex gap-3">
+              <button onclick="downloadExcel()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download Excel
+              </button>
+              <button onclick="downloadPDF()" class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6" id="summary-cards">
+        <div class="stat-card rounded-2xl p-5 shadow-md hover-lift fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Sales</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-sales-count"><%= summary.totalSalesCount %></p>
+              <p class="text-xs text-stone-500 mt-1">Orders completed</p>
+            </div>
+            <div class="w-11 h-11 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card rounded-2xl p-5 shadow-md hover-lift fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Order Amount</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="stat-order-amount">₹<%= summary.totalOrderAmount.toLocaleString('en-IN') %></p>
+              <p class="text-xs text-stone-500 mt-1">Gross revenue</p>
+            </div>
+            <div class="w-11 h-11 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card rounded-2xl p-5 shadow-md hover-lift fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Discount</p>
+              <p class="text-2xl font-bold text-red-600 mt-1" id="stat-discount">₹<%= summary.totalDiscount.toLocaleString('en-IN') %></p>
+              <p class="text-xs text-stone-500 mt-1">Product offers</p>
+            </div>
+            <div class="w-11 h-11 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card rounded-2xl p-5 shadow-md hover-lift fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Coupon Deductions</p>
+              <p class="text-2xl font-bold text-purple-600 mt-1" id="stat-coupon">₹<%= summary.totalCouponDiscount.toLocaleString('en-IN') %></p>
+              <p class="text-xs text-stone-500 mt-1">Coupon savings</p>
+            </div>
+            <div class="w-11 h-11 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Revenue Banner -->
+      <div class="bg-gradient-to-r from-stone-700 to-amber-900 rounded-2xl p-5 mb-6 text-white shadow-xl fade-in">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-stone-300 text-sm font-medium">Net Revenue (after all deductions)</p>
+            <p class="text-3xl font-bold mt-1" id="stat-net">₹<%= summary.netRevenue.toLocaleString('en-IN') %></p>
+          </div>
+          <div class="text-right">
+            <p class="text-stone-300 text-xs">Total Deductions</p>
+            <p class="text-xl font-semibold text-red-300" id="stat-total-deductions">- ₹<%= (summary.totalDiscount + summary.totalCouponDiscount).toLocaleString('en-IN') %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="bg-white rounded-2xl shadow-xl border border-stone-200 fade-in" id="report-table-container">
+        <div class="p-5 border-b border-stone-100 bg-gradient-to-r from-stone-100 to-amber-50 rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </div>
+              <h3 class="text-base font-semibold text-gray-800">Detailed Orders</h3>
+            </div>
+            <span class="text-sm text-gray-500"><%= orders.length %> records</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="report-table">
+            <thead>
+              <tr class="bg-gradient-to-r from-stone-50 to-amber-50 border-b border-stone-200">
+                <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Order ID</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Gross Amt</th>
+                <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Discount</th>
+                <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Coupon</th>
+                <th class="px-5 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Net Amt</th>
+              </tr>
+            </thead>
+            <tbody id="report-tbody">
+              <% if (orders.length === 0) { %>
+              <tr>
+                <td colspan="8" class="px-5 py-12 text-center">
+                  <div class="flex flex-col items-center gap-3">
+                    <svg class="w-12 h-12 text-stone-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <p class="text-gray-400 font-medium">No orders found for this period</p>
+                    <p class="text-gray-300 text-xs">Try adjusting the date filter</p>
+                  </div>
+                </td>
+              </tr>
+              <% } else { %>
+              <% orders.forEach(order => { %>
+              <tr class="table-row border-b border-stone-100 transition-colors"
+                  data-id="<%= order.orderId %>"
+                  data-customer="<%= order.customerName %>"
+                  data-date="<%= order.dateStr %>"
+                  data-status="<%= order.status %>"
+                  data-gross="<%= order.grossAmount %>"
+                  data-discount="<%= order.discount %>"
+                  data-coupon="<%= order.couponDiscount %>"
+                  data-net="<%= order.netAmount %>">
+                <td class="px-5 py-3.5">
+                  <span class="font-mono text-xs font-semibold bg-stone-100 px-2.5 py-1 rounded-lg text-stone-700">#<%= order.orderId.toString().slice(-6).toUpperCase() %></span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <p class="font-medium text-gray-800"><%= order.customerName %></p>
+                  <p class="text-xs text-gray-400"><%= order.customerEmail %></p>
+                </td>
+                <td class="px-5 py-3.5 text-gray-600 whitespace-nowrap"><%= order.dateStr %></td>
+                <td class="px-5 py-3.5">
+                  <% const statusColors = {
+                    'Delivered': 'bg-green-100 text-green-800',
+                    'Shipped': 'bg-blue-100 text-blue-800',
+                    'Processing': 'bg-yellow-100 text-yellow-800',
+                    'Pending': 'bg-gray-100 text-gray-700',
+                    'Cancelled': 'bg-red-100 text-red-800',
+                    'Returned': 'bg-purple-100 text-purple-800'
+                  }; %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= statusColors[order.status] || 'bg-gray-100 text-gray-700' %>">
+                    <%= order.status %>
+                  </span>
+                </td>
+                <td class="px-5 py-3.5 text-right font-medium text-gray-800">₹<%= order.grossAmount.toLocaleString('en-IN') %></td>
+                <td class="px-5 py-3.5 text-right text-red-500 font-medium">
+                  <% if (order.discount > 0) { %>- ₹<%= order.discount.toLocaleString('en-IN') %><% } else { %>—<% } %>
+                </td>
+                <td class="px-5 py-3.5 text-right text-purple-500 font-medium">
+                  <% if (order.couponDiscount > 0) { %>- ₹<%= order.couponDiscount.toLocaleString('en-IN') %><% } else { %>—<% } %>
+                </td>
+                <td class="px-5 py-3.5 text-right font-bold text-green-700">₹<%= order.netAmount.toLocaleString('en-IN') %></td>
+              </tr>
+              <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Logout Modal -->
+<div id="logout-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h7a1 1 0 011 1v1"/></svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800 mb-2">Log out?</h2>
+    <p class="text-gray-500 text-sm mb-6">Are you sure you want to log out?</p>
+    <div class="flex gap-3 justify-center">
+      <button onclick="closeLogoutModal()" class="px-6 py-2.5 border border-stone-300 text-gray-600 rounded-xl hover:bg-stone-50 font-medium">Cancel</button>
+      <a href="/admin/logout" class="px-6 py-2.5 bg-gradient-to-r from-stone-600 to-amber-800 text-white rounded-xl hover:opacity-90 font-medium">Yes, log out</a>
+    </div>
+  </div>
+</div>
+<!-- Pagination -->
+        <div class="px-6 py-4 border-t border-stone-300 bg-stone-100 rounded-b-2xl">
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-700">
+              Showing page <span class="font-medium"><%= currentPage %></span> of <span class="font-medium"><%= totalPages %></span>
+            </p>
+            <nav class="flex items-center space-x-2">
+              <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %><%= search ? '&search=' + search : '' %>" 
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-400 rounded-lg hover:bg-stone-100 hover:text-stone-800 transition-colors duration-200">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </a>
+              <% } %>
+              <div class="flex space-x-1">
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                  <a href="?page=<%= i %><%= search ? '&search=' + search : '' %>"
+                     class="inline-flex items-center px-3 py-2 text-sm font-medium <%= i === parseInt(currentPage) ? 'bg-stone-600 text-white border-stone-600' : 'text-stone-700 bg-white border-stone-400 hover:bg-stone-100' %> border rounded-lg transition-colors duration-200">
+                    <%= i %>
+                  </a>
+                <% } %>
+              </div>
+              <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %><%= search ? '&search=' + search : '' %>" 
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-400 rounded-lg hover:bg-stone-100 hover:text-stone-800 transition-colors duration-200">
+                  Next
+                  <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              <% } %>
+            </nav>
+          </div>
+        </div>
+
+<script>
+  // ---- State ----
+  let currentFilter = 'month';
+  let currentStartDate = null;
+  let currentEndDate = null;
+
+  // ---- Filter Logic ----
+  function setFilter(type) {
+    currentFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + type).classList.add('active');
+
+    const customDiv = document.getElementById('custom-range');
+    if (type === 'custom') {
+      customDiv.classList.remove('hidden');
+      return;
+    }
+    customDiv.classList.add('hidden');
+
+    const labels = { today: 'Today', week: 'This Week', month: 'This Month', year: 'This Year' };
+    document.getElementById('filter-label').textContent = 'Showing: ' + labels[type];
+
+    fetchReport(type, null, null);
+  }
+
+  function applyCustomFilter() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    if (!start || !end) { alert('Please select both start and end dates.'); return; }
+    if (start > end) { alert('Start date cannot be after end date.'); return; }
+    currentStartDate = start;
+    currentEndDate = end;
+    document.getElementById('filter-label').textContent = `Showing: ${start} to ${end}`;
+    fetchReport('custom', start, end);
+  }
+
+  // ---- Fetch Report via AJAX ----
+  function fetchReport(filter, startDate, endDate) {
+    const params = new URLSearchParams({ filter });
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    fetch('/admin/sales-report/data?' + params.toString())
+      .then(r => r.json())
+      .then(data => {
+        updateSummaryCards(data.summary);
+        updateTable(data.orders);
+      })
+      .catch(err => console.error('Report fetch error:', err));
+  }
+
+  function updateSummaryCards(s) {
+    document.getElementById('stat-sales-count').textContent = s.totalSalesCount;
+    document.getElementById('stat-order-amount').textContent = '₹' + s.totalOrderAmount.toLocaleString('en-IN');
+    document.getElementById('stat-discount').textContent = '₹' + s.totalDiscount.toLocaleString('en-IN');
+    document.getElementById('stat-coupon').textContent = '₹' + s.totalCouponDiscount.toLocaleString('en-IN');
+    document.getElementById('stat-net').textContent = '₹' + s.netRevenue.toLocaleString('en-IN');
+    document.getElementById('stat-total-deductions').textContent = '- ₹' + (s.totalDiscount + s.totalCouponDiscount).toLocaleString('en-IN');
+  }
+
+  const statusColors = {
+    'Delivered': '#dcfce7,#166534', 'Shipped': '#dbeafe,#1e40af',
+    'Processing': '#fef9c3,#854d0e', 'Pending': '#f3f4f6,#374151',
+    'Cancelled': '#fee2e2,#991b1b', 'Returned': '#f3e8ff,#6b21a8'
+  };
+
+  function updateTable(orders) {
+    const tbody = document.getElementById('report-tbody');
+    if (!orders || orders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-12 text-center"><div class="flex flex-col items-center gap-3"><svg class="w-12 h-12 text-stone-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-gray-400 font-medium">No orders found for this period</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = orders.map(o => {
+      const sc = statusColors[o.status] || '#f3f4f6,#374151';
+      const [bg, fg] = sc.split(',');
+      return `
+        <tr class="table-row border-b border-stone-100 transition-colors"
+            data-id="${o.orderId}" data-customer="${o.customerName}" data-date="${o.dateStr}"
+            data-status="${o.status}" data-gross="${o.grossAmount}" data-discount="${o.discount}"
+            data-coupon="${o.couponDiscount}" data-net="${o.netAmount}">
+          <td class="px-5 py-3.5"><span class="font-mono text-xs font-semibold bg-stone-100 px-2.5 py-1 rounded-lg text-stone-700">#${String(o.orderId).slice(-6).toUpperCase()}</span></td>
+          <td class="px-5 py-3.5"><p class="font-medium text-gray-800">${o.customerName}</p><p class="text-xs text-gray-400">${o.customerEmail || ''}</p></td>
+          <td class="px-5 py-3.5 text-gray-600 whitespace-nowrap">${o.dateStr}</td>
+          <td class="px-5 py-3.5"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background:${bg};color:${fg}">${o.status}</span></td>
+          <td class="px-5 py-3.5 text-right font-medium text-gray-800">₹${o.grossAmount.toLocaleString('en-IN')}</td>
+          <td class="px-5 py-3.5 text-right text-red-500 font-medium">${o.discount > 0 ? '- ₹' + o.discount.toLocaleString('en-IN') : '—'}</td>
+          <td class="px-5 py-3.5 text-right text-purple-500 font-medium">${o.couponDiscount > 0 ? '- ₹' + o.couponDiscount.toLocaleString('en-IN') : '—'}</td>
+          <td class="px-5 py-3.5 text-right font-bold text-green-700">₹${o.netAmount.toLocaleString('en-IN')}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ---- Excel Download ----
+  function downloadExcel() {
+    const rows = document.querySelectorAll('#report-tbody tr[data-id]');
+    if (!rows.length) { alert('No data to export.'); return; }
+
+    const summary = {
+      'Total Sales Count': document.getElementById('stat-sales-count').textContent,
+      'Total Order Amount': document.getElementById('stat-order-amount').textContent,
+      'Total Discount': document.getElementById('stat-discount').textContent,
+      'Coupon Deductions': document.getElementById('stat-coupon').textContent,
+      'Net Revenue': document.getElementById('stat-net').textContent,
+      'Filter Period': document.getElementById('filter-label').textContent
+    };
+
+    const wb = XLSX.utils.book_new();
+
+    // Summary sheet
+    const summaryData = Object.entries(summary).map(([k,v]) => [k, v]);
+    const summarySheet = XLSX.utils.aoa_to_sheet([['Summary Report'], [], ...summaryData]);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+
+    // Orders sheet
+    const headers = ['Order ID', 'Customer', 'Email', 'Date', 'Status', 'Gross Amount', 'Discount', 'Coupon Discount', 'Net Amount'];
+    const orderData = Array.from(rows).map(r => [
+      '#' + r.dataset.id.slice(-6).toUpperCase(),
+      r.dataset.customer,
+      r.querySelector('p.text-xs')?.textContent || '',
+      r.dataset.date,
+      r.dataset.status,
+      parseFloat(r.dataset.gross),
+      parseFloat(r.dataset.discount),
+      parseFloat(r.dataset.coupon),
+      parseFloat(r.dataset.net)
+    ]);
+    const ordersSheet = XLSX.utils.aoa_to_sheet([headers, ...orderData]);
+    ordersSheet['!cols'] = headers.map(() => ({ wch: 18 }));
+    XLSX.utils.book_append_sheet(wb, ordersSheet, 'Orders');
+
+    const filename = `sales-report-${currentFilter}-${new Date().toISOString().slice(0,10)}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  }
+
+  // ---- PDF Download ----
+  function downloadPDF() {
+    const rows = document.querySelectorAll('#report-tbody tr[data-id]');
+    if (!rows.length) { alert('No data to export.'); return; }
+
+    const filterLabel = document.getElementById('filter-label').textContent;
+    const stats = {
+      salesCount: document.getElementById('stat-sales-count').textContent,
+      orderAmount: document.getElementById('stat-order-amount').textContent,
+      discount: document.getElementById('stat-discount').textContent,
+      coupon: document.getElementById('stat-coupon').textContent,
+      net: document.getElementById('stat-net').textContent,
+    };
+
+    const orderRows = Array.from(rows).map(r => `
+      <tr>
+        <td>#${r.dataset.id.slice(-6).toUpperCase()}</td>
+        <td>${r.dataset.customer}</td>
+        <td>${r.dataset.date}</td>
+        <td>${r.dataset.status}</td>
+        <td style="text-align:right">₹${parseFloat(r.dataset.gross).toLocaleString('en-IN')}</td>
+        <td style="text-align:right;color:#dc2626">${parseFloat(r.dataset.discount) > 0 ? '-₹' + parseFloat(r.dataset.discount).toLocaleString('en-IN') : '—'}</td>
+        <td style="text-align:right;color:#7c3aed">${parseFloat(r.dataset.coupon) > 0 ? '-₹' + parseFloat(r.dataset.coupon).toLocaleString('en-IN') : '—'}</td>
+        <td style="text-align:right;color:#15803d;font-weight:700">₹${parseFloat(r.dataset.net).toLocaleString('en-IN')}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>Sales Report</title>
+    <style>
+      body{font-family:Arial,sans-serif;margin:20px;color:#1f2937;font-size:12px}
+      h1{color:#78350f;margin-bottom:4px;font-size:20px}
+      .subtitle{color:#6b7280;margin-bottom:20px;font-size:11px}
+      .summary{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+      .stat-box{background:#fef3c7;border:1px solid #fcd34d;padding:10px 16px;border-radius:8px;min-width:130px}
+      .stat-box .label{font-size:9px;color:#92400e;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+      .stat-box .value{font-size:16px;font-weight:700;color:#1f2937}
+      .net-box{background:#1c1917;color:white;padding:10px 20px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th{background:#292524;color:white;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+      td{padding:7px 10px;border-bottom:1px solid #e7e5e4}
+      tr:nth-child(even) td{background:#fafaf9}
+      .footer{margin-top:20px;font-size:10px;color:#9ca3af;text-align:right}
+    </style></head><body>
+    <h1>📊 Sales Report</h1>
+    <p class="subtitle">${filterLabel} &nbsp;|&nbsp; Generated: ${new Date().toLocaleString('en-IN')}</p>
+    <div class="summary">
+      <div class="stat-box"><div class="label">Total Sales</div><div class="value">${stats.salesCount}</div></div>
+      <div class="stat-box"><div class="label">Order Amount</div><div class="value">${stats.orderAmount}</div></div>
+      <div class="stat-box"><div class="label">Discount</div><div class="value" style="color:#dc2626">${stats.discount}</div></div>
+      <div class="stat-box"><div class="label">Coupon Savings</div><div class="value" style="color:#7c3aed">${stats.coupon}</div></div>
+    </div>
+    <div class="net-box">
+      <div><span style="font-size:11px;color:#d6d3d1">Net Revenue</span><br/><span style="font-size:22px;font-weight:700">${stats.net}</span></div>
+      <div style="font-size:11px;color:#fca5a5">Total Deductions: -${document.getElementById('stat-total-deductions').textContent.replace('- ','')} </div>
+    </div>
+    <table>
+      <thead><tr><th>Order ID</th><th>Customer</th><th>Date</th><th>Status</th><th>Gross Amt</th><th>Discount</th><th>Coupon</th><th>Net Amt</th></tr></thead>
+      <tbody>${orderRows}</tbody>
+    </table>
+    <div class="footer">AdminHub Sales Report &copy; ${new Date().getFullYear()}</div>
+    </body></html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => { win.print(); }, 500);
+  }
+
+  // ---- Modal ----
+  function showLogoutModal(e) { e.preventDefault(); document.getElementById('logout-modal').style.display = 'flex'; }
+  function closeLogoutModal() { document.getElementById('logout-modal').style.display = 'none'; }
+  document.getElementById('logout-modal').addEventListener('click', function(e) { if (e.target === this) closeLogoutModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogoutModal(); });
+</script>
+</body>
+</html>

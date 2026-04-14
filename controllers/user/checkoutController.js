@@ -23,7 +23,6 @@ const countryStateData = {
     ]
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const loadCheckout = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -146,7 +145,6 @@ const processOrder = async (req, res) => {
             return res.json({ success: false, message: 'Your cart is empty' });
         }
 
-        // ── Resolve address ───────────────────────────────────────────────────
         let addressId;
         if (selectedAddress) {
             const found = user.addresses.find(a => a._id.toString() === selectedAddress);
@@ -169,7 +167,6 @@ const processOrder = async (req, res) => {
             addressId = newAddress._id;
         }
 
-        // ── Stock validation ──────────────────────────────────────────────────
         for (let item of cart.items) {
             const product = item.productId;
             if (product.isBlocked) {
@@ -186,13 +183,11 @@ const processOrder = async (req, res) => {
             }
         }
 
-        // ── Calculate totals ──────────────────────────────────────────────────
         const subtotal    = cart.items.reduce((s, i) => s + i.totalPrice, 0);
         const shipping    = subtotal > 2500 ? 0 : 99;
         const tax         = subtotal * 0.18;
         const totalPrice  = subtotal + shipping + tax;
 
-        // ── Coupon validation ─────────────────────────────────────────────────
         let discount      = 0;
         let couponApplied = false;
         let appliedCoupon = null;
@@ -225,65 +220,95 @@ const processOrder = async (req, res) => {
         }
 
         const finalAmount = Math.max(0, totalPrice - discount);
+if (paymentMethod === 'wallet') {
+    const wallet = await getOrCreateWallet(userId);
+    if (wallet.balance < finalAmount) {
+        return res.json({
+            success: false,
+            isPartialWallet: true, 
+            walletBalance: wallet.balance,
+            message: `Insufficient wallet balance.`
+        });
+    }
+}
 
-        // ── Wallet payment validation ─────────────────────────────────────────
-        if (paymentMethod === 'wallet') {
-            const wallet = await getOrCreateWallet(userId);
-            if (wallet.balance < finalAmount) {
-                return res.json({
-                    success: false,
-                    message: `Insufficient wallet balance. Available: ₹${wallet.balance.toFixed(2)}, Required: ₹${finalAmount.toFixed(2)}`
-                });
-            }
-        }
+if (paymentMethod === 'wallet+cod') {
+    const wallet = await getOrCreateWallet(userId);
+    if (wallet.balance <= 0) {
+        return res.json({
+            success: false,
+            message: 'Your wallet has no balance.'
+        });
+    }
+}
+let paymentStatus = 'Pending';
+if (paymentMethod === 'wallet')                                           paymentStatus = 'Completed';
+else if (paymentMethod === 'wallet+cod')                                  paymentStatus = 'Partially Paid';
+else if (paymentMethod === 'Cash on Delivery' || paymentMethod === 'cod') paymentStatus = 'Pending';
+else if (paymentMethod === 'razorpay')                                    paymentStatus = 'Completed';
 
-        // ── Determine payment status ──────────────────────────────────────────
-        let paymentStatus = 'Pending';
-        if (paymentMethod === 'wallet')                                       paymentStatus = 'Completed';
-        else if (paymentMethod === 'Cash on Delivery' || paymentMethod === 'cod') paymentStatus = 'Pending';
-        else if (paymentMethod === 'razorpay')                                paymentStatus = 'Completed';
+let walletAmountUsed = 0;
+let codAmountDue = 0;
 
-        // ── Create order ──────────────────────────────────────────────────────
-        const orderData = {
-            orderedItems: cart.items.map(item => ({
-                product:  item.productId._id,
-                quantity: item.quantity,
-                price:    item.price
-            })),
-            totalPrice,
-            discount,
-            finalAmount,
-            address:           userId,
-            selectedAddressId: addressId,
-            paymentMethod,
-            paymentStatus,
-            invoiceDate:   new Date(),
-            status:        'Pending',
-            createdOn:     new Date(),
-            couponApplied
-        };
+if (paymentMethod === 'wallet+cod') {
+    const wallet = await getOrCreateWallet(userId);
+    walletAmountUsed = Math.min(wallet.balance, finalAmount);
+    codAmountDue = finalAmount - walletAmountUsed;
+} else if (paymentMethod === 'wallet') {
+    walletAmountUsed = finalAmount;
+    codAmountDue = 0;
+}
+
+const orderData = {
+    orderedItems: cart.items.map(item => ({
+        product:  item.productId._id,
+        quantity: item.quantity,
+        price:    item.price
+    })),
+    totalPrice,
+    discount,
+    finalAmount,
+    walletAmountUsed,
+    codAmountDue,
+    address:           userId,
+    selectedAddressId: addressId,
+    paymentMethod,
+    paymentStatus,
+    invoiceDate:   new Date(),
+    status:        'Pending',
+    createdOn:     new Date(),
+    couponApplied
+};
 
         const order      = new Order(orderData);
         const savedOrder = await order.save();
 
-        // ── Mark coupon as used ───────────────────────────────────────────────
         if (couponApplied && appliedCoupon) {
             await Coupon.findByIdAndUpdate(appliedCoupon._id, {
                 $push: { userBy: userId }
             });
         }
 
-        // ── Debit wallet if wallet payment ────────────────────────────────────
-        if (paymentMethod === 'wallet') {
-            await debitWallet(
-                userId,
-                finalAmount,
-                `Payment for order #${String(savedOrder.orderId || savedOrder._id).slice(-8).toUpperCase()}`,
-                savedOrder._id
-            );
-        }
+if (paymentMethod === 'wallet') {
+    await debitWallet(
+        userId,
+        finalAmount,
+        `Payment for order #${String(savedOrder.orderId || savedOrder._id).slice(-8).toUpperCase()}`,
+        savedOrder._id
+    );
+}
 
-        // ── Deduct stock ──────────────────────────────────────────────────────
+if (paymentMethod === 'wallet+cod') {
+    const wallet = await getOrCreateWallet(userId);
+    const debitAmt = Math.min(wallet.balance, finalAmount);
+    await debitWallet(
+        userId,
+        debitAmt,
+        `Partial wallet payment for order #${String(savedOrder.orderId || savedOrder._id).slice(-8).toUpperCase()}`,
+        savedOrder._id
+    );
+}
+
         for (let item of cart.items) {
             const product = await Product.findById(item.productId._id);
             product.quantity -= item.quantity;
@@ -291,10 +316,8 @@ const processOrder = async (req, res) => {
             await product.save();
         }
 
-        // ── Clear cart ────────────────────────────────────────────────────────
         await Cart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
 
-        // ── Confirmation email (best-effort) ──────────────────────────────────
         try {
             const selectedAddressData = user.addresses.find(
                 a => a._id.toString() === addressId.toString()
@@ -320,13 +343,11 @@ const processOrder = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const orderSuccess = async (req, res) => {
     try {
         const userId = req.session.user;
         if (!userId) return res.redirect('/login');
 
-        // ── Fetch the most recent order for this user ─────────────────────
         const order = await Order.findOne({ address: userId })
             .sort({ createdOn: -1 })
             .populate('orderedItems.product', 'productName productImage finalPrice')
@@ -337,7 +358,6 @@ const orderSuccess = async (req, res) => {
         const user = await User.findById(userId).lean();
         if (!user)  return res.redirect('/');
 
-        // ── Resolve shipping address ──────────────────────────────────────
         let shippingAddress = null;
         if (order.selectedAddressId) {
             shippingAddress = user.addresses.find(
@@ -354,13 +374,14 @@ const orderSuccess = async (req, res) => {
             };
         }
 
-        // ── Transform order ───────────────────────────────────────────────
         const rawItems = order.orderedItems || order.orderedItemes || [];
 
-        const transformedOrder = {
-            _id:           order._id,
-            orderId:       order.orderId,
-            totalAmount:   order.finalAmount,
+   const transformedOrder = {
+    _id:           order._id,
+    orderId:       order.orderId,
+    totalAmount:   order.finalAmount,
+    walletAmountUsed: order.walletAmountUsed || 0,
+    codAmountDue:     order.codAmountDue || 0,
             orderStatus:   order.status,
             paymentMethod: order.paymentMethod || 'Cash on Delivery',
             paymentStatus: order.paymentStatus || 'Pending',
@@ -394,7 +415,6 @@ const orderSuccess = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const addAddressCheckout = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -431,7 +451,6 @@ const addAddressCheckout = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const updateAddressCheckout = async (req, res) => {
     try {
         const userId    = req.session.user;
@@ -471,7 +490,6 @@ const updateAddressCheckout = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const deleteAddressCheckout = async (req, res) => {
     try {
         const userId    = req.session.user;
@@ -495,7 +513,6 @@ const deleteAddressCheckout = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const getAddressCheckout = async (req, res) => {
     try {
         const userId    = req.session.user;
@@ -514,7 +531,6 @@ const getAddressCheckout = async (req, res) => {
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 const getStatesCheckout = async (req, res) => {
     try {
         const { country } = req.query;
@@ -524,6 +540,21 @@ const getStatesCheckout = async (req, res) => {
         res.json({ success: false, states: [] });
     }
 };
+const orderFailed = async (req, res) => {
+    try {
+        const reason = req.query.reason || 'Payment was not completed';
+        const amount = req.query.amount || null;
+        const method = req.query.method || null;
+
+        const orderInfo = (amount || method) ? { amount, paymentMethod: method } : null;
+
+        res.render('user/order-failed', { reason, orderInfo });
+    } catch (error) {
+        console.error("Error loading order failed page:", error);
+        res.redirect('/');
+    }
+};
+
 
 export default {
     loadCheckout,
@@ -534,5 +565,6 @@ export default {
     getAddressCheckout,
     getStatesCheckout,
     orderSuccess,
-    sendOrderConfirmationEmail
+    sendOrderConfirmationEmail,
+    orderFailed
 };

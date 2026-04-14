@@ -139,9 +139,8 @@ export const toggleCoupon = async (req, res) => {
     } catch (err) {
         console.error("toggleCoupon error:", err);
         return res.status(500).json({ success: false, message: "Server error" });
-    }5555555555555555555555555
-};555555555
-435
+    }
+};
 export const deleteCoupon = async (req, res) => {
     try {
         const { couponId } = req.body;

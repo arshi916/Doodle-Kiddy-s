@@ -16,17 +16,13 @@ import adminRouter from "./routers/adminRouter.js";
 
 import StatusCodes from "./config/statusCodes.js";
 import db from "./config/db.js";
-
-// __dirname fix for ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// DB connection
 db();
 
-// USER SESSION
 const userSession = session({
   name: "connect.sid_user",
   secret: process.env.SESSION_SECRET,

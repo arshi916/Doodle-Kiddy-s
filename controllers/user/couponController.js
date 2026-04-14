@@ -1,7 +1,6 @@
 import Coupon from "../../models/couponSchema.js";
 import Cart   from "../../models/cartSchema.js";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
 
 const calcTotals = (cartItems, discount = 0) => {
     const subtotal    = cartItems.reduce((s, i) => s + i.totalPrice, 0);
@@ -12,11 +11,6 @@ const calcTotals = (cartItems, discount = 0) => {
     return { subtotal, shipping, tax, totalPrice, discount, finalAmount };
 };
 
-// ─── GET /api/coupons/available ──────────────────────────────────────────────
-// Returns all coupons that:
-//   • are listed (islist: true)
-//   • have not expired
-//   • have NOT already been used by this user
 const getAvailableCoupons = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -33,10 +27,9 @@ const getAvailableCoupons = async (req, res) => {
         const coupons = await Coupon.find({
             islist:   true,
             expireOn: { $gt: now },
-            userBy:   { $ne: userId },          // user hasn't used it yet
+            userBy:   { $ne: userId },         
         });
 
-        // Mark which ones meet the minimum spend requirement
         const result = coupons.map(c => ({
             _id:          c._id,
             name:         c.name,
@@ -53,7 +46,6 @@ const getAvailableCoupons = async (req, res) => {
     }
 };
 
-// ─── POST /api/coupons/apply ─────────────────────────────────────────────────
 const applyCoupon = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -75,7 +67,6 @@ const applyCoupon = async (req, res) => {
 
         const coupon = await Coupon.findOne({ name: couponCode.trim().toUpperCase() });
 
-        // ── validations ──────────────────────────────────────────────────────
         if (!coupon) {
             return res.json({ success: false, message: "Invalid coupon code" });
         }
@@ -98,7 +89,6 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // ── all good — calculate totals ───────────────────────────────────────
         const totals = calcTotals(cart.items, coupon.offerPrice);
 
         return res.json({
@@ -115,7 +105,6 @@ const applyCoupon = async (req, res) => {
     }
 };
 
-// ─── POST /api/coupons/remove ────────────────────────────────────────────────
 const removeCoupon = async (req, res) => {
     try {
         const userId = req.session.user;

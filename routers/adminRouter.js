@@ -5,18 +5,20 @@ import categoryController from "../controllers/admin/categoryController.js";
 import productController from "../controllers/admin/productController.js";
 import { upload, uploadMultipleMiddleware } from "../middlewares/upload.js";
 import couponController from "../controllers/admin/couponController.js";
-import offerController from "../controllers/admin/offerController.js";
 import { adminAuth } from "../middlewares/auth.js";
-
-// ✅ Named imports only — matches your export { } at bottom of orderController.js
-import { 
-  loadOrders, 
-  viewOrder, 
-  updateOrderStatus, 
+import {
+  loadOrders,
+  viewOrder,
+  updateOrderStatus,
   handleReturnRequest,
   approveReturn,
   getOrderStats
 } from "../controllers/admin/orderController.js";
+
+import {
+  loadSalesReport,
+  getSalesReportData
+} from "../controllers/admin/salesReportController.js";
 
 const router = express.Router();
 
@@ -61,15 +63,15 @@ router.post("/products/delete", adminAuth, productController.deleteProduct);
 router.get("/products/listed", adminAuth, productController.getListedProducts);
 router.post("/products/add-offer", adminAuth, productController.addProductOffer);
 
-// Orders — ⚠️ specific routes MUST come before /orders/:id
+// Orders — specific routes BEFORE wildcard /:id
 router.get("/orders", adminAuth, loadOrders);
-router.get("/orders/stats", adminAuth, getOrderStats);        // ✅ before /:id
+router.get("/orders/stats", adminAuth, getOrderStats);
 router.get("/orders/detail/:id", adminAuth, viewOrder);
 router.get("/orders/view/:id", adminAuth, viewOrder);
 router.post("/orders/update-status", adminAuth, updateOrderStatus);
 router.post("/orders/handle-return", adminAuth, handleReturnRequest);
 router.post("/orders/approve-return", adminAuth, approveReturn);
-router.get("/orders/:id", adminAuth, viewOrder);              // ✅ wildcard last
+router.get("/orders/:id", adminAuth, viewOrder);
 
 // Coupons
 router.get("/coupons", adminAuth, couponController.loadCoupons);
@@ -77,5 +79,8 @@ router.post("/coupons/add", adminAuth, couponController.addCoupon);
 router.post("/coupons/edit/:id", adminAuth, couponController.editCoupon);
 router.post("/coupons/toggle", adminAuth, couponController.toggleCoupon);
 router.post("/coupons/delete", adminAuth, couponController.deleteCoupon);
+
+router.get("/sales-report", adminAuth, loadSalesReport);
+router.get("/sales-report/data", adminAuth, getSalesReportData);
 
 export default router;

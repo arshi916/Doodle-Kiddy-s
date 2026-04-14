@@ -94,6 +94,45 @@
             background: #C8A882;
             transform: scale(1.1);
         }
+        .avatar-remove {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.7rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    opacity: 0;
+}
+.profile-avatar:hover .avatar-remove {
+    opacity: 1;
+}
+.avatar-remove:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+.avatar-initials {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #D4B896, #C8A882);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 2px;
+    border-radius: 50%;
+}
 
         .profile-info h1 {
             font-size: 2.5rem;
@@ -1808,13 +1847,23 @@
     <div class="container">
         <!-- Profile Header -->
         <div class="profile-header">
-            <div class="profile-avatar">
-                <img src="<%= user.profileImage || '/images/default-avatar.jpg' %>" alt="Profile Picture" class="avatar-img" id="avatarImg">
-                <button class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
-                    <i class="fas fa-camera"></i>
-                </button>
-                <input type="file" id="avatarInput" style="display: none;" accept="image/*" onchange="handleAvatarChange(event)">
-            </div>
+         <div class="profile-avatar" id="profileAvatarContainer">
+    <% if (user.profileImage && user.profileImage !== '/images/default-avatar.jpg') { %>
+        <img src="<%= user.profileImage %>" alt="Profile Picture" class="avatar-img" id="avatarImg" style="display:block;">
+        <button class="avatar-remove" id="avatarRemoveBtn" onclick="removeAvatar()" title="Remove photo">
+            <i class="fas fa-times"></i>
+        </button>
+    <% } else { %>
+        <img src="" alt="" class="avatar-img" id="avatarImg" style="display:none;">
+        <div class="avatar-initials" id="avatarInitials">
+            <%= (user.name || 'U').charAt(0).toUpperCase() %>
+        </div>
+    <% } %>
+    <button class="avatar-upload" onclick="document.getElementById('avatarInput').click()" title="Change photo">
+        <i class="fas fa-camera"></i>
+    </button>
+    <input type="file" id="avatarInput" style="display:none;" accept="image/*" onchange="handleAvatarChange(event)">
+</div>
             <div class="profile-info">
                 <h1><%= user.name %></h1>
                 <p><i class="fas fa-envelope"></i> <%= user.email %></p>
@@ -2516,54 +2565,82 @@
         showNotification('Server error. Please try again.', 'error');
     });
 });
-        // Avatar upload functions
-        function handleAvatarChange(event) {
-            const file = event.target.files[0];
-            if (file) {
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('File size too large. Maximum 5MB allowed.', 'error');
-                    return;
-                }
+function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { showNotification('File too large. Max 5MB.', 'error'); return; }
+    if (!file.type.startsWith('image/')) { showNotification('Please select an image file.', 'error'); return; }
 
-                if (!file.type.startsWith('image/')) {
-                    showNotification('Please select an image file.', 'error');
-                    return;
-                }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = document.getElementById('avatarImg');
+        const initials = document.getElementById('avatarInitials');
+        img.src = e.target.result;
+        img.style.display = 'block';
+        if (initials) initials.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    uploadAvatar(file);
+}
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('avatarImg').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-
-                uploadAvatar(file);
+function uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append('profileImage', file);
+    fetch('/profile/upload-avatar', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Profile picture updated!', 'success');
+            document.getElementById('avatarImg').src = data.imagePath + '?t=' + Date.now();
+            document.getElementById('avatarImg').style.display = 'block';
+            const initials = document.getElementById('avatarInitials');
+            if (initials) initials.style.display = 'none';
+            let removeBtn = document.getElementById('avatarRemoveBtn');
+            if (!removeBtn) {
+                removeBtn = document.createElement('button');
+                removeBtn.id = 'avatarRemoveBtn';
+                removeBtn.className = 'avatar-remove';
+                removeBtn.title = 'Remove photo';
+                removeBtn.onclick = removeAvatar;
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                document.getElementById('profileAvatarContainer').appendChild(removeBtn);
             }
+        } else {
+            showNotification(data.message || 'Upload failed', 'error');
         }
+    })
+    .catch(() => showNotification('Error uploading image', 'error'));
+}
 
-        function uploadAvatar(file) {
-            const formData = new FormData();
-            formData.append('profileImage', file);
-
-            fetch('/profile/upload-avatar', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification(data.message, 'success');
-                    document.getElementById('avatarImg').src = data.imagePath + '?t=' + new Date().getTime();
-                } else {
-                    showNotification(data.message || 'Failed to upload image', 'error');
-                    location.reload();
-                }
-            })
-            .catch(err => {
-                showNotification('Error uploading image', 'error');
-                location.reload();
-            });
+function removeAvatar() {
+    if (!confirm('Remove your profile picture?')) return;
+    fetch('/profile/remove-avatar', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Profile picture removed.', 'success');
+            const img = document.getElementById('avatarImg');
+            img.src = ''; img.style.display = 'none';
+            const removeBtn = document.getElementById('avatarRemoveBtn');
+            if (removeBtn) removeBtn.remove();
+            let initials = document.getElementById('avatarInitials');
+            if (!initials) {
+                initials = document.createElement('div');
+                initials.id = 'avatarInitials';
+                initials.className = 'avatar-initials';
+                const letter = (document.querySelector('.profile-info h1')?.textContent || 'U').trim().charAt(0).toUpperCase();
+                initials.textContent = letter;
+                const container = document.getElementById('profileAvatarContainer');
+                container.insertBefore(initials, container.querySelector('.avatar-upload'));
+            } else {
+                initials.style.display = 'flex';
+            }
+        } else {
+            showNotification(data.message || 'Error removing picture.', 'error');
         }
-
+    })
+    .catch(() => showNotification('Error removing picture.', 'error'));
+}
         // Email change functions
         function openEmailEditModal() {
             document.getElementById('emailEditModal').style.display = 'flex';
@@ -3327,20 +3404,40 @@ function showOrderDetails(orderId) {
                                     <i class="fas ${order.paymentMethod === 'Cash on Delivery' ? 'fa-money-bill-wave' : 'fa-credit-card'}" style="color: white; font-size: 1.3rem;"></i>
                                 </div>
                                 <div>
-                                    <p style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #333;">${order.paymentMethod || 'Cash on Delivery'}</p>
-                                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666;">
-                                        ${order.paymentMethod === 'Cash on Delivery' ? 'Pay when you receive' : 'Online Payment'}
-                                    </p>
+<p style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #333;">${
+    order.paymentMethod === 'wallet+cod' ? 'Wallet + Cash on Delivery' :
+    order.paymentMethod === 'cod' ? 'Cash on Delivery' :
+    order.paymentMethod === 'razorpay' ? 'Razorpay' :
+    order.paymentMethod === 'wallet' ? 'Wallet' :
+    order.paymentMethod || 'N/A'
+}</p>                                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666;">
+${order.paymentMethod === 'Cash on Delivery' || order.paymentMethod === 'cod' 
+    ? 'Pay when you receive' 
+    : order.paymentMethod === 'wallet+cod' 
+    ? 'Wallet + Cash on Delivery' 
+    : 'Online Payment'}                                    </p>
                                 </div>
                             </div>
-                            ${order.paymentStatus ? `
-                                <div style="margin-top: 15px; padding: 10px; background: ${order.paymentStatus === 'Completed' ? 'rgba(40, 167, 69, 0.1)' : 'rgba(255, 193, 7, 0.1)'}; border-radius: 8px;">
-                                    <p style="margin: 0; font-size: 0.9rem; color: ${order.paymentStatus === 'Completed' ? '#28a745' : '#ffc107'}; display: flex; align-items: center; gap: 8px;">
-                                        <i class="fas ${order.paymentStatus === 'Completed' ? 'fa-check-circle' : 'fa-clock'}"></i>
-                                        Payment Status: ${order.paymentStatus}
-                                    </p>
-                                </div>
-                            ` : ''}
+                         ${order.paymentStatus ? `
+    <div style="margin-top: 15px; padding: 10px; background: ${order.paymentStatus === 'Completed' ? 'rgba(40, 167, 69, 0.1)' : 'rgba(255, 193, 7, 0.1)'}; border-radius: 8px;">
+        <p style="margin: 0; font-size: 0.9rem; color: ${order.paymentStatus === 'Completed' ? '#28a745' : '#ffc107'}; display: flex; align-items: center; gap: 8px;">
+            <i class="fas ${order.paymentStatus === 'Completed' ? 'fa-check-circle' : 'fa-clock'}"></i>
+            Payment Status: ${order.paymentStatus}
+        </p>
+    </div>
+` : ''}
+${order.paymentMethod === 'wallet+cod' && order.walletAmountUsed > 0 ? `
+    <div style="margin-top: 10px; padding: 12px; background: rgba(212,184,150,0.08); border: 1px solid #D4B896; border-radius: 8px;">
+        <p style="margin: 0 0 6px 0; font-size: 0.85rem; color: #D4B896; font-weight: 600;">
+            <i class="fas fa-wallet" style="margin-right: 6px;"></i>
+            Paid via Wallet: ₹${(order.walletAmountUsed || 0).toFixed(2)}
+        </p>
+        <p style="margin: 0; font-size: 0.85rem; color: #e67e22; font-weight: 600;">
+            <i class="fas fa-money-bill-wave" style="margin-right: 6px;"></i>
+            Pay on Delivery: ₹${(order.codAmountDue || 0).toFixed(2)}
+        </p>
+    </div>
+` : ''}
                         </div>
 
                         <!-- Shipping Address Card -->

@@ -5,7 +5,7 @@ const loadCategories = async (req, res) => {
   try {
    const search = req.query.search ? req.query.search.trim() : "";
     const page = parseInt(req.query.page) || 1;
-    const limit = 5;
+    const limit = 6;
     
     const query = search
       ? { name: { $regex: search, $options: "i" }, isDeleted: false }
@@ -13,11 +13,25 @@ const loadCategories = async (req, res) => {
 
     const total = await Category.countDocuments(query);
     const categories = await Category.find(query)
+  
       .sort({ updatedAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
-    
+      const today = new Date();
+
+for (let category of categories) {
+  if (
+    category.categoryOffer &&
+    category.categoryOffer.endDate < today &&
+    category.categoryOffer.isActive
+  ) {
+    category.categoryOffer.isActive = false;
+    await category.save();
+  }
+}
+
+
     const successMessage = req.session.successMessage;
     if (successMessage) {
       delete req.session.successMessage; 
@@ -27,6 +41,7 @@ const loadCategories = async (req, res) => {
       categories,
       activePage: "categories",
       search,
+      total,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       successMessage 
@@ -58,85 +73,52 @@ const addCategory = async (req, res) => {
     const trimmedDescription = description ? description.trim() : '';
 
     if (!trimmedName) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: "Category name is required. Please enter a valid category name."
-      };
-      return res.redirect("/admin/categories/add");
+      return res.status(400).json({ success: false, message: "Category name is required." });
     }
-
     if (trimmedName.length < 2) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: "Category name must be at least 2 characters long."
-      };
-      return res.redirect("/admin/categories/add");
+      return res.status(400).json({ success: false, message: "Category name must be at least 2 characters long." });
     }
-
     if (trimmedName.length > 50) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: "Category name cannot exceed 50 characters."
-      };
-      return res.redirect("/admin/categories/add");
+      return res.status(400).json({ success: false, message: "Category name cannot exceed 50 characters." });
     }
-
-    const existingCategory = await Category.findOne({ 
-      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
-      isDeleted: false 
-    });
-    
-    if (existingCategory) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: `Category "${trimmedName}" already exists! Please choose a different name.`
-      };
-      return res.redirect("/admin/categories/add");
-    }
-
     if (trimmedDescription && trimmedDescription.length > 500) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: "Description cannot exceed 500 characters."
-      };
-      return res.redirect("/admin/categories/add");
+      return res.status(400).json({ success: false, message: "Description cannot exceed 500 characters." });
     }
 
-    const newCategory = new Category({ 
-      name: trimmedName, 
-      description: trimmedDescription, 
+    const existingCategory = await Category.findOne({
+      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+      isDeleted: false
+    });
+
+    if (existingCategory) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Category "${trimmedName}" already exists! Please choose a different name.` 
+      });
+    }
+
+    const newCategory = new Category({
+      name: trimmedName,
+      description: trimmedDescription,
       isDeleted: false,
       isListed: true
     });
 
     await newCategory.save();
-    console.log("New category added:", newCategory);
 
-   
-    req.session.successMessage = `Category "${trimmedName}" has been added successfully! 🎉`;
-    res.redirect("/admin/categories");
-    
+    return res.json({ 
+      success: true, 
+      message: `Category "${trimmedName}" has been added successfully! 🎉` 
+    });
+
   } catch (err) {
     console.error("Error adding category:", err);
-    
-
     if (err.code === 11000) {
-      req.session.popupMessage = {
-        type: 'error',
-        message: "Category already exists! Please choose a different name."
-      };
-      return res.redirect("/admin/categories/add");
+      return res.status(400).json({ success: false, message: "Category already exists!" });
     }
-    
-   
-    req.session.popupMessage = {
-      type: 'error',
-      message: "Something went wrong while adding the category. Please try again."
-    };
-    return res.redirect("/admin/categories/add");
+    return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
   }
 };
-
 const loadEditCategory = async (req, res) => {   
   try {     
     const { id } = req.params;      
@@ -418,13 +400,13 @@ const addCategoryOffer = async (req, res) => {
         message: "All fields are required" 
       });
     }
+ 
 
     const category = await Category.findById(categoryId);
     if (!category || category.isDeleted) {
       return res.status(404).json({ success: false, message: "Category not found" });
     }
 
-    // Optional: Only allow offers on listed categories
     if (!category.isListed) {
       return res.status(400).json({ 
         success: false, 
@@ -432,6 +414,7 @@ const addCategoryOffer = async (req, res) => {
       });
     }
 
+   
     category.categoryOffer = {
       title: title.trim(),
       discount: Number(discount),
@@ -458,6 +441,19 @@ const getListedCategories = async (req, res) => {
       isListed: true, 
       isDeleted: false 
     }).select("name _id categoryOffer").sort({ name: 1 });
+
+    const today = new Date();
+   for( let category of categories){
+    if(
+
+  category.categoryOffer &&
+  category.categoryOffer.endDate &&
+  category.categoryOffer.endDate < today
+    ){
+      category.categoryOffer.isActive=false;
+      await category.save()
+    }
+   }
 
     res.json({ success: true, categories });
   } catch (err) {

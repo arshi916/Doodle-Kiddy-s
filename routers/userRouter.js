@@ -129,6 +129,7 @@ router.post('/profile/return-order', userAuth, profileController.returnOrder);
 router.post('/profile/cancel-order-item', userAuth, profileController.cancelOrderItem);
 router.post('/profile/return-order-item', userAuth, profileController.returnOrderItem);
 router.get('/profile/generate-invoice/:id', userAuth, profileController.generateInvoice);
+router.get('/order-failed', checkoutController.orderFailed);
 
 //wallet
 router.get('/api/wallet', userAuth, walletController.loadWallet);

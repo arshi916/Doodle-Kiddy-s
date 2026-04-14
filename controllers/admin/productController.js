@@ -300,6 +300,7 @@ const loadProductPage = async (req, res) => {
       title: "Products",
       products,
       search,
+      totalProducts,
       currentPage: page,
       totalPages,
       activePage: "products",
@@ -445,13 +446,33 @@ const updateProductPost = async (req, res) => {
     }
 
     let newImages = [];
-    if (req.files && req.files.length > 0) {
-      for (let file of req.files) {
-        
-        newImages.push(filename);
-      }
-    }
+if (req.files && req.files.length > 0) {
+  for (let file of req.files) {
+    const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2,9)}-${file.originalname}`;
+    const outputPath = path.join("public", "images", filename);
 
+    await sharp(file.buffer)
+      .resize(300, 300, { fit: "cover", position: "center" })
+      .jpeg({ quality: 90 })
+      .toFile(outputPath);
+
+    newImages.push(filename);
+  }
+}
+
+   if (req.files && req.files.length > 0) {
+  for (let file of req.files) {
+    const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2,9)}-${file.originalname}`;
+    const outputPath = path.join("public", "images", filename);
+    
+    await sharp(file.buffer)
+      .resize(300, 300, { fit: "cover" })
+      .jpeg({ quality: 90 })
+      .toFile(outputPath);
+
+    newImages.push(filename); 
+  }
+}
     const productImages = [...oldImages, ...newImages];
 
     if (productImages.length < 3) {
@@ -707,7 +728,6 @@ const addProductOffer = async (req, res) => {
     if (!product) return res.json({ success: false, message: 'Product not found.' });
 
     if (discountNum === 0) {
-      // Remove offer — restore sale price to original or regularPrice - 1
       product.productOffer = 0;
       product.salePrice = product.regularPrice - 1;
       await product.save();

@@ -73,7 +73,10 @@ const loadWishlist = async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page) || 1);
 
         const wishlist = await Wishlist.findOne({ userId })
-            .populate("products.productId");
+ .populate({
+        path: "products.productId",
+        match: { isBlocked: false }  
+    });            
 
         const allProducts = getSortedProducts(wishlist);
         const totalItems  = allProducts.length;

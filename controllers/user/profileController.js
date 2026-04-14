@@ -15,6 +15,13 @@ import { exec } from "child_process";
 import PDFDocument from "pdfkit";
 import Wallet from "../../models/walletSchema.js";
 import { creditWallet } from "./walletController.js";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
 
 const countryStateData = {
   "India": [
@@ -155,7 +162,7 @@ const updateProfile = async (req, res) => {
 const updateAvatar = async (req, res) => {
   try {
     const userId = req.session.user;
-    
+
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
@@ -165,34 +172,27 @@ const updateAvatar = async (req, res) => {
       fs.mkdirSync(userDir, { recursive: true });
     }
 
-    const fileExtension = path.extname(req.file.originalname);
-    const fileName = `profile_${userId}_${Date.now()}${fileExtension}`;
+    const fileName = `profile_${userId}_${Date.now()}.jpg`;
     const finalPath = path.join(userDir, fileName);
 
     await sharp(req.file.buffer)
       .resize(300, 300, { fit: 'cover', position: 'center' })
       .jpeg({ quality: 90 })
       .toFile(finalPath);
-    console.log('File saved at:', finalPath);
 
+    // Delete old image if it exists and isn't the default
     const currentUser = await User.findById(userId);
-    if (currentUser && currentUser.profileImage && currentUser.profileImage !== '/images/default-avatar.jpg') {
-      const oldImagePath = path.join(__dirname, '../../public', currentUser.profileImage);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
+    if (currentUser?.profileImage && currentUser.profileImage !== '/images/default-avatar.jpg') {
+      const oldPath = path.join(__dirname, '../../public', currentUser.profileImage);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     }
 
     const imagePath = `/uploads/profiles/${fileName}`;
     await User.findByIdAndUpdate(userId, { profileImage: imagePath });
 
-    res.json({ 
-      success: true, 
-      message: 'Profile picture updated successfully',
-      imagePath: imagePath
-    });
+    res.json({ success: true, message: 'Profile picture updated', imagePath });
   } catch (error) {
-    console.error("Error updating avatar:", error);
+    console.error('Error updating avatar:', error);
     res.status(500).json({ success: false, message: 'Error updating profile picture' });
   }
 };
@@ -1291,8 +1291,10 @@ const getOrderDetails = async (req, res) => {
       status: order.status || 'Pending',
       createdOn: order.createdOn,
       invoiceDate: order.invoiceDate,
-      paymentMethord:order.paymentMethord,
-      paymentStatus :order.paymentStatus ||'pending',
+      paymentMethod: order.paymentMethod || 'N/A',
+      paymentStatus: order.paymentStatus || 'Pending',
+      walletAmountUsed: order.walletAmountUsed || 0,
+    codAmountDue: order.codAmountDue || 0,
       items: (order.orderedItems || []).map(item => {
         const product = item.product || {};
         return {
@@ -1500,7 +1502,29 @@ const cancelOrder = async (req, res) => {
     order.updatedAt = new Date();
 
     await order.save();
-    if (order.paymentMethod !== 'cod') {
+   if (order.paymentMethod === 'wallet') {
+    await creditWallet(
+        userId,
+        order.finalAmount,
+        `Refund for cancelled order #${String(order.orderId).slice(-8).toUpperCase()}`,
+        order._id
+    );
+} else if (order.paymentMethod === 'wallet+cod') {
+    // Only refund the wallet portion that was actually debited
+    const walletTx = await Wallet.findOne({ userId })
+        .then(w => w?.transactions?.find(t => 
+            t.orderId?.toString() === order._id.toString() && t.type === 'debit'
+        ));
+    const walletAmountPaid = walletTx ? walletTx.amount : 0;
+    if (walletAmountPaid > 0) {
+        await creditWallet(
+            userId,
+            walletAmountPaid,
+            `Wallet refund for cancelled order #${String(order.orderId).slice(-8).toUpperCase()}`,
+            order._id
+        );
+    }
+} else if (order.paymentMethod === 'razorpay') {
     await creditWallet(
         userId,
         order.finalAmount,
@@ -1660,13 +1684,29 @@ const cancelOrderItem = async (req, res) => {
     order.updatedAt = new Date();
     await order.save();
 
- if (order.paymentMethod !== 'cod' && order.paymentMethod !== 'Cash on Delivery') {
+if (order.paymentMethod === 'wallet' || order.paymentMethod === 'razorpay') {
     await creditWallet(
         userId,
         itemRefund,
         `Refund for cancelled item in order #${String(order.orderId).slice(-8).toUpperCase()}`,
         order._id
     );
+} else if (order.paymentMethod === 'wallet+cod') {
+    const itemRatio = itemRefund / order.totalPrice;
+    const walletTx = await Wallet.findOne({ userId })
+        .then(w => w?.transactions?.find(t =>
+            t.orderId?.toString() === order._id.toString() && t.type === 'debit'
+        ));
+    const walletAmountPaid = walletTx ? walletTx.amount : 0;
+    const walletRefund = Math.min(itemRefund, Math.round(walletAmountPaid * itemRatio * 100) / 100);
+    if (walletRefund > 0) {
+        await creditWallet(
+            userId,
+            walletRefund,
+            `Wallet refund for cancelled item in order #${String(order.orderId).slice(-8).toUpperCase()}`,
+            order._id
+        );
+    }
 }
     const user = await User.findById(userId);
     if (user && user.email) {
@@ -1903,7 +1943,6 @@ const generateInvoice = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=invoice_${orderNumber}.pdf`);
     doc.pipe(res);
 
-    // ── Helper: draw a single line of text at exact x,y, no wrapping ever ──
     const drawText = (text, x, y, size, color, bold = false) => {
       doc.fontSize(size)
          .fillColor(color)
@@ -1911,48 +1950,36 @@ const generateInvoice = async (req, res) => {
          .text(String(text), x, y, { lineBreak: false });
     };
 
-    // ── Helper: truncate text to fit within maxChars ──
     const trunc = (str, maxChars) => {
       str = String(str || '');
       return str.length > maxChars ? str.slice(0, maxChars - 1) + '…' : str;
     };
 
-    // ── Page layout constants ──
-    const PW = 595;   // A4 width
-    const ML = 45;    // margin left
-    const MR = 45;    // margin right
-    const CW = PW - ML - MR;  // content width = 505
+    const PW = 595;   
+    const ML = 45;   
+    const MR = 45;    
+    const CW = PW - ML - MR; 
 
-    let Y = 0;  // current Y — we control this entirely
+    let Y = 0; 
 
-    // ═══════════════════════════════════════════════
-    // HEADER BAND
-    // ═══════════════════════════════════════════════
     doc.rect(0, 0, PW, 80).fill('#D4B896');
     drawText('Kids Fashion Store', ML, 20, 20, '#ffffff', true);
     drawText('Your one-stop kids fashion destination', ML, 48, 9, '#fff8f0');
     drawText('INVOICE', PW - MR - 70, 28, 14, '#ffffff', true);
     Y = 95;
 
-    // ═══════════════════════════════════════════════
-    // ORDER DETAILS (left) + CUSTOMER DETAILS (right)
-    // Two completely separate columns with a fixed gap
-    // ═══════════════════════════════════════════════
-    const COL1_X = ML;           // left col starts at 45
-    const COL1_W = 240;          // left col width
-    const COL2_X = ML + 270;     // right col starts at 315 (30px gap)
-    const COL2_W = CW - 270;     // right col width ~235
+    const COL1_X = ML;           
+    const COL1_W = 240;          
+    const COL2_X = ML + 270;     
+    const COL2_W = CW - 270;   
+    const LBL_W   = 82;   
+    const LBL_GAP = 6;    
+    const ROW_H   = 16;  
 
-    const LBL_W   = 82;   // label width in left col
-    const LBL_GAP = 6;    // gap between label and value
-    const ROW_H   = 16;   // exact row height
-
-    // Section headings
     drawText('Order Details', COL1_X, Y, 10, '#D4B896', true);
     drawText('Customer Details', COL2_X, Y, 10, '#D4B896', true);
     Y += 14;
 
-    // Left col rows — label+value on same line, strictly within COL1_W
     const leftRows = [
       ['Order No.',   `#${orderNumber}`],
       ['Date',        new Date(order.createdOn).toLocaleDateString('en-IN', {
@@ -1963,14 +1990,12 @@ const generateInvoice = async (req, res) => {
       ['Order Status',order.status],
     ];
 
-    // Right col rows
     const rightRows = [
       ['Name',  trunc(user.name  || 'N/A', 28)],
       ['Email', trunc(user.email || 'N/A', 32)],
       ['Phone', trunc(user.phone || 'N/A', 16)],
     ];
 
-    // Draw both columns independently — right col uses its own Y counter
     const leftStartY  = Y;
     const rightStartY = Y;
 
@@ -1988,16 +2013,12 @@ const generateInvoice = async (req, res) => {
       drawText(value,  COL2_X + 38 + 6,   rowY, 8, '#333333');
     });
 
-    // Advance Y past whichever column is taller
     Y += Math.max(leftRows.length, rightRows.length) * ROW_H + 14;
 
-    // Thin separator
     doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#dddddd').lineWidth(0.5).stroke();
     Y += 12;
 
-    // ═══════════════════════════════════════════════
-    // SHIPPING ADDRESS
-    // ═══════════════════════════════════════════════
+   
     if (shippingAddress) {
       drawText('Shipping Address', ML, Y, 10, '#D4B896', true);
       Y += 14;
@@ -2020,13 +2041,10 @@ const generateInvoice = async (req, res) => {
     doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
     Y += 12;
 
-    // ═══════════════════════════════════════════════
-    // ITEMS TABLE
-    // ═══════════════════════════════════════════════
+ 
     drawText('Order Items', ML, Y, 10, '#D4B896', true);
     Y += 14;
 
-    // Table column config — must sum to CW (505)
     const TC = [
       { label: '#',          x: ML,      w: 18  },
       { label: 'Product',    x: ML + 22, w: 200 },
@@ -2036,10 +2054,9 @@ const generateInvoice = async (req, res) => {
       { label: 'Status',     x: ML + 428,w: 77               },
     ];
 
-    const TH = 18;  // table header height
-    const TR = 18;  // table row height
+    const TH = 18; 
+    const TR = 18; 
 
-    // Header background
     doc.rect(ML, Y, CW, TH).fill('#D4B896');
 
     TC.forEach(col => {
@@ -2054,7 +2071,6 @@ const generateInvoice = async (req, res) => {
     });
     Y += TH + 2;
 
-    // Data rows
     (order.orderedItems || []).forEach((item, index) => {
       const product   = item.product  || {};
       const qty       = item.quantity || 1;
@@ -2076,15 +2092,11 @@ const generateInvoice = async (req, res) => {
       Y += TR;
     });
 
-    // Table bottom border
     doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
     Y += 16;
 
-    // ═══════════════════════════════════════════════
-    // ORDER SUMMARY
-    // ═══════════════════════════════════════════════
-    const SX = PW - MR - 180;  // summary block starts here
-    const VX = PW - MR - 5;    // value right-edge
+    const SX = PW - MR - 180; 
+    const VX = PW - MR - 5;    
 
     const summaryRows = [
       { label: 'Subtotal:', value: `Rs.${(order.totalPrice || 0).toFixed(2)}`,  color: '#333333', bold: false },
@@ -2106,9 +2118,6 @@ const generateInvoice = async (req, res) => {
        .text(`Rs.${(order.finalAmount || 0).toFixed(2)}`, SX, Y, { width: 180, align: 'right', lineBreak: false });
     Y += 40;
 
-    // ═══════════════════════════════════════════════
-    // FOOTER
-    // ═══════════════════════════════════════════════
     doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
     Y += 10;
 

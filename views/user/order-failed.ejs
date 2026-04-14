@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Kids Fashion Store</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <%- include("../../views/partials/user/header") %>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f7f4ef 0%, #e8ddd4 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .failed-card {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .failed-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        /* ── Failure icon ── */
+        .failed-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: shake 0.6s ease-in-out 0.3s both;
+        }
+
+        .failed-icon i {
+            font-size: 60px;
+            color: white;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15%       { transform: translateX(-8px) rotate(-3deg); }
+            30%       { transform: translateX(8px)  rotate(3deg); }
+            45%       { transform: translateX(-6px) rotate(-2deg); }
+            60%       { transform: translateX(6px)  rotate(2deg); }
+            75%       { transform: translateX(-3px); }
+            90%       { transform: translateX(3px); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .failed-title {
+            font-size: 2.5rem;
+            color: #e74c3c;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .failed-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* ── Error details box ── */
+        .error-details {
+            background: #fff5f5;
+            border: 2px solid rgba(231, 76, 60, 0.2);
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin: 0 0 30px;
+            text-align: left;
+        }
+
+        .error-details-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #c0392b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-reason {
+            font-size: 1rem;
+            color: #e74c3c;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .error-hint {
+            font-size: 0.875rem;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        /* ── Order info grid (mirrors success page) ── */
+        .order-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value.red   { color: #e74c3c; }
+        .info-value.amber { color: #D4B896; }
+
+        /* ── What happened section ── */
+        .what-happened {
+            background: rgba(231, 76, 60, 0.05);
+            border: 2px solid rgba(231, 76, 60, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .what-happened h4 {
+            color: #e74c3c;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reason-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .reason-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 7px 0;
+            font-size: 14px;
+            color: #555;
+            border-bottom: 1px solid rgba(231, 76, 60, 0.08);
+        }
+
+        .reason-list li:last-child { border-bottom: none; }
+
+        .reason-list li i {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ── Action buttons (mirrors success page) ── */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #D4B896 0%, #C8A882 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(212, 184, 150, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            color: #333;
+            transform: translateY(-2px);
+        }
+
+        /* ── Footer note ── */
+        .contact-note {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e1e1;
+            color: #666;
+        }
+
+        .contact-note p { margin-bottom: 10px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .failed-card   { padding: 40px 25px; }
+            .failed-title  { font-size: 2rem; }
+            .order-info    { grid-template-columns: 1fr; gap: 15px; }
+            .action-buttons { flex-direction: column; align-items: center; }
+            .btn           { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="failed-card">
+
+            <!-- Failure icon -->
+            <div class="failed-icon">
+                <i class="fas fa-times"></i>
+            </div>
+
+            <!-- Heading -->
+            <h1 class="failed-title">Payment Failed!</h1>
+            <p class="failed-subtitle">
+                We couldn't process your payment. Don't worry — your cart is safe and no money has been deducted.
+            </p>
+
+            <!-- Error detail box -->
+            <div class="error-details">
+                <div class="error-details-title">
+                    <i class="fas fa-exclamation-circle"></i> Error Details
+                </div>
+                <p class="error-reason">
+                    <%= typeof reason !== 'undefined' && reason ? reason : 'Payment was not completed' %>
+                </p>
+                <p class="error-hint">
+                    If any amount was deducted from your account, it will be automatically refunded within 5–7 business days.
+                </p>
+            </div>
+
+            <!-- Order info grid -->
+            <% if (typeof orderInfo !== 'undefined' && orderInfo) { %>
+            <div class="order-details">
+                <div class="order-info">
+                    <% if (orderInfo.amount) { %>
+                    <div class="info-group">
+                        <div class="info-label">Order Amount</div>
+                        <div class="info-value amber">₹<%= orderInfo.amount %></div>
+                    </div>
+                    <% } %>
+                    <% if (orderInfo.paymentMethod) { %>
+                    <div class="info-group">
+                        <div class="info-label">Payment Method</div>
+                        <div class="info-value"><%= orderInfo.paymentMethod %></div>
+                    </div>
+                    <% } %>
+                    <div class="info-group">
+                        <div class="info-label">Payment Status</div>
+                        <div class="info-value red">
+                            <i class="fas fa-times-circle" style="margin-right:5px;"></i>Failed
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-label">Cart Status</div>
+                        <div class="info-value" style="color:#27ae60;">
+                            <i class="fas fa-check-circle" style="margin-right:5px;"></i>Saved
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Why it might have failed -->
+            <div class="what-happened">
+                <h4><i class="fas fa-question-circle"></i> Why did this happen?</h4>
+                <ul class="reason-list">
+                    <li><i class="fas fa-circle"></i> Payment was cancelled or timed out</li>
+                    <li><i class="fas fa-circle"></i> Insufficient funds in your account</li>
+                    <li><i class="fas fa-circle"></i> Bank declined the transaction</li>
+                    <li><i class="fas fa-circle"></i> Network or connectivity issue during payment</li>
+                    <li><i class="fas fa-circle"></i> Incorrect card details entered</li>
+                </ul>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="action-buttons">
+                <a href="/checkout" class="btn btn-danger">
+                    <i class="fas fa-redo"></i>
+                    Retry Payment
+                </a>
+                <a href="/profile?tab=orders" class="btn btn-primary">
+                    <i class="fas fa-list"></i>
+                    View Orders
+                </a>
+                <a href="/shop" class="btn btn-secondary">
+                    <i class="fas fa-shopping-cart"></i>
+                    Continue Shopping
+                </a>
+            </div>
+
+            <!-- Contact note -->
+            <div class="contact-note">
+                <p>
+                    <i class="fas fa-envelope" style="margin-right:8px; color:#D4B896;"></i>
+                    If you were charged, please contact us at support@kidsfashion.com
+                </p>
+                <p>
+                    <i class="fas fa-phone" style="margin-right:8px; color:#D4B896;"></i>
+                    Need help? Our support team is here for you
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <%- include("../../views/partials/user/footer") %>
+</body>
+</html>

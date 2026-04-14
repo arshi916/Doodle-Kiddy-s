@@ -29,7 +29,7 @@ const loadOrders = async (req, res) => {
     const orders = await Order.find(query)
       .populate({ path: 'address', select: 'name email address phone' })
       .populate({
-        path: 'orderedItems.product',  // ✅ fixed typo
+        path: 'orderedItems.product',  
         select: 'productName category productImage price salePrice'
       })
       .sort({ createdOn: -1 })
@@ -48,7 +48,7 @@ const loadOrders = async (req, res) => {
         const userBasedOrders = await Order.find(userQuery)
           .populate({ path: 'address', select: 'name email address phone' })
           .populate({
-            path: 'orderedItems.product',  // ✅ fixed typo
+            path: 'orderedItems.product',  
             select: 'productName category productImage price salePrice'
           })
           .sort({ createdOn: -1 })
@@ -90,7 +90,7 @@ const viewOrder = async (req, res) => {
     const order = await Order.findById(orderId)
       .populate({ path: 'address', select: 'name email phone' })
       .populate({
-        path: 'orderedItems.product',  // ✅ fixed typo
+        path: 'orderedItems.product',  
         select: 'productName category productImage price salePrice description color size'
       });
 
@@ -157,7 +157,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    const order = await Order.findById(orderId).populate('orderedItems.product');  // ✅ fixed typo
+    const order = await Order.findById(orderId).populate('orderedItems.product');  
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
@@ -171,9 +171,8 @@ const updateOrderStatus = async (req, res) => {
       order.invoiceDate = new Date();
     }
 
-    // Update item statuses for forward-moving statuses
     if (['Processing', 'Shipping', 'Delivered'].includes(status)) {
-      order.orderedItems.forEach(item => {  // ✅ fixed typo
+      order.orderedItems.forEach(item => {  
         if (['Pending', 'Processing', 'Shipping'].includes(item.status || 'Pending')) {
           item.status = status;
         }
@@ -182,18 +181,7 @@ const updateOrderStatus = async (req, res) => {
 
     // Deduct stock when moving from Pending to Processing/Shipping/Delivered
     if (oldStatus === 'Pending' && ['Processing', 'Shipping', 'Delivered'].includes(status)) {
-      for (const item of order.orderedItems) {  // ✅ fixed typo
-        const product = item.product;
-        if (product && product.quantity >= item.quantity) {
-          product.quantity -= item.quantity;
-          await product.save();
-        } else {
-          return res.status(400).json({
-            success: false,
-            message: `Insufficient stock for product: ${product?.productName || 'Unknown'}`
-          });
-        }
-      }
+     
     }
 
     await order.save();
@@ -228,19 +216,17 @@ const handleReturnRequest = async (req, res) => {
     }
 
     const order = await Order.findById(orderId)
-      .populate('orderedItems.product')  // ✅ fixed typo
+      .populate('orderedItems.product')  
       .populate('address');
 
     if (!order) {
       return res.json({ success: false, message: 'Order not found' });
     }
 
-    // Find items with Return Request status
-    const returnRequestedItems = order.orderedItems.filter(  // ✅ fixed typo
+    const returnRequestedItems = order.orderedItems.filter(  
       item => (item.status || '').trim() === 'Return Request'
     );
 
-    // Also check order-level return request
     const isOrderLevelReturn = order.status === 'Return Request';
 
     if (returnRequestedItems.length === 0 && !isOrderLevelReturn) {
@@ -254,12 +240,10 @@ const handleReturnRequest = async (req, res) => {
       let refundAmount = 0;
 
       if (isOrderLevelReturn && returnRequestedItems.length === 0) {
-        // Full order return
         refundAmount = order.finalAmount;
         order.status = 'Returned';
 
-        // Restore all stock
-        for (const item of order.orderedItems) {  // ✅ fixed typo
+        for (const item of order.orderedItems) {  
           if (item.product) {
             await Product.findByIdAndUpdate(
               item.product._id,
@@ -269,7 +253,6 @@ const handleReturnRequest = async (req, res) => {
           item.status = 'Returned';
         }
       } else {
-        // Item-level returns
         for (const item of returnRequestedItems) {
         const itemTotal = item.price * item.quantity;
 const orderTotal = order.totalPrice;
@@ -290,8 +273,7 @@ refundAmount += finalItemAmount;
           item.status = 'Returned';
         }
 
-        // If all items are returned/cancelled, update order status too
-        const allProcessed = order.orderedItems.every(  // ✅ fixed typo
+        const allProcessed = order.orderedItems.every(  
           i => ['Returned', 'Cancelled'].includes(i.status || '')
         );
         if (allProcessed) order.status = 'Returned';
@@ -301,7 +283,6 @@ refundAmount += finalItemAmount;
       order.updatedAt = new Date();
       await order.save();
 
-      // ✅ Credit wallet after admin approves return
       if (refundAmount > 0) {
         await creditWallet(
           order.address._id || order.address,
@@ -362,7 +343,6 @@ const approveReturn = async (req, res) => {
     let refundAmount = 0;
 
     if (itemId) {
-      // Item-level approval
       const itemIndex = order.orderedItems.findIndex(  // ✅ fixed typo
         i => i._id.toString() === itemId
       );
@@ -381,7 +361,6 @@ const approveReturn = async (req, res) => {
       order.orderedItems[itemIndex].status = 'Returned';  // ✅ fixed typo
       order.orderedItems[itemIndex].returnApprovedDate = new Date();
 
-      // Restore stock
       if (item.product?._id) {
         await Product.findByIdAndUpdate(
           item.product._id,
@@ -389,14 +368,12 @@ const approveReturn = async (req, res) => {
         );
       }
 
-      // Update order status if all items done
-      const allDone = order.orderedItems.every(  // ✅ fixed typo
+      const allDone = order.orderedItems.every( 
         i => ['Returned', 'Cancelled'].includes(i.status)
       );
       if (allDone) order.status = 'Returned';
 
     } else {
-      // Full order approval
       if (order.status !== 'Return Request') {
         return res.json({ success: false, message: 'No return request for this order' });
       }
@@ -405,7 +382,7 @@ const approveReturn = async (req, res) => {
       order.status = 'Returned';
       order.returnApprovedDate = new Date();
 
-      for (const item of order.orderedItems) {  // ✅ fixed typo
+      for (const item of order.orderedItems) { 
         if (item.product?._id) {
           await Product.findByIdAndUpdate(
             item.product._id,
@@ -419,7 +396,6 @@ const approveReturn = async (req, res) => {
     order.updatedAt = new Date();
     await order.save();
 
-    // ✅ Credit wallet
     await creditWallet(
       order.address,
       refundAmount,
@@ -477,7 +453,7 @@ const exportOrders = async (req, res) => {
 
     const orders = await Order.find(query)
       .populate('address', 'name email phone')
-      .populate('orderedItems.product', 'productName price')  // ✅ fixed typo
+      .populate('orderedItems.product', 'productName price')  
       .sort({ createdOn: -1 });
 
     const csvHeaders = ['Order ID','Customer Name','Customer Email','Total Amount','Status','Order Date','Items Count'].join(',');
@@ -489,7 +465,7 @@ const exportOrders = async (req, res) => {
       order.finalAmount,
       order.status,
       order.createdOn ? new Date(order.createdOn).toLocaleDateString() : 'N/A',
-      order.orderedItems?.length || 0  // ✅ fixed typo
+      order.orderedItems?.length || 0
     ].join(','));
 
     const csvContent = [csvHeaders, ...csvRows].join('\n');

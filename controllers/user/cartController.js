@@ -271,12 +271,6 @@ const removeFromCart = async (req, res) => {
             return res.status(404).json({ success: false, message: "Item not found in cart" });
         }
 
-    
-        // const product = await Product.findById(productId);
-        // if (product) {
-        //     product.quantity += cart.items[itemIndex].quantity;
-        //     await product.save();
-        // }
 
         cart.items.splice(itemIndex, 1);
         await cart.save(); 

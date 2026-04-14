@@ -26,7 +26,7 @@ const orderSchema = new Schema({
         },
         status: {
             type: String,
-            enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Return Request', 'Returned'],
+            enum: ['Pending', 'Processing', 'Shipping', 'Delivered', 'Cancelled', 'Return Request', 'Returned'],
             default: 'Pending'
         },
         cancellationReason: String,
@@ -63,7 +63,7 @@ const orderSchema = new Schema({
     status: {
         type: String,
         required: true,
-        enum: ['Pending', 'Processing', 'Shipping', 'Shipped', 'Delivered', 'Return Request', 'Returned', 'Cancelled'],
+        enum: ['Pending', 'Processing', 'Shipping', 'Delivered', 'Return Request', 'Returned', 'Cancelled'],
         default: 'Pending'
     },
     createdOn: {  
@@ -71,21 +71,25 @@ const orderSchema = new Schema({
         default: Date.now,
         required: true,
     },
-     paymentMethod: {
-        type: String,
-        enum: ['cod', 'razorpay', 'card', 'upi', 'netbanking','wallet'],
-        required: true,
-        default: 'cod'
-    },
-    paymentStatus: {
-        type: String,
-        enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
-        default: 'Pending'
-    },
-    couponApplied: {
-        type: Boolean,
-        default: false,
-    },
+ paymentMethod: {
+    type: String,
+    enum: ['cod', 'razorpay', 'card', 'upi', 'netbanking', 'wallet', 'wallet+cod'],
+    required: true,
+    default: 'cod'
+},
+paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Completed', 'Failed', 'Refunded', 'Partially Paid'],
+    default: 'Pending'
+},
+    walletAmountUsed: {
+    type: Number,
+    default: 0
+},
+codAmountDue: {
+    type: Number,
+    default: 0
+},
     returnReason: String,
     returnComments: String,
     returnRequestedDate: Date,

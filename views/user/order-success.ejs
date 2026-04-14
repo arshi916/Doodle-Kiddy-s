@@ -315,24 +315,37 @@
                         <div class="info-label">Order Number</div>
 <div class="info-value">#<%= String(orderNumber).slice(-8).toUpperCase() %></div>
                     </div>
+                  <div class="info-group">
+    <div class="info-label">Total Amount</div>
+    <div class="info-value">₹<%= order.totalAmount.toFixed(2) %></div>
+</div>
+
+<% if (order.paymentMethod === 'wallet+cod' && order.walletAmountUsed > 0) { %>
+<div class="info-group" style="background: rgba(212,184,150,0.08); border: 1px solid #D4B896;">
+    <div class="info-label" style="color: #D4B896;">Paid via Wallet</div>
+    <div class="info-value" style="color: #D4B896;">- ₹<%= order.walletAmountUsed.toFixed(2) %></div>
+</div>
+<div class="info-group" style="background: rgba(231,76,60,0.05); border: 1px solid #e67e22;">
+    <div class="info-label" style="color: #e67e22;">Pay on Delivery</div>
+    <div class="info-value" style="color: #e67e22;">₹<%= order.codAmountDue.toFixed(2) %></div>
+</div>
+<% } %>
                     <div class="info-group">
-                        <div class="info-label">Total Amount</div>
-                        <div class="info-value">₹<%= order.totalAmount.toFixed(2) %></div>
-                    </div>
-                    <div class="info-group">
-                        <div class="info-label">Payment Method</div>
-                        <div class="info-value">
-                            <% if (order.paymentMethod === 'cod') { %>
-                                Cash on Delivery
-                            <% } else if (order.paymentMethod === 'card') { %>
-                                Credit/Debit Card
-                            <% } else if (order.paymentMethod === 'paypal') { %>
-                                PayPal
-                            <% } else { %>
-                                <%= order.paymentMethod %>
-                            <% } %>
-                        </div>
-                    </div>
+    <div class="info-label">Payment Method</div>
+    <div class="info-value">
+        <% if (order.paymentMethod === 'wallet+cod') { %>
+            Wallet + Cash on Delivery
+        <% } else if (order.paymentMethod === 'cod') { %>
+            Cash on Delivery
+        <% } else if (order.paymentMethod === 'wallet') { %>
+            Wallet
+        <% } else if (order.paymentMethod === 'razorpay') { %>
+            Razorpay
+        <% } else { %>
+            <%= order.paymentMethod %>
+        <% } %>
+    </div>
+</div>
                     <div class="info-group">
                         <div class="info-label">Order Status</div>
                         <div class="info-value">

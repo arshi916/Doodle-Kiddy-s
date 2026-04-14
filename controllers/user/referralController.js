@@ -10,7 +10,6 @@ const loadReferral = async (req, res) => {
         let user = await User.findById(userId).lean();
         if (!user) return res.redirect('/login');
 
-        // Auto-generate referral code if missing
         if (!user.referralCode) {
             const newCode = user.name.toUpperCase().slice(0, 3) +
                 Math.random().toString(36).substring(2, 7).toUpperCase();

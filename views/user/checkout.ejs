@@ -771,7 +771,57 @@
         </div>
     </div>
 </div>
+<!-- ══ WALLET HYBRID PAYMENT MODAL ══ -->
+<div id="walletHybridModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:20px; padding:32px; width:90%; max-width:460px; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:modalIn .3s ease;">
 
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:#fff8f0; border:2px solid #D4B896; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i class="fas fa-wallet" style="color:#D4B896; font-size:16px;"></i>
+            </div>
+            <div>
+                <p style="margin:0; font-size:15px; font-weight:700; color:#333;">Insufficient Wallet Balance</p>
+                <p style="margin:0; font-size:12px; color:#666;">Would you like to use a partial payment?</p>
+            </div>
+        </div>
+
+        <div style="border-top:1px solid #f0f0f0; margin:18px 0;"></div>
+
+        <div style="background:#f8f9fa; border-radius:12px; padding:14px 16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+                <span style="color:#666;">Order total</span>
+                <span style="font-weight:700; color:#333;" id="hybridOrderTotal">₹0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
+                <span style="color:#666;">Your wallet balance</span>
+                <span style="font-weight:700; color:#D4B896;" id="hybridWalletBal">₹0.00</span>
+            </div>
+            <div style="border-top:1px solid #e0e0e0; margin:10px 0;"></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px;">
+                <span style="color:#666;">Remaining (Cash on Delivery)</span>
+                <span style="font-weight:700; color:#e67e22;" id="hybridCodAmount">₹0.00</span>
+            </div>
+        </div>
+
+        <div style="border:2px solid #D4B896; border-radius:12px; padding:14px 16px; margin-bottom:20px; background:#fffdf9;">
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+                <i class="fas fa-shield-alt" style="color:#D4B896; font-size:14px; margin-top:2px; flex-shrink:0;"></i>
+                <p style="margin:0; font-size:12px; color:#555; line-height:1.7;" id="hybridDescription"></p>
+            </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <button onclick="confirmHybridPayment()" style="width:100%; padding:14px; background:linear-gradient(135deg,#D4B896,#C8A882); color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer;">
+                <i class="fas fa-check-circle" style="margin-right:6px;"></i>
+                Use Wallet + Pay <span id="hybridCodBtn">₹0.00</span> on Delivery
+            </button>
+            <button onclick="closeHybridModal()" style="width:100%; padding:12px; background:transparent; color:#666; border:2px solid #e0e0e0; border-radius:12px; font-size:13px; cursor:pointer;">
+                Choose a different payment method
+            </button>
+        </div>
+
+    </div>
+</div>
 <%- include("../../views/partials/user/footer") %>
 
 <script>
@@ -933,6 +983,7 @@ async function fetchWalletBalance() {
         const res  = await fetch('/api/wallet/balance');
         const data = await res.json();
         const bal  = data.success ? data.balance : 0;
+        window._walletBalance = bal;   // ← ADD THIS LINE ONLY
         document.getElementById('walletBalanceDisplay').textContent = `₹${bal.toFixed(2)}`;
         if (bal <= 0) {
             const wo = document.getElementById('wallet-option');
@@ -1111,11 +1162,11 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
 
     if (appliedCouponCode) formData.append('couponCode', appliedCouponCode);
 
-    // ── Razorpay flow ──
+// ── Razorpay flow ──
     if (payment && payment.value === 'razorpay') {
         try {
             const totalText   = document.getElementById('summaryTotal').innerText.replace('₹','').replace(/,/g,'');
-            const totalAmount = Math.round(parseFloat(totalText) * 100); // paise
+            const totalAmount = Math.round(parseFloat(totalText) * 100);
 
             const res  = await fetch('/create-order', {
                 method:  'POST',
@@ -1133,42 +1184,27 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
             }
 
             const options = {
-                key:      '<%= process.env.RAZORPAY_KEY_ID %>',
-                amount:   data.order.amount,
-                currency: 'INR',
-                name:     'Doodle Kiddys',
+                key:         '<%= process.env.RAZORPAY_KEY_ID %>',
+                amount:      data.order.amount,
+                currency:    'INR',
+                name:        'Doodle Kiddys',
                 description: 'Order Payment',
-                order_id: data.order.id,
-              handler: async function(response) {
-    // Append Razorpay payment details for verification
-    formData.append('razorpay_payment_id', response.razorpay_payment_id);
-    formData.append('razorpay_order_id', response.razorpay_order_id);
-    formData.append('razorpay_signature', response.razorpay_signature);
+                order_id:    data.order.id,
+                handler: async function(response) {
+                    formData.append('razorpay_payment_id', response.razorpay_payment_id);
+                    formData.append('razorpay_order_id',   response.razorpay_order_id);
+                    formData.append('razorpay_signature',  response.razorpay_signature);
 
-    const orderRes = await fetch('/checkout/process', {
-        method: 'POST',
-        body:   formData
-    });
+                    const orderRes  = await fetch('/checkout/process', {
+                        method: 'POST',
+                        body:   formData
+                    });
                     const orderData = await orderRes.json();
 
                     if (orderData.success) {
-    Swal.fire({
-        icon: 'success',
-        title: ' Order Placed!',
-        text: 'Your order has been placed successfully. Redirecting...',
-        confirmButtonColor: '#D4B896',
-        timer: 2500,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        customClass: { popup: 'custom-swal-popup' }
-    }).then(() => {
-        window.location.href = '/order-success';
-    });
-}else {
-                        showAlert('error', 'Order Error', orderData.message || 'Order could not be placed');
-                        placeOrderBtn.disabled = false;
-                        placeOrderBtn.querySelector('.btn-text').style.display = '';
-                        placeOrderBtn.querySelector('.loading').style.display  = 'none';
+                        window.location.href = '/order-success';
+                    } else {
+                        window.location.href = `/order-failed?reason=${encodeURIComponent(orderData.message || 'Payment failed')}`;
                     }
                 },
                 prefill: {
@@ -1178,10 +1214,7 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
                 theme: { color: '#D4B896' },
                 modal: {
                     ondismiss: function() {
-                        showAlert('info', 'Payment Cancelled', 'You cancelled the payment.');
-                        placeOrderBtn.disabled = false;
-                        placeOrderBtn.querySelector('.btn-text').style.display = '';
-                        placeOrderBtn.querySelector('.loading').style.display  = 'none';
+                        window.location.href = '/order-failed?reason=Payment+was+cancelled';
                     }
                 }
             };
@@ -1191,10 +1224,7 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
 
         } catch (err) {
             console.error('Razorpay error:', err);
-            showAlert('error', 'Error', 'Payment failed. Please try again.');
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.querySelector('.btn-text').style.display = '';
-            placeOrderBtn.querySelector('.loading').style.display  = 'none';
+            window.location.href = '/order-failed?reason=Payment+processing+error';
         }
         return; // stop here for razorpay
     }
@@ -1209,7 +1239,16 @@ if (payment && (payment.value === 'cod') ) {
         return;
     }
 }
-    // ── All other payment methods (COD, Wallet, etc.) ──
+ if (payment && payment.value === 'wallet') {
+    const walletBal  = window._walletBalance || 0;
+    const totalText  = document.getElementById('summaryTotal').innerText.replace('₹','').replace(/,/g,'');
+    const orderTotal = parseFloat(totalText);
+
+    if (walletBal < orderTotal) {
+        openHybridModal(orderTotal, walletBal, formData);
+        return;
+    }
+}
     try {
         const res  = await fetch('/checkout/process', { method: 'POST', body: formData });
         const data = await res.json();
@@ -1232,17 +1271,11 @@ if (data.success) {
     placeOrderBtn.querySelector('.btn-text').style.display = '';
     placeOrderBtn.querySelector('.loading').style.display  = 'none';
 } else {
-            showAlert('error', 'Order Error', data.message || 'Could not place order');
-            placeOrderBtn.disabled = false;
-            placeOrderBtn.querySelector('.btn-text').style.display = '';
-            placeOrderBtn.querySelector('.loading').style.display  = 'none';
-        }
-    } catch (err) {
-        showAlert('error', 'Error', 'Something went wrong. Please try again.');
-        placeOrderBtn.disabled = false;
-        placeOrderBtn.querySelector('.btn-text').style.display = '';
-        placeOrderBtn.querySelector('.loading').style.display  = 'none';
+        window.location.href = `/order-failed?reason=${encodeURIComponent(data.message || 'Could not place order')}`;
     }
+} catch (err) {
+    window.location.href = '/order-failed?reason=Something+went+wrong';
+}
 });
 /* ═══════════════════════════════════════════════════════════════════════
    VALIDATION
@@ -1298,6 +1331,66 @@ document.getElementById('zipCode').addEventListener('input', e => { e.target.val
 ═══════════════════════════════════════════════════════════════════════ */
 function showAlert(type, title, text) {
     Swal.fire({ icon:type, title, text, confirmButtonColor:'#D4B896', customClass:{ popup:'custom-swal-popup', confirmButton:'custom-swal-confirm-btn' } });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WALLET HYBRID MODAL
+═══════════════════════════════════════════════════════════════════════ */
+let _hybridFormData = null;
+
+function openHybridModal(orderTotal, walletBal, formData) {
+    const codAmt = orderTotal - walletBal;
+    document.getElementById('hybridOrderTotal').textContent = `₹${orderTotal.toFixed(2)}`;
+    document.getElementById('hybridWalletBal').textContent  = `₹${walletBal.toFixed(2)}`;
+    document.getElementById('hybridCodAmount').textContent  = `₹${codAmt.toFixed(2)}`;
+    document.getElementById('hybridCodBtn').textContent     = `₹${codAmt.toFixed(2)}`;
+    document.getElementById('hybridDescription').textContent =
+        `₹${walletBal.toFixed(2)} will be debited from your wallet now. You pay ₹${codAmt.toFixed(2)} in cash when the order arrives.`;
+    _hybridFormData = formData;
+    document.getElementById('walletHybridModal').style.display = 'flex';
+}
+
+function closeHybridModal() {
+    document.getElementById('walletHybridModal').style.display = 'none';
+    _hybridFormData = null;
+    const btn = document.getElementById('place-order-btn');
+    btn.disabled = false;
+    btn.querySelector('.btn-text').style.display = '';
+    btn.querySelector('.loading').style.display  = 'none';
+}
+
+async function confirmHybridPayment() {
+    if (!_hybridFormData) return;
+    document.getElementById('walletHybridModal').style.display = 'none';
+    _hybridFormData.set('paymentMethod', 'wallet+cod');
+
+    try {
+        const res  = await fetch('/checkout/process', { method: 'POST', body: _hybridFormData });
+        const data = await res.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Placed!',
+                text: 'Redirecting...',
+                confirmButtonColor: '#D4B896',
+                timer: 2500,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                customClass: { popup: 'custom-swal-popup' }
+            }).then(() => { window.location.href = '/order-success'; });
+        } else {
+    window.location.href = `/order-failed?reason=${encodeURIComponent(data.message || 'Could not place order')}`;
+}
+    } catch (err) {
+        showAlert('error', 'Error', 'Something went wrong. Please try again.');
+    } finally {
+        _hybridFormData = null;
+        const btn = document.getElementById('place-order-btn');
+        btn.disabled = false;
+        btn.querySelector('.btn-text').style.display = '';
+        btn.querySelector('.loading').style.display  = 'none';
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

@@ -608,11 +608,11 @@ document.getElementById('productForm').addEventListener('submit', async function
   formData.append('existingImages', JSON.stringify(existingImages));
 
   // New uploaded/cropped images
-  uploadedFiles.forEach(file => {
-    if (file && !file.existing) {
-      formData.append('images', file);
-    }
-  });
+ uploadedFiles.forEach(file => {
+  if (file && !file.existing) {
+    formData.append('productImage', file);  // ✅
+  }
+});
 
   // Stock inputs (if you have dynamic color/size stock fields)
   document.querySelectorAll('#colorSizeStockSection input[name^="stock_"]').forEach(el => {

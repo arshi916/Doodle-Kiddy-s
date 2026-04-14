@@ -11,6 +11,7 @@ const hasMultipleOptions = (product) => {
 };
 
 const loadShopping = async (req, res) => {
+    
     try {
         const page = parseInt(req.query.page) || 1;
         const productsPerPage = 9;
@@ -103,7 +104,6 @@ const renderShopPage = async (req, res) => {
 
         const validProducts = products.filter(product => product.category !== null && product.quantity > 0);
 
-        // Use the helper to attach offers
         const productsWithOffers = attachOffersToProducts(validProducts);
 
         const transformedProducts = productsWithOffers.map(product => ({
@@ -206,7 +206,6 @@ const getProducts = async (req, res) => {
 
             { $match: { 'categoryData.isListed': true, 'categoryData.isDeleted': { $ne: true } } },
 
-            // 🔥 SAFELY extract only the discount number
             {
                 $addFields: {
                     productDiscount: { $ifNull: ['$productOffer', 0] },
@@ -221,7 +220,6 @@ const getProducts = async (req, res) => {
                 }
             },
 
-            // Safe finalPrice calculation
             {
                 $addFields: {
                     finalPrice: {
@@ -331,7 +329,6 @@ const getProductsForShop = async (req, res) => {
             { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: true } },
             { $match: { 'categoryData.isListed': true, 'categoryData.isDeleted': { $ne: true } } },
 
-            // Safe discount extraction
             {
                 $addFields: {
                     productDiscount: { $ifNull: ['$productOffer', 0] },
@@ -340,7 +337,6 @@ const getProductsForShop = async (req, res) => {
             },
             { $addFields: { effectiveDiscount: { $max: ['$productDiscount', '$categoryDiscount'] } } },
 
-            // Safe finalPrice
             {
                 $addFields: {
                     finalPrice: {
@@ -433,12 +429,10 @@ const loadProductDetail = async (req, res) => {
 
         const productId = req.params.id;
 
-      // REPLACE WITH THIS
 if (!mongoose.Types.ObjectId.isValid(productId)) {
     return res.redirect('/shop?msg=unavailable');
 }
 
-        // Main Product with safe offer handling
         const productAgg = await Product.aggregate([
             { 
                 $match: { 
@@ -472,7 +466,6 @@ if (!mongoose.Types.ObjectId.isValid(productId)) {
                 }
             },
 
-            // Safe final price
             {
                 $addFields: {
                     finalPrice: {
@@ -590,7 +583,6 @@ if (!productAgg || productAgg.length === 0) {
 
     } catch (error) {
         console.error('Error in loadProductDetail:', error);
-     // REPLACE WITH THIS
 return res.redirect('/shop?msg=unavailable');
     }
 };
