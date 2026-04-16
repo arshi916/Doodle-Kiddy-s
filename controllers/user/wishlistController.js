@@ -73,10 +73,7 @@ const loadWishlist = async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page) || 1);
 
         const wishlist = await Wishlist.findOne({ userId })
- .populate({
-        path: "products.productId",
-        match: { isBlocked: false }  
-    });            
+.populate("products.productId");          
 
         const allProducts = getSortedProducts(wishlist);
         const totalItems  = allProducts.length;
@@ -123,7 +120,8 @@ const getWishlistPage = async (req, res) => {
                 salePrice:   p.salePrice,
                 regularPrice:p.regularPrice,
                 image:       p.productImage?.[0] || '',
-                addedAt:     item.addedAt || item._id.getTimestamp()
+                addedAt:     item.addedAt || item._id.getTimestamp(),
+                 isBlocked:    p.isBlocked || false 
             };
         });
 

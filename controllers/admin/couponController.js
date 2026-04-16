@@ -1,11 +1,12 @@
 import Coupon from "../../models/couponSchema.js";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 6;
 
 export const loadCoupons = async (req, res) => {
     try {
         const search      = req.query.search || "";
         const currentPage = parseInt(req.query.page) || 1;
+
 
         const query = search
             ? { name: { $regex: search.trim().toUpperCase(), $options: "i" } }
@@ -24,6 +25,7 @@ export const loadCoupons = async (req, res) => {
             search,
             currentPage,
             totalPages,
+            totalCoupons
         });
     } catch (err) {
         console.error("loadCoupons error:", err);

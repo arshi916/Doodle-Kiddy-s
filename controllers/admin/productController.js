@@ -278,7 +278,7 @@ const loadProductPage = async (req, res) => {
         { brand: { $regex: searchRegex } }
       ];
     }
-
+ 
     const totalProducts = await Product.countDocuments(query);
     const totalPages = Math.ceil(totalProducts / limit);
 
@@ -304,7 +304,9 @@ const loadProductPage = async (req, res) => {
       currentPage: page,
       totalPages,
       activePage: "products",
-      successMessage
+      successMessage,
+   
+
     });
   } catch (error) {
     console.error("Error loading product page:", error);

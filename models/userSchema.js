@@ -34,7 +34,7 @@ const userSchema = new Schema({
     },
     googleID: { type: String, sparse: true, unique: true },
 
-    profileImage: { type: String, default: "/images/default-avatar.png" },
+    profileImage: { type: String,  },
     isBlocked:    { type: Boolean, default: false },
     isAdmin:      { type: Boolean, default: false },
 
