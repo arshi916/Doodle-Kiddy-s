@@ -3286,11 +3286,11 @@ function loadOrders() {
                                 <button class="btn btn-outline" onclick="showOrderDetails('${order._id}')">
                                     <i class="fas fa-eye"></i> View Details
                                 </button>
-                                ${order.status === 'Delivered' ? `
-                                    <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
-                                        <i class="fas fa-file-pdf"></i> Download Invoice
-                                    </button>
-                                ` : ''}
+${(!['Cancelled'].includes(order.status) && 
+   !(order.status === 'Pending' && order.paymentStatus !== 'Completed')) ? `    <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
+        <i class="fas fa-file-pdf"></i> Download Invoice
+    </button>
+` : ''}
                             </div>
                         </div>
                     `;
@@ -3508,6 +3508,19 @@ ${order.paymentMethod === 'wallet+cod' && order.walletAmountUsed > 0 ? `
             <i class="fas fa-info-circle"></i> View Rejection Details
         </button>
     `;
+} else if (status === 'Returned' || status === 'returned') {
+    statusBadge = `
+        <div style="position: absolute; top: 15px; right: 15px; background: rgba(40, 167, 69, 0.1); color: #28a745; padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">
+            <i class="fas fa-check-circle"></i> Return Approved
+        </div>
+        <div style="margin-top: 10px; background: rgba(40,167,69,0.07); border-left: 3px solid #28a745; border-radius: 8px; padding: 12px 14px;">
+            <p style="margin:0 0 4px; font-size:0.85rem; font-weight:700; color:#28a745;">
+                <i class="fas fa-wallet"></i> Refund Credited to Wallet
+            </p>
+            <p style="margin:0; font-size:0.8rem; color:#555;">
+                Your return was approved and the refund has been credited to your wallet balance.
+            </p>
+        </div>`;
 } else if (status.includes('Return')) {
     statusBadge = '<div style="position: absolute; top: 15px; right: 15px; background: rgba(108, 117, 125, 0.1); color: #6c757d; padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-undo"></i> Return Requested</div>';
 }
@@ -3539,26 +3552,27 @@ ${order.paymentMethod === 'wallet+cod' && order.walletAmountUsed > 0 ? `
 
 <!-- Order Actions -->
 <div class="order-actions" style="margin-top: 25px; display: flex; gap: 12px; flex-wrap: wrap;">
-    ${order.status === 'Delivered' ? `
-        <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
-            <i class="fas fa-file-pdf"></i> Download Invoice
-        </button>
-    ` : `
-        <div style="
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            background: rgba(212,184,150,0.08);
-            border: 1px dashed #D4B896;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            color: #999;
-        ">
-            <i class="fas fa-file-pdf" style="color: #D4B896;"></i>
-            Invoice available after delivery
-        </div>
-    `}
+   ${(!['Cancelled'].includes(order.status) && 
+   !(order.status === 'Pending' && order.paymentStatus !== 'Completed')) ? `
+    <button class="btn btn-primary" onclick="generateInvoice('${order._id}')">
+        <i class="fas fa-file-pdf"></i> Download Invoice
+    </button>
+` : order.status === 'Cancelled' ? '' : `
+    <div style="
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(212,184,150,0.08);
+        border: 1px dashed #D4B896;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        color: #999;
+    ">
+        <i class="fas fa-file-pdf" style="color: #D4B896;"></i>
+        Invoice available after payment
+    </div>
+`}
     ${['Pending', 'Processing'].includes(order.status) ? `
         <button class="btn btn-danger" onclick="openCancelAllModal('${order._id}')">
             <i class="fas fa-times-circle"></i> Cancel Entire Order

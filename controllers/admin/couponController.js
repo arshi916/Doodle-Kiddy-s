@@ -156,4 +156,9 @@ export const deleteCoupon = async (req, res) => {
     }
 };
 
-export default { loadCoupons, addCoupon, editCoupon, toggleCoupon, deleteCoupon };
+export default{ 
+    loadCoupons, 
+    addCoupon, 
+    editCoupon, 
+    toggleCoupon, 
+    deleteCoupon };

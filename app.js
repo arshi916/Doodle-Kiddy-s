@@ -37,7 +37,7 @@ const userSession = session({
   },
 });
 
-// ADMIN SESSION
+
 const adminSession = session({
   name: "connect.sid_admin",
   secret: process.env.SESSION_SECRET,
@@ -52,7 +52,7 @@ const adminSession = session({
   },
 });
 
-// APPLY SESSION
+
 app.use((req, res, next) => {
   if (req.path.startsWith("/admin")) {
     adminSession(req, res, next);
@@ -76,17 +76,17 @@ app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// clear popup
+
 app.post("/clear-popup-message", (req, res) => {
   delete req.session.popupMessage;
   res.sendStatus(200);
 });
 
-// routes
+
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-// 404
+
 app.use((req, res) => {
   res.status(StatusCodes.NOT_FOUND).json({
     success: false,
@@ -94,7 +94,7 @@ app.use((req, res) => {
   });
 });
 
-// error handler
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

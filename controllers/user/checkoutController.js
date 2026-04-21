@@ -555,6 +555,44 @@ const orderFailed = async (req, res) => {
     }
 };
 
+const validateCart = async (req, res) => {
+    try {
+        const userId = req.session.user;
+        if (!userId) return res.json({ success: false, message: 'Please login to continue' });
+
+        const cart = await Cart.findOne({ userId }).populate({
+            path:   'items.productId',
+            select: 'productName quantity status isBlocked'
+        });
+
+        if (!cart || cart.items.length === 0) {
+            return res.json({ success: false, message: 'Your cart is empty' });
+        }
+
+        for (let item of cart.items) {
+            const product = item.productId;
+
+            if (!product) {
+                return res.json({ success: false, message: 'One or more products in your cart are no longer available.' });
+            }
+            if (product.isBlocked) {
+                return res.json({ success: false, message: `"${product.productName}" has been removed by the store and cannot be ordered.` });
+            }
+            if (product.status === 'out of stock') {
+                return res.json({ success: false, message: `"${product.productName}" is currently out of stock.` });
+            }
+            if (product.quantity < item.quantity) {
+                return res.json({ success: false, message: `"${product.productName}" has insufficient stock. Only ${product.quantity} left.` });
+            }
+        }
+
+        return res.json({ success: true, message: 'Cart is valid' });
+
+    } catch (error) {
+        console.error('Cart validation error:', error);
+        return res.status(500).json({ success: false, message: 'Could not validate cart. Please try again.' });
+    }
+};
 
 export default {
     loadCheckout,
@@ -566,5 +604,6 @@ export default {
     getStatesCheckout,
     orderSuccess,
     sendOrderConfirmationEmail,
-    orderFailed
+    orderFailed,
+     validateCart, 
 };

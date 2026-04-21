@@ -145,6 +145,8 @@
 
         <div class="p-8">
           <form id="productForm" action="/admin/products/update/<%= product._id %>" method="POST" enctype="multipart/form-data">
+              <input type="hidden" name="returnPage" value="<%= returnPage %>">
+
             <!-- Images Section -->
             <div class="mb-8">
               <div class="gradient-border">
@@ -645,7 +647,8 @@ document.getElementById('productForm').addEventListener('submit', async function
           popup: 'animate__animated animate__fadeOutUp'
         }
       }).then(() => {
-        window.location.href = '/admin/products';
+        window.location.href = `/admin/products?page=<%= returnPage %>`;
+
       });
     } else {
       Swal.fire({

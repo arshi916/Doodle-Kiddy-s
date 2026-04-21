@@ -302,7 +302,8 @@ document.getElementById('categoryForm').addEventListener('submit', async functio
 
 // Check for error messages from server
 document.addEventListener('DOMContentLoaded', function() {
-  const errorMessage = '<%= typeof errorMessage !== "undefined" ? errorMessage : "" %>';
+  const errorMessage = '<%- typeof errorMessage !== "undefined" ? errorMessage : "" %>';
+
   
   if (errorMessage) {
     Swal.fire({

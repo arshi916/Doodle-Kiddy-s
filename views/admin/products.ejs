@@ -199,7 +199,7 @@
         <p class="text-sm text-gray-600 font-medium">Total Products</p>
         <p class="text-3xl font-bold text-gray-800"><%= totalProducts %></p>
       </div>
-     
+    
     </div>
     
     <div class="flex gap-3">
@@ -265,7 +265,6 @@
                         </p>
            
 
-<p class="text-xs text-gray-500">Product ID: <%= product._id.toString().slice(-8) %></p>
                         <p class="text-xs text-gray-500">Product ID: <%= product._id.toString().slice(-8) %></p>
                       </div>
                     </div>
@@ -344,31 +343,34 @@
                   <!-- Actions -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center gap-2">
-                      <a href="/admin/products/edit/<%= product._id %>" class="inline-flex items-center p-2 text-stone-600 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-all duration-200" title="Edit Product">
+                      <a href="/admin/products/edit/<%= product._id %>?page=<%= currentPage %>" class="inline-flex items-center p-2 text-stone-600 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-all duration-200" title="Edit Product">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </a>
                       
-                      <form method="POST" action="/admin/products/toggle-block" class="inline" onsubmit="event.preventDefault(); showConfirmModal(this, '<%= product.isBlocked ? 'Unblock this product?' : 'Block this product?' %>', '<%= product.productName %>')">
-                        <input type="hidden" name="productsId" value="<%= product._id %>">
-                        <button 
-                          type="submit" 
-                          class="inline-flex items-center p-2 <%= product.isBlocked ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-red-600 hover:text-red-700 hover:bg-red-50' %> rounded-lg transition-all duration-200" 
-                          title="<%= product.isBlocked ? 'Unblock Product' : 'Block Product' %>">
-                          <% if (product.isBlocked) { %>
-                            <!-- Unlock Icon for Unblock -->
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                            </svg>
-                          <% } else { %>
-                            <!-- Lock Icon for Block -->
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                          <% } %>
-                        </button>
-                      </form>
+                     <form method="POST" action="/admin/products/toggle-block" class="inline"
+  onsubmit="event.preventDefault(); showConfirmModal(this, this.dataset.msg, this.dataset.name)"
+  data-msg="<%= product.isBlocked ? 'Unblock this product?' : 'Block this product?' %>"
+  data-name="<%= product.productName %>">
+  <input type="hidden" name="productsId" value="<%= product._id %>">
+  <input type="hidden" name="returnPage" value="<%= currentPage %>">
+    <input type="hidden" name="returnSearch" value="<%= search || '' %>">
+  <button 
+    type="submit" 
+    class="inline-flex items-center p-2 <%= product.isBlocked ? 'text-green-600 hover:text-green-700 hover:bg-green-50' : 'text-red-600 hover:text-red-700 hover:bg-red-50' %> rounded-lg transition-all duration-200" 
+    title="<%= product.isBlocked ? 'Unblock Product' : 'Block Product' %>">
+    <% if (product.isBlocked) { %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+      </svg>
+    <% } else { %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    <% } %>
+  </button>
+</form>
                     </div>
                   </td>
                 </tr>

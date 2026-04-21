@@ -277,13 +277,13 @@ const toggleCategoryListing = async (req, res) => {
     category.isListed = !category.isListed;
     category.updatedAt = new Date();
     await category.save();
+
     
     console.log('Category listing status updated to:', category.isListed);
     
     const statusText = category.isListed ? 'listed' : 'unlisted';
     const successMessage = `Category "${category.name}" has been ${statusText} successfully! ${category.isListed ? '✅' : '❌'}`;
     
-    req.session.successMessage = successMessage;
     
     if (req.xhr || req.headers.accept.indexOf('json') > -1) {
       return res.json({ 
@@ -370,7 +370,6 @@ const toggleCategoryStatus = async (req, res) => {
       });
     }
     
-    req.session.successMessage = `Category "${category.name}" updated successfully!`;
     res.redirect("/admin/categories");   
   } catch (err) {     
     console.error('Error toggling category:', err);     

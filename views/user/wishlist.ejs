@@ -640,7 +640,7 @@ function doAddToCart(productId, productName, size, color, btn) {
     fetch('/api/add-to-cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, quantity: 1, size, color })
+body: JSON.stringify({ productId, quantity: 1, selectedSize: size, selectedColor: color })
     })
     .then(r => r.json())
     .then(data => {

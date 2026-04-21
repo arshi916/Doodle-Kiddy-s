@@ -970,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function () {
   <% if (typeof successMessage !== 'undefined' && successMessage) { %>
     Swal.fire({
       title: 'Success!',
-      text: '<%= successMessage %>',
+text: '<%- successMessage %>',
       icon: 'success',
       confirmButtonColor: '#059669',
       confirmButtonText: 'Great!',

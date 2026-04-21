@@ -253,6 +253,9 @@ const addProduct = async (req, res) => {
 };
 const loadProductPage = async (req, res) => {
   try {
+
+    
+
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
@@ -280,6 +283,7 @@ const loadProductPage = async (req, res) => {
     }
  
     const totalProducts = await Product.countDocuments(query);
+
     const totalPages = Math.ceil(totalProducts / limit);
 
     const products = await Product.find(query)
@@ -287,9 +291,7 @@ const loadProductPage = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
-
-    console.log(`Search: "${search}", Found: ${products.length} products`);
-
+const totalPrice = await products.reduce((sum,price)=>{return sum+price.salePrice},0)
     
     const successMessage = req.session.successMessage;
     if (successMessage) {
@@ -398,11 +400,13 @@ const getEditProduct = async (req, res) => {
     console.log('Categories for edit:', categories.length);
     console.log('Categories:', categories.map(cat => ({ id: cat._id, name: cat.name })));
 
-    res.render("admin/edit-product", {
-      product,
-      categories,
-      title: "Edit Product",
-    });
+   const returnPage = req.query.page || 1;
+res.render("admin/edit-product", {
+  product,
+  categories,
+  title: "Edit Product",
+  returnPage,
+});
   } catch (error) {
     console.error("Error loading edit product page:", error);
     res.render("admin/admin-error", {
@@ -618,8 +622,11 @@ if (req.files && req.files.length > 0) {
       });
     }
 
-    res.redirect("/admin/products");
-  } catch (error) {
+const returnPage = req.body.returnPage || 1;
+const returnSearch = req.body.returnSearch || '';
+const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
+res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
+ } catch (error) {
     console.error("Product update failed:", error);
 
     const isAjax = req.headers['content-type']?.includes('multipart/form-data') && 
@@ -661,8 +668,11 @@ const deleteProduct = async (req, res) => {
     await Product.findByIdAndUpdate(productsId, { isDeleted: true });
     
     req.session.successMessage = `Product "${product.productName}" has been deleted successfully!`;
-    res.redirect("/admin/products");
-  } catch (error) {
+const returnPage = req.body.returnPage || 1;
+const returnSearch = req.body.returnSearch || '';
+const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
+res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
+} catch (error) {
     console.error("Soft delete failed:", error);
     res.render("admin/admin-error", {
       title: "Error",
@@ -697,7 +707,8 @@ const toggleBlockStatus = async (req, res) => {
     const statusText = product.isBlocked ? 'blocked' : 'unblocked';
     req.session.successMessage = `Product "${product.productName}" has been ${statusText} successfully!`;
 
-    res.redirect("/admin/products");
+const returnPage = req.body.returnPage || 1;
+res.redirect(`/admin/products?page=${returnPage}`);
   } catch (error) {
     console.error("Error toggling block status:", error);
     res.render("admin/admin-error", {

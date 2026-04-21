@@ -602,6 +602,29 @@
         <div class="cart-layout">
             <!-- Cart Items -->
             <div class="cart-items">
+                  <% if (typeof blockedItems !== 'undefined' && blockedItems.length > 0) { %>
+        <div id="blocked-items-banner" style="
+            background: linear-gradient(135deg, #fff5f5, #ffeaea);
+            border: 2px solid #e74c3c;
+            border-radius: 14px;
+            padding: 18px 22px;
+            margin-bottom: 22px;
+        ">
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+                <i class="fas fa-ban" style="color:#e74c3c; font-size:20px; margin-top:2px;"></i>
+                <div>
+                    <p style="font-weight:700; color:#c0392b; font-size:15px; margin-bottom:6px;">
+                        <%= blockedItems.length %> item<%= blockedItems.length > 1 ? 's' : '' %> removed — no longer available
+                    </p>
+                    <% blockedItems.forEach(item => { %>
+                        <p style="font-size:13px; color:#666; margin:2px 0;">
+                            • <%= item.productId ? item.productId.productName : 'Unknown Product' %>
+                        </p>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+    <% } %>
                 <div class="section-title">
                     <i class="fas fa-list"></i>
                     Cart Items (<span id="cart-item-count"><%= cart.items.length %></span>)
@@ -1004,9 +1027,109 @@ function addToCart(productId, selectedSize, selectedColor) {
             }
         }
 
-function proceedToCheckout() {
-    console.log("Redirecting to /user/checkout");
-    window.location.href = '/checkout';
+async function proceedToCheckout() {
+    const btn = document.querySelector('.checkout-btn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+    try {
+        const res  = await fetch('/checkout/validate-cart', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success) {
+            window.location.href = '/checkout';
+        } else {
+            showBlockedModal(data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    } catch (err) {
+        window.location.href = '/checkout';
+    }
+}
+
+function showBlockedModal(message) {
+    const existing = document.getElementById('blocked-modal-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'blocked-modal-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        display: flex; align-items: center; justify-content: center; z-index: 9999;
+    `;
+    overlay.innerHTML = `
+        <div style="background:white; border-radius:18px; padding:2rem;
+                    max-width:400px; width:90%; text-align:center;
+                    box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="width:60px; height:60px; border-radius:50%; background:#fdecea;
+                        display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem;">
+                <i class="fas fa-ban" style="color:#e74c3c; font-size:24px;"></i>
+            </div>
+            <h3 style="font-size:18px; font-weight:700; color:#333; margin-bottom:10px;">
+                Cannot Proceed to Checkout
+            </h3>
+            <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:1.5rem;">
+                ${message}
+            </p>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="document.getElementById('blocked-modal-overlay').remove(); window.location.reload();"
+                        style="padding:11px 24px; border-radius:10px; border:none;
+                               background:linear-gradient(135deg,#D4B896,#C8A882);
+                               color:white; font-size:14px; font-weight:700; cursor:pointer;">
+                    <i class="fas fa-sync-alt"></i> Refresh Cart
+                </button>
+                <button onclick="document.getElementById('blocked-modal-overlay').remove();"
+                        style="padding:11px 24px; border-radius:10px; border:1.5px solid #ddd;
+                               background:white; color:#333; font-size:14px; cursor:pointer;">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+}
+
+// Silently check every 30 seconds if any cart item got blocked
+function startCartBlockedPolling() {
+    setInterval(async () => {
+        try {
+            const res  = await fetch('/checkout/validate-cart', { method: 'POST' });
+            const data = await res.json();
+            if (!data.success) {
+                // Remove affected item from UI without reload
+                const cartItems = document.querySelectorAll('.cart-item');
+                cartItems.forEach(el => {
+                    // Show a subtle banner if not already shown
+                    if (!document.getElementById('live-blocked-banner')) {
+                        const banner = document.createElement('div');
+                        banner.id = 'live-blocked-banner';
+                        banner.style.cssText = `
+                            background:#fff5f5; border:2px solid #e74c3c;
+                            border-radius:12px; padding:14px 18px; margin-bottom:16px;
+                            display:flex; align-items:center; gap:10px;
+                        `;
+                        banner.innerHTML = `
+                            <i class="fas fa-ban" style="color:#e74c3c;"></i>
+                            <span style="font-size:14px; color:#c0392b; font-weight:600;">
+                                ${data.message} — Please refresh your cart.
+                            </span>
+                            <button onclick="window.location.reload()" style="
+                                margin-left:auto; padding:6px 14px; border-radius:8px;
+                                border:none; background:#e74c3c; color:white;
+                                font-size:12px; font-weight:700; cursor:pointer;">
+                                Refresh
+                            </button>
+                        `;
+                        const container = document.getElementById('cart-items-container');
+                        if (container) container.prepend(banner);
+                    }
+                });
+            }
+        } catch (e) { /* silent fail */ }
+    }, 30000); // every 30 seconds
 }
 
         function showNotification(message, type = 'success') {
@@ -1037,6 +1160,7 @@ function proceedToCheckout() {
 
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
+             startCartBlockedPolling(); 
             
             const elements = document.querySelectorAll('.cart-header, .cart-items, .order-summary');
             elements.forEach((element, index) => {

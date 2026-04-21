@@ -14,71 +14,63 @@
 
     body {
       background: linear-gradient(135deg, #f7f4ef 0%, #e8ddd4 100%);
-      overflow: hidden;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
     }
 
     .container {
       display: flex;
       max-width: 950px;
-      width: 100%;
-      height: 90vh;
-      min-height: 500px;
+      width: 95%;
+      height: 92vh;
+      max-height: 700px;
       border-radius: 20px;
       overflow: hidden;
       background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
       box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
       animation: slideIn 0.6s ease-out;
     }
 
     @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── Left: form ── */
     .form-section {
       width: 50%;
-      padding: 40px;
+      padding: 28px 36px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      overflow-y: auto;
     }
 
+    /* scrollbar thin so it doesn't shift layout */
+    .form-section::-webkit-scrollbar { width: 4px; }
+    .form-section::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+    /* ── Right: image ── */
     .image-section {
       width: 50%;
-      background: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      overflow: hidden;
     }
 
     .image-section img {
       width: 100%;
-      height: auto;
-      object-fit: contain;
-      border-radius: 10px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-      position: relative;
-      z-index: 1;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
-
+    /* ── Typography ── */
     h1 {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       background: linear-gradient(135deg, #dccdbd 0%, #dab17e 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -90,23 +82,33 @@
       font-size: 12px;
       margin-bottom: 4px;
       font-weight: 600;
+      color: #444;
     }
 
+    /* ── Form groups ── */
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 13px;
     }
 
     input[type="text"],
     input[type="email"],
     input[type="password"] {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 9px 12px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      font-size: 12px;
-      background: rgba(255, 255, 255, 0.8);
+      font-size: 13px;
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
+    input:focus {
+      outline: none;
+      border-color: #dab17e;
+      box-shadow: 0 0 0 3px rgba(218, 177, 126, 0.18);
+    }
+
+    /* ── Password toggle ── */
     .password-field {
       position: relative;
     }
@@ -118,206 +120,199 @@
       transform: translateY(-50%);
       cursor: pointer;
       color: #b5b3b3;
+      font-size: 14px;
+      line-height: 1;
+      background: none;
+      border: none;
+      padding: 0;
     }
 
+    /* ── Buttons ── */
     .sign-up-btn {
       width: 100%;
-      padding: 12px;
+      padding: 11px;
       background: linear-gradient(135deg, #dccdbd 0%, #dab17e 100%);
       color: white;
       border: none;
       border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
-      margin-top: 15px;
+      margin-top: 14px;
       cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
+      transition: opacity 0.2s, transform 0.2s;
     }
 
     .sign-up-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      opacity: 0.9;
+      transform: translateY(-1px);
     }
 
     .divider {
       text-align: center;
-      color: #777;
+      color: #999;
       font-size: 12px;
-      margin: 20px 0;
+      margin: 14px 0 10px;
     }
 
     .google-btn {
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       display: flex;
       justify-content: center;
       align-items: center;
+      gap: 8px;
       border: 1px solid #e1e1e1;
       background: white;
       border-radius: 10px;
       font-size: 12px;
       cursor: pointer;
+      text-decoration: none;
+      color: #333;
     }
 
     .google-btn img {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
+      width: 15px;
+      height: 15px;
     }
 
     .sign-in-link {
       text-align: center;
       font-size: 12px;
       margin-top: 10px;
+      color: #555;
     }
 
     .sign-in-link a {
-      color: #667eea;
+      color: #dab17e;
       text-decoration: none;
       font-weight: 600;
     }
 
-    .sign-in-link a:hover {
-      color: #764ba2;
-    }
-
+    /* ── Validation messages ── */
     .error-message {
       color: #e74c3c;
       font-size: 10px;
-      margin-top: 4px;
+      margin-top: 3px;
+      display: none;
     }
 
     .server-error {
       background-color: #f8d7da;
       color: #721c24;
-      padding: 6px;
+      padding: 6px 10px;
       border-radius: 6px;
       font-size: 12px;
       margin-bottom: 10px;
     }
 
-    @media (max-width: 768px) {
+    /* ── Referral feedback ── */
+    #referral-feedback {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 650px) {
       .container {
         flex-direction: column;
         height: auto;
-      }
-      .form-section, .image-section {
+        max-height: none;
         width: 100%;
-        padding: 20px;
+        border-radius: 0;
       }
-      .image-section img {
-        width: 80%;
-        border-radius: 30px;
-      }
+      .form-section { width: 100%; padding: 28px 24px; }
+      .image-section { width: 100%; height: 220px; }
     }
   </style>
 </head>
 <body>
+
 <div class="container">
-    <div class="form-section">
-      <h1>Sign up</h1>
 
-      <% if (typeof message !== 'undefined' && message) { %>
-        <div class="server-error">
-          <%= message %>
-        </div>
-      <% } %>
-<!-- Referral Code (optional) -->
+  <!-- ── Form ── -->
+  <div class="form-section">
+    <h1>Sign up</h1>
 
-      <form id="signform" method="POST" action="/signup">
-        
-         <div class="form-group">
-        <label for="referredBy">Referral Code <span style="color:#999;font-size:12px;">(Optional)</span></label>
-        <input 
-            type="text" 
-            id="referredBy" 
-            name="referredBy" 
-            placeholder="Enter referral code if you have one"
-            style="text-transform:uppercase;"
-            maxlength="12"
-        >
-        <div id="referral-feedback" style="font-size:12px;margin-top:5px;"></div>
-    </div>
+    <% if (typeof message !== 'undefined' && message) { %>
+      <div class="server-error"><%= message %></div>
+    <% } %>
 
-        <div class="form-group">
-          <label for="name">Full Name</label>
-          <input type="text" id="name" name="name" required />
-          <div id="error1" class="error-message"></div>
-        </div>
+    <form id="signform" method="POST" action="/signup">
 
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" required />
-          <div id="error2" class="error-message"></div>
-        </div>
-
-        <div class="form-group">
-          <label for="phone">Phone Number</label>
-          <input type="text" id="phone" name="phone" required />
-          <div id="error3" class="error-message"></div>
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <div class="password-field">
-            <input type="password" id="password" name="password" required />
-            <span class="eye-icon" onclick="togglePassword('password')">
-              👁
-            </span>
-          </div>
-          <div id="error4" class="error-message"></div>
-        </div>
-
-        <div class="form-group">
-          <label for="confirm-password">Confirm Password</label>
-          <div class="password-field">
-            <input type="password" id="confirm-password" name="confirm_password" required />
-            <span class="eye-icon" onclick="togglePassword('confirm-password')">
-              👁
-            </span>
-          </div>
-          <div id="error5" class="error-message"></div>
-        </div>
-
-        
-          <% if (locals.message && message.length > 0) { %>
-  <div class="alert alert-danger text-center">
-    <%= message %>
-  </div>
-<% } %>
-
-
-        <button type="submit" class="sign-up-btn">Sign up</button>
-      </form>
-
-      <div class="divider">or</div>
-
-      <a href = "/auth/google" class="google-btn">
-        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google logo">
-        Continue with Google
-      </a>
-
-      <div class="sign-in-link">
-        Already have an account? <a href="/login">Sign in</a>
+      <!-- Referral Code -->
+      <div class="form-group">
+        <label for="referredBy">Referral Code <span style="color:#999;font-weight:400;">(Optional)</span></label>
+        <input type="text" id="referredBy" name="referredBy"
+               placeholder="Enter referral code if you have one"
+               style="text-transform:uppercase;" maxlength="12">
+        <div id="referral-feedback"></div>
       </div>
-    </div>
 
-    <div class="image-section">
-      <img src="/images/image 3.jpg" alt="Children playing">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required>
+        <div id="error1" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+        <div id="error2" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="text" id="phone" name="phone" required>
+        <div id="error3" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-field">
+          <input type="password" id="password" name="password" required>
+          <button type="button" class="eye-icon" onclick="togglePassword('password')">👁</button>
+        </div>
+        <div id="error4" class="error-message"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm-password">Confirm Password</label>
+        <div class="password-field">
+          <input type="password" id="confirm-password" name="confirm_password" required>
+          <button type="button" class="eye-icon" onclick="togglePassword('confirm-password')">👁</button>
+        </div>
+        <div id="error5" class="error-message"></div>
+      </div>
+
+      <button type="submit" class="sign-up-btn">Sign up</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <a href="/auth/google" class="google-btn">
+      <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google logo">
+      Continue with Google
+    </a>
+
+    <div class="sign-in-link">
+      Already have an account? <a href="/login">Sign in</a>
     </div>
   </div>
 
-  <script>
- 
+  <!-- ── Image ── -->
+  <div class="image-section">
+    <img src="/images/image 3.jpg" alt="Children playing">
+  </div>
+
+</div>
+
+<!-- All your original JS — untouched -->
+<script>
 document.getElementById('referredBy').addEventListener('input', async function () {
     const code     = this.value.trim().toUpperCase();
     const feedback = document.getElementById('referral-feedback');
     this.value     = code;
-
     if (code.length < 5) { feedback.textContent = ''; return; }
-
     try {
         const res  = await fetch(`/api/referral/validate?code=${code}`);
         const data = await res.json();
@@ -328,116 +323,111 @@ document.getElementById('referredBy').addEventListener('input', async function (
             feedback.textContent = '❌ ' + (data.message || 'Invalid referral code');
             feedback.style.color = '#e74c3c';
         }
-    } catch (e) {
-        feedback.textContent = '';
-    }
+    } catch (e) { feedback.textContent = ''; }
 });
 
-    const nameid = document.getElementById("name")
-    const emailid = document.getElementById("email")
-    const phoneid = document.getElementById("phone")
-    const passid = document.getElementById("password");
-    const cpassid = document.getElementById("confirm-password")
-    const error1 = document.getElementById("error1")
-    const error2 = document.getElementById("error2")
-    const error3 = document.getElementById("error3")
-    const error4 = document.getElementById("error4")
-    const error5 = document.getElementById("error5")
-    const signform = document.getElementById("signform")
+const nameid  = document.getElementById("name");
+const emailid = document.getElementById("email");
+const phoneid = document.getElementById("phone");
+const passid  = document.getElementById("password");
+const cpassid = document.getElementById("confirm-password");
+const error1  = document.getElementById("error1");
+const error2  = document.getElementById("error2");
+const error3  = document.getElementById("error3");
+const error4  = document.getElementById("error4");
+const error5  = document.getElementById("error5");
+const signform = document.getElementById("signform");
 
-    function togglePassword(fieldId) {
-      const field = document.getElementById(fieldId);
-      field.type = field.type === "password" ? "text" : "password";
+function togglePassword(fieldId) {
+  const field = document.getElementById(fieldId);
+  field.type = field.type === "password" ? "text" : "password";
+}
+
+function nameValidateCheking() {
+  const nameval = nameid.value;
+  const namepattern = /^[A-Za-z\s]+$/;
+  if (nameval.trim() === "") {
+    error1.style.display = "block";
+    error1.innerHTML = "Please enter a valid name";
+    return false;
+  } else if (!namepattern.test(nameval)) {
+    error1.style.display = "block";
+    error1.innerHTML = "Name can only contain alphabets and spaces";
+    return false;
+  } else {
+    error1.style.display = "none";
+    return true;
+  }
+}
+
+function emailVAlidateCheking() {
+  const emailval = emailid.value;
+  const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  if (!emailpattern.test(emailval)) {
+    error2.style.display = "block";
+    error2.innerHTML = "Invalid email format";
+    return false;
+  } else {
+    error2.style.display = "none";
+    return true;
+  }
+}
+
+function phoneValidateCheking() {
+  const phoneval = phoneid.value;
+  const phonePattern = /^[0-9]{10}$/;
+  if (!phonePattern.test(phoneval)) {
+    error3.style.display = "block";
+    error3.innerHTML = "Enter a valid 10-digit phone number";
+    return false;
+  } else {
+    error3.style.display = "none";
+    return true;
+  }
+}
+
+function passValidateCheking() {
+  const passval  = passid.value;
+  const cpassval = cpassid.value;
+  const alpha    = /[a-zA-Z]/;
+  const digit    = /\d/;
+  let isValid    = true;
+  if (passval.length < 8 || !alpha.test(passval) || !digit.test(passval)) {
+    error4.style.display = "block";
+    error4.innerHTML = "Password must be 8+ chars, letters and numbers";
+    isValid = false;
+  } else {
+    error4.style.display = "none";
+  }
+  if (cpassval && passval !== cpassval) {
+    error5.style.display = "block";
+    error5.innerHTML = "Passwords do not match";
+    isValid = false;
+  } else {
+    error5.style.display = "none";
+  }
+  return isValid;
+}
+
+nameid.addEventListener('blur', nameValidateCheking);
+emailid.addEventListener('blur', emailVAlidateCheking);
+phoneid.addEventListener('blur', phoneValidateCheking);
+passid.addEventListener('blur', passValidateCheking);
+cpassid.addEventListener('blur', passValidateCheking);
+
+document.addEventListener("DOMContentLoaded", function () {
+  signform.addEventListener('submit', function (e) {
+    if (!nameValidateCheking() || !emailVAlidateCheking() || !phoneValidateCheking() || !passValidateCheking()) {
+      e.preventDefault();
     }
+  });
+});
 
-    function nameValidateCheking() {
-      const nameval = nameid.value;
-      const namepattern = /^[A-Za-z\s]+$/;
-      if (nameval.trim() === "") {
-        error1.style.display = "block";
-        error1.innerHTML = "Please enter a valid name";
-        return false;
-      } else if (!namepattern.test(nameval)) {
-        error1.style.display = "block";
-        error1.innerHTML = "Name can only contain alphabets and spaces";
-        return false;
-      } else {
-        error1.style.display = "none";
-        return true;
-      }
-    }
-
-    function emailVAlidateCheking() {
-      const emailval = emailid.value;
-      const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-      if (!emailpattern.test(emailval)) {
-        error2.style.display = "block";
-        error2.innerHTML = "Invalid email format";
-        return false;
-      } else {
-        error2.style.display = "none";
-        return true;
-      }
-    }
-
-    function phoneValidateCheking() {
-      const phoneval = phoneid.value;
-      const phonePattern = /^[0-9]{10}$/;
-      if (!phonePattern.test(phoneval)) {
-        error3.style.display = "block";
-        error3.innerHTML = "Enter a valid 10-digit phone number";
-        return false;
-      } else {
-        error3.style.display = "none";
-        return true;
-      }
-    }
-
-    function passValidateCheking() {
-      const passval = passid.value;
-      const cpassval = cpassid.value;
-      const alpha = /[a-zA-Z]/;
-      const digit = /\d/;
-      let isValid = true;
-
-      if (passval.length < 8 || !alpha.test(passval) || !digit.test(passval)) {
-        error4.style.display = "block";
-        error4.innerHTML = "Password must be 8+ chars, letters and numbers";
-        isValid = false;
-      } else {
-        error4.style.display = "none";
-      }
-
-      if (cpassval && passval !== cpassval) {
-        error5.style.display = "block";
-        error5.innerHTML = "Passwords do not match";
-        isValid = false;
-      } else {
-        error5.style.display = "none";
-      }
-
-      return isValid;
-    }
-
-    nameid.addEventListener('blur', nameValidateCheking);
-    emailid.addEventListener('blur', emailVAlidateCheking);
-    phoneid.addEventListener('blur', phoneValidateCheking);
-    passid.addEventListener('blur', passValidateCheking);
-    cpassid.addEventListener('blur', passValidateCheking);
-
-    document.addEventListener("DOMContentLoaded", function () {
-      signform.addEventListener('submit', function (e) {
-        if (!nameValidateCheking() || !emailVAlidateCheking() || !phoneValidateCheking() || !passValidateCheking()) {
-          e.preventDefault();
-        }
-      });
-    });
-
-   const urlParams  = new URLSearchParams(window.location.search);
-const refCode    = urlParams.get('ref');
+const urlParams = new URLSearchParams(window.location.search);
+const refCode   = urlParams.get('ref');
 if (refCode) {
-    const input = document.getElementById('referredBy');
-    if (input) input.value = refCode.toUpperCase();
+  const input = document.getElementById('referredBy');
+  if (input) input.value = refCode.toUpperCase();
 }
 </script>
 </body>

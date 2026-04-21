@@ -120,6 +120,7 @@ router.put('/user/checkout/address/:id', upload.none(), checkoutController.updat
 router.delete('/user/checkout/address/:id', checkoutController.deleteAddressCheckout);
 router.post('/checkout/process', userAuth, upload.none(), checkoutController.processOrder);
 router.get('/order-success', checkoutController.orderSuccess);
+router.post('/checkout/validate-cart', userAuth, checkoutController.validateCart);
 
 // Orders
 router.get('/profile/orders', userAuth, profileController.loadOrders);

@@ -1193,6 +1193,8 @@ const loadOrders = async (req, res) => {
           finalAmount: order.finalAmount || 0,
           discount: order.discount || 0,
           status: order.status || 'Pending',
+            paymentStatus: order.paymentStatus || 'Pending',   
+  paymentMethod: order.paymentMethod || 'cod',
           createdOn: order.createdOn || new Date(),
           invoiceDate: order.invoiceDate || null,
           items: items,
@@ -1217,8 +1219,7 @@ const loadOrders = async (req, res) => {
       }
     });
 
-    console.log('Transformed orders count:', transformedOrders.length);
-    console.log('=== DEBUG: Orders loaded successfully ===');
+  
 
     res.json({ 
 
@@ -1510,7 +1511,7 @@ const cancelOrder = async (req, res) => {
         order._id
     );
 } else if (order.paymentMethod === 'wallet+cod') {
-    // Only refund the wallet portion that was actually debited
+  
     const walletTx = await Wallet.findOne({ userId })
         .then(w => w?.transactions?.find(t => 
             t.orderId?.toString() === order._id.toString() && t.type === 'debit'

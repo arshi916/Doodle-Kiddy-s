@@ -638,11 +638,14 @@
 
                       
 
-                        <div class="payment-option" onclick="selectPayment('cod', event)">
-                            <input type="radio" name="paymentMethod" value="cod">
-                            <div class="payment-icon"><i class="fas fa-money-bill-wave"></i></div>
-                            <div class="payment-details"><h4>Cash on Delivery</h4><p>Pay when you receive your order</p></div>
-                        </div>
+<div class="payment-option" id="cod-option" onclick="selectPayment('cod', event)">
+    <input type="radio" name="paymentMethod" value="cod">
+    <div class="payment-icon"><i class="fas fa-money-bill-wave"></i></div>
+    <div class="payment-details">
+        <h4>Cash on Delivery</h4>
+        <p id="cod-desc">Pay when you receive your order</p>
+    </div>
+</div>
 
                         <div class="payment-option" id="wallet-option" onclick="selectPayment('wallet', event)">
                             <input type="radio" name="paymentMethod" value="wallet">
@@ -825,16 +828,11 @@
 <%- include("../../views/partials/user/footer") %>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════════
-   GLOBALS
-═══════════════════════════════════════════════════════════════════════ */
+
 const countryStateData = <%- countryStateData %>;
 let currentEditId  = null;
 let appliedCouponCode = '';   // tracks what's currently applied
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ADDRESS HELPERS
-═══════════════════════════════════════════════════════════════════════ */
 function toggleAddressMode(mode) {
     const saved   = document.getElementById('saved-addresses');
     const newAddr = document.getElementById('new-address');
@@ -967,9 +965,7 @@ async function loadStates() {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   PAYMENT
-═══════════════════════════════════════════════════════════════════════ */
+
 function selectPayment(method, event) {
     event.stopPropagation();
     document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
@@ -993,9 +989,7 @@ async function fetchWalletBalance() {
     } catch (e) { document.getElementById('walletBalanceDisplay').textContent = '₹0.00'; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   COUPON — CORE
-═══════════════════════════════════════════════════════════════════════ */
+
 function updateSummaryPrices(data) {
     // data: { subtotal, shipping, tax, totalPrice, discount, finalAmount }
     document.getElementById('summaryShipping').textContent = `₹${(data.shipping || 0).toFixed(2)}`;
@@ -1057,9 +1051,7 @@ async function removeCoupon() {
     } catch (e) { showAlert('error','Error','Failed to remove coupon.'); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   COUPON MODAL
-═══════════════════════════════════════════════════════════════════════ */
+
 async function openCouponModal() {
     document.getElementById('couponModalOverlay').classList.add('show');
     const body = document.getElementById('couponModalBody');
@@ -1129,9 +1121,7 @@ function useCouponFromModal(code) {
 function closeCouponModal() { document.getElementById('couponModalOverlay').classList.remove('show'); }
 function closeCouponModalOnOverlay(e) { if (e.target === document.getElementById('couponModalOverlay')) closeCouponModal(); }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   FORM SUBMIT
-═══════════════════════════════════════════════════════════════════════ */
+
 document.getElementById('checkout-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     if (!validateForm()) return;
@@ -1140,6 +1130,16 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
     placeOrderBtn.disabled = true;
     placeOrderBtn.querySelector('.btn-text').style.display = 'none';
     placeOrderBtn.querySelector('.loading').style.display  = 'flex';
+
+      const validateRes  = await fetch('/checkout/validate-cart', { method: 'POST' });
+    const validateData = await validateRes.json();
+    if (!validateData.success) {
+        showAlert('error', 'Cannot Place Order', validateData.message);
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.querySelector('.btn-text').style.display = '';
+        placeOrderBtn.querySelector('.loading').style.display  = 'none';
+        return;
+    }
 
     const payment   = document.querySelector('input[name="paymentMethod"]:checked');
     const formData  = new FormData();
@@ -1165,6 +1165,17 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
 // ── Razorpay flow ──
     if (payment && payment.value === 'razorpay') {
         try {
+
+            const validateRes  = await fetch('/checkout/validate-cart', { method: 'POST' });
+        const validateData = await validateRes.json();
+
+        if (!validateData.success) {
+            showAlert('error', 'Cannot Place Order', validateData.message);
+            placeOrderBtn.disabled = false;
+            placeOrderBtn.querySelector('.btn-text').style.display = '';
+            placeOrderBtn.querySelector('.loading').style.display  = 'none';
+            return;
+        }
             const totalText   = document.getElementById('summaryTotal').innerText.replace('₹','').replace(/,/g,'');
             const totalAmount = Math.round(parseFloat(totalText) * 100);
 
@@ -1231,8 +1242,8 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
 if (payment && (payment.value === 'cod') ) {
     const totalText   = document.getElementById('summaryTotal').innerText.replace('₹','').replace(/,/g,'');
     const totalAmount = parseFloat(totalText);
-    if (totalAmount > 10000) {
-        showAlert('error', 'COD Not Available', 'Cash on Delivery is not available for orders above ₹10,000. Please use online payment.');
+    if (totalAmount > 1000) {
+        showAlert('error', 'COD Not Available', 'Cash on Delivery is not available for orders above ₹10,00. Please use online payment.');
         placeOrderBtn.disabled = false;
         placeOrderBtn.querySelector('.btn-text').style.display = '';
         placeOrderBtn.querySelector('.loading').style.display  = 'none';
@@ -1277,9 +1288,7 @@ if (data.success) {
     window.location.href = '/order-failed?reason=Something+went+wrong';
 }
 });
-/* ═══════════════════════════════════════════════════════════════════════
-   VALIDATION
-═══════════════════════════════════════════════════════════════════════ */
+
 function validateForm() {
     let valid = true;
     const isNew = document.getElementById('new-address').classList.contains('show');
@@ -1315,9 +1324,6 @@ function validateForm() {
     return valid;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   INPUT FORMATTERS
-═══════════════════════════════════════════════════════════════════════ */
 document.getElementById('phone').addEventListener('input', e => {
     let v = e.target.value.replace(/\D/g,'');
     if (v.length > 6) v = v.substring(0,3)+'-'+v.substring(3,6)+'-'+v.substring(6,10);
@@ -1326,16 +1332,10 @@ document.getElementById('phone').addEventListener('input', e => {
 });
 document.getElementById('zipCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').substring(0,6); });
 
-/* ═══════════════════════════════════════════════════════════════════════
-   UTILS
-═══════════════════════════════════════════════════════════════════════ */
 function showAlert(type, title, text) {
     Swal.fire({ icon:type, title, text, confirmButtonColor:'#D4B896', customClass:{ popup:'custom-swal-popup', confirmButton:'custom-swal-confirm-btn' } });
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   WALLET HYBRID MODAL
-═══════════════════════════════════════════════════════════════════════ */
 let _hybridFormData = null;
 
 function openHybridModal(orderTotal, walletBal, formData) {
@@ -1393,20 +1393,35 @@ async function confirmHybridPayment() {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('new-address').classList.contains('show')) loadStates();
     fetchWalletBalance();
+    // Disable COD if order total > 1000
+const totalText = document.getElementById('summaryTotal').innerText.replace('₹','').replace(/,/g,'');
+const orderTotal = parseFloat(totalText);
+if (orderTotal > 1000) {
+    const codOption = document.getElementById('cod-option');
+    codOption.style.opacity = '0.5';
+    codOption.style.cursor = 'not-allowed';
+    codOption.style.pointerEvents = 'none';
+    document.getElementById('cod-desc').textContent = 'Not available for orders above ₹1,000';
+    document.getElementById('cod-desc').style.color = '#e74c3c';
 
-    // Entrance animations
+    // If COD was somehow selected, switch to razorpay
+    const codRadio = document.querySelector('input[name="paymentMethod"][value="cod"]');
+    if (codRadio && codRadio.checked) {
+        codRadio.checked = false;
+        document.querySelector('input[name="paymentMethod"][value="razorpay"]').checked = true;
+        document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+        document.querySelector('.payment-option').classList.add('selected');
+    }
+}
+
     document.querySelectorAll('.checkout-header,.progress-steps,.checkout-form,.order-summary').forEach((el,i) => {
         el.style.opacity = '0'; el.style.transform = 'translateY(30px)';
         setTimeout(() => { el.style.transition = 'all .6s ease'; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; }, i * 150);
     });
 
-    // Blur validation
     document.querySelectorAll('input, select, textarea').forEach(input => {
         input.addEventListener('blur', function() {
             const err = document.getElementById(this.id + '-error');
@@ -1416,10 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    // Prevent Enter on inputs from submitting
     document.querySelectorAll('input').forEach(i => i.addEventListener('keypress', e => { if (e.key === 'Enter') e.preventDefault(); }));
-    // But allow Enter on coupon input to trigger apply
     document.getElementById('couponCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
 });
 </script>

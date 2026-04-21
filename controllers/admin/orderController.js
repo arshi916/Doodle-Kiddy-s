@@ -179,7 +179,6 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Deduct stock when moving from Pending to Processing/Shipping/Delivered
     if (oldStatus === 'Pending' && ['Processing', 'Shipping', 'Delivered'].includes(status)) {
      
     }
