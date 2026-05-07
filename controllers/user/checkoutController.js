@@ -61,7 +61,8 @@ const loadCheckout = async (req, res) => {
             user:             user,
             addresses:        user.addresses || [],
             countries:        Object.keys(countryStateData),
-            countryStateData: JSON.stringify(countryStateData)
+            countryStateData: JSON.stringify(countryStateData),
+             pendingCoupon:    req.session.pendingCoupon || null
         });
     } catch (error) {
         console.log("Checkout error:", error);
@@ -214,7 +215,15 @@ const processOrder = async (req, res) => {
                 });
             }
 
-            discount      = coupon.offerPrice;
+            if (coupon.discountType === 'percentage') {
+                discount = (subtotal * coupon.offerPrice) / 100;
+                if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                    discount = coupon.maxDiscount;
+                }
+                discount = Math.round(discount * 100) / 100;
+            } else {
+                discount = coupon.offerPrice;
+            }
             couponApplied = true;
             appliedCoupon = coupon;
         }
@@ -259,6 +268,8 @@ if (paymentMethod === 'wallet+cod') {
     codAmountDue = 0;
 }
 
+const productDiscount = 0; 
+
 const orderData = {
     orderedItems: cart.items.map(item => ({
         product:  item.productId._id,
@@ -266,7 +277,9 @@ const orderData = {
         price:    item.price
     })),
     totalPrice,
-    discount,
+    discount:        0,
+    couponDiscount:  discount,       
+    couponCode:      couponApplied ? appliedCoupon.name : null,
     finalAmount,
     walletAmountUsed,
     codAmountDue,
@@ -309,12 +322,28 @@ if (paymentMethod === 'wallet+cod') {
     );
 }
 
-        for (let item of cart.items) {
-            const product = await Product.findById(item.productId._id);
-            product.quantity -= item.quantity;
-            if (product.quantity === 0) product.status = "out of stock";
-            await product.save();
-        }
+       for (let item of cart.items) {
+    const cartItem = item;
+    const product = await Product.findById(item.productId._id);
+    if (!product) continue;
+
+    const stockEntry = product.stocks?.find(
+        s => s.color === (cartItem.selectedColor || '').toLowerCase() &&
+             s.size  === (cartItem.selectedSize  || '')
+    );
+
+    if (stockEntry) {
+        stockEntry.quantity = Math.max(0, stockEntry.quantity - cartItem.quantity);
+    }
+
+    product.quantity = product.stocks
+        ? product.stocks.reduce((sum, s) => sum + s.quantity, 0)
+        : Math.max(0, product.quantity - cartItem.quantity);
+
+    if (product.quantity === 0) product.status = "out of stock";
+
+    await product.save();
+}
 
         await Cart.findByIdAndUpdate(cart._id, { $set: { items: [] } });
 
@@ -326,6 +355,7 @@ if (paymentMethod === 'wallet+cod') {
         } catch (emailError) {
             console.error('Error sending order confirmation email:', emailError);
         }
+        req.session.pendingCoupon = null;
 
         return res.json({
             success:     true,
@@ -345,6 +375,7 @@ if (paymentMethod === 'wallet+cod') {
 
 const orderSuccess = async (req, res) => {
     try {
+        req.session.pendingCoupon = null;
         const userId = req.session.user;
         if (!userId) return res.redirect('/login');
 
@@ -385,6 +416,8 @@ const orderSuccess = async (req, res) => {
             orderStatus:   order.status,
             paymentMethod: order.paymentMethod || 'Cash on Delivery',
             paymentStatus: order.paymentStatus || 'Pending',
+             couponDiscount: order.couponDiscount || 0,   
+    couponCode:     order.couponCode || null,
             discount:      order.discount || 0,
             couponApplied: order.couponApplied || false,
             items: rawItems.map(item => ({
@@ -545,9 +578,15 @@ const orderFailed = async (req, res) => {
         const reason = req.query.reason || 'Payment was not completed';
         const amount = req.query.amount || null;
         const method = req.query.method || null;
+        const coupon = req.query.coupon || null;   
+
+        if (coupon) {
+            req.session.pendingCoupon = coupon;
+        } else {
+            req.session.pendingCoupon = null; 
+        }
 
         const orderInfo = (amount || method) ? { amount, paymentMethod: method } : null;
-
         res.render('user/order-failed', { reason, orderInfo });
     } catch (error) {
         console.error("Error loading order failed page:", error);
@@ -594,6 +633,11 @@ const validateCart = async (req, res) => {
     }
 };
 
+const clearPendingCoupon = (req, res) => {
+    req.session.pendingCoupon = null;
+    res.json({ success: true });
+};
+
 export default {
     loadCheckout,
     processOrder,
@@ -606,4 +650,5 @@ export default {
     sendOrderConfirmationEmail,
     orderFailed,
      validateCart, 
+     clearPendingCoupon
 };

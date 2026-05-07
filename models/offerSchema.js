@@ -4,8 +4,7 @@ const { Schema } = mongoose;
 const offerSchema = new Schema({
     offerType:   { type: String, enum: ['product', 'category'], required: true },
     offerName:   { type: String, required: true },
-    discount:    { type: Number, required: true, min: 1, max: 99 }, // percentage
-    // only one of these will be set depending on offerType
+    discount:    { type: Number, required: true, min: 1, max: 99 },
     productId:   { type: Schema.Types.ObjectId, ref: 'Product', default: null },
     categoryId:  { type: Schema.Types.ObjectId, ref: 'Category', default: null },
     startDate:   { type: Date, required: true },

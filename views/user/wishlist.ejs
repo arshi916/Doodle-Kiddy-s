@@ -257,15 +257,11 @@
 </div>
 
 <script>
-/* ══════════════════════════════════════════════════════
-   STATE — mirrors what the server rendered
-   ══════════════════════════════════════════════════════ */
 let _currentPage = <%= currentPage %>;
 let _totalPages  = <%= totalPages %>;
 let _totalItems  = <%= totalItems %>;
 const LIMIT      = 8;
 
-/* render pagination immediately on load */
 refreshPagination(_currentPage, _totalPages);
 
 /* ── NOTIFICATION ── */
@@ -295,113 +291,82 @@ function showNotification(message, type = 'success') {
     }, 2800);
 }
 
-/* ── BUILD A CARD FROM JSON DATA ── */
+/* ── BUILD CARD ── */
 function buildCard(item) {
-    const price      = item.salePrice || item.regularPrice || 0;
-    const imageSrc   = item.image ? `/images/${item.image}` : '/images/placeholder.jpg';
-    const safeName   = item.productName.replace(/'/g, "\\'");
-    let addedLabel   = '';
+    const price    = item.salePrice || item.regularPrice || 0;
+    const imageSrc = item.image ? `/images/${item.image}` : '/images/placeholder.jpg';
+    const safeName = item.productName.replace(/'/g, "\\'");
+    let addedLabel = '';
     if (item.addedAt) {
         addedLabel = new Date(item.addedAt).toLocaleDateString('en-IN', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
     }
-
-const blocked = item.isBlocked || false;
-const card = document.createElement('div');
-card.className = `product-card card-slide-in${blocked ? ' blocked' : ''}`;
-card.dataset.id = item.productId;
-card.innerHTML = `
-    ${blocked ? '<div class="unavailable-badge">Unavailable</div>' : ''}
-    <a href="/product/${item.productId}">
-            <img src="${imageSrc}" class="product-image"
-                 onerror="this.src='/images/placeholder.jpg'" />
+    const blocked = item.isBlocked || false;
+    const card = document.createElement('div');
+    card.className = `product-card card-slide-in${blocked ? ' blocked' : ''}`;
+    card.dataset.id = item.productId;
+    card.innerHTML = `
+        ${blocked ? '<div class="unavailable-badge">Unavailable</div>' : ''}
+        <a href="/product/${item.productId}">
+            <img src="${imageSrc}" class="product-image" onerror="this.src='/images/placeholder.jpg'" />
         </a>
         <div class="product-info">
             <h3 class="product-title">${item.productName}</h3>
             ${addedLabel ? `<p class="added-date">Added ${addedLabel}</p>` : ''}
             <p class="product-price">₹${price}</p>
             <div class="actions">
-                <button class="btn btn-cart"
-                    onclick="addToCart('${item.productId}','${safeName}',this)">
-                    Add to Cart
-                </button>
-                <button class="btn btn-remove"
-                    onclick="removeFromWishlist('${item.productId}',this)">
-                    Remove
-                </button>
+                <button class="btn btn-cart" onclick="addToCart('${item.productId}','${safeName}',this)">Add to Cart</button>
+                <button class="btn btn-remove" onclick="removeFromWishlist('${item.productId}',this)">Remove</button>
             </div>
         </div>`;
     return card;
 }
 
-/* ── REFILL: fetch current page from API and patch the grid ── */
+/* ── REFILL GRID ── */
 async function refillGrid() {
     try {
         const res  = await fetch(`/api/wishlist?page=${_currentPage}`);
         const data = await res.json();
         if (!data.success) return;
 
-        // Update global state
         _totalItems = data.totalItems;
         _totalPages = data.totalPages;
 
-        // Recalculate page if current page is now out of range
         if (_currentPage > _totalPages) {
-            _currentPage = _totalPages;
-            // Redirect to corrected page
-            window.location.href = `/wishlist?page=${_currentPage}`;
+            window.location.href = `/wishlist?page=${_totalPages}`;
             return;
         }
 
         const grid = document.getElementById('wishlistGrid');
         if (!grid) return;
 
-        // IDs currently shown in the grid
-        const shownIds = new Set(
-            [...grid.querySelectorAll('.product-card')].map(c => c.dataset.id)
-        );
+        const shownIds = new Set([...grid.querySelectorAll('.product-card')].map(c => c.dataset.id));
 
-        // IDs that should be on this page after removal
-        const serverIds = new Set(data.items.map(i => String(i.productId)));
-
-        // Add cards that are on server but not yet in grid (refill from next page)
         data.items.forEach(item => {
             if (!shownIds.has(String(item.productId))) {
-                const newCard = buildCard(item);
-                grid.appendChild(newCard);
+                grid.appendChild(buildCard(item));
             }
         });
 
-        // Update count badge
         const countEl = document.getElementById('wishlistCount');
-        if (countEl) {
-            countEl.textContent = `${_totalItems} item${_totalItems !== 1 ? 's' : ''}`;
+        if (countEl) countEl.textContent = `${_totalItems} item${_totalItems !== 1 ? 's' : ''}`;
+
+        if (grid.querySelectorAll('.product-card').length === 0 || _totalItems === 0) {
+            showEmptyState(); return;
         }
 
-        // If grid is now empty show empty state
-        const remaining = grid.querySelectorAll('.product-card');
-        if (remaining.length === 0 || _totalItems === 0) {
-            showEmptyState();
-            return;
-        }
-
-        // Re-render pagination
         refreshPagination(_currentPage, _totalPages);
-
-    } catch (err) {
-        console.error('refillGrid error:', err);
-    }
+    } catch (err) { console.error('refillGrid error:', err); }
 }
 
-/* ── SHOW EMPTY STATE ── */
+/* ── EMPTY STATE ── */
 function showEmptyState() {
-    const container = document.querySelector('.wishlist-container');
-    const grid      = document.getElementById('wishlistGrid');
+    const container  = document.querySelector('.wishlist-container');
+    const grid       = document.getElementById('wishlistGrid');
     const pagination = document.getElementById('paginationContainer');
     if (grid)       grid.remove();
     if (pagination) pagination.remove();
-
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.innerHTML = `
@@ -409,45 +374,26 @@ function showEmptyState() {
         <p>Add your favorite products here 💖</p>
         <a href="/shop" style="display:inline-block;margin-top:1.5rem;padding:0.7rem 2rem;
            background:linear-gradient(#dec7aa,#e5c39f);color:white;border-radius:25px;
-           text-decoration:none;font-weight:600;">
-            Browse Products
-        </a>`;
+           text-decoration:none;font-weight:600;">Browse Products</a>`;
     container.appendChild(empty);
-
     const countEl = document.getElementById('wishlistCount');
     if (countEl) countEl.style.display = 'none';
 }
 
-/* ── PAGINATION RENDERER ── */
+/* ── PAGINATION ── */
 function refreshPagination(current, total) {
     const container = document.getElementById('paginationContainer');
     if (!container) return;
-
     if (total <= 1) { container.innerHTML = ''; return; }
-
-    let html = '';
-
-    // Prev button
-    html += `<a href="/wishlist?page=${current - 1}"
-                class="page-btn ${current === 1 ? 'disabled' : ''}"
-                onclick="handlePageClick(event, ${current - 1})">← Prev</a>`;
-
-    // Page numbers with ellipsis
+    let html = `<a href="/wishlist?page=${current-1}" class="page-btn ${current===1?'disabled':''}" onclick="handlePageClick(event,${current-1})">← Prev</a>`;
     for (let p = 1; p <= total; p++) {
-        if (p === 1 || p === total || (p >= current - 1 && p <= current + 1)) {
-            html += `<a href="/wishlist?page=${p}"
-                        class="page-btn ${p === current ? 'active' : ''}"
-                        onclick="handlePageClick(event, ${p})">${p}</a>`;
-        } else if (p === current - 2 || p === current + 2) {
+        if (p === 1 || p === total || (p >= current-1 && p <= current+1)) {
+            html += `<a href="/wishlist?page=${p}" class="page-btn ${p===current?'active':''}" onclick="handlePageClick(event,${p})">${p}</a>`;
+        } else if (p === current-2 || p === current+2) {
             html += `<span class="page-info">…</span>`;
         }
     }
-
-    // Next button
-    html += `<a href="/wishlist?page=${current + 1}"
-                class="page-btn ${current === total ? 'disabled' : ''}"
-                onclick="handlePageClick(event, ${current + 1})">Next →</a>`;
-
+    html += `<a href="/wishlist?page=${current+1}" class="page-btn ${current===total?'disabled':''}" onclick="handlePageClick(event,${current+1})">Next →</a>`;
     container.innerHTML = html;
 }
 
@@ -456,43 +402,29 @@ function handlePageClick(e, page) {
     window.location.href = `/wishlist?page=${page}`;
 }
 
-/* ── REMOVE FROM WISHLIST ── */
+/* ── REMOVE ── */
 function removeFromWishlist(productId, btn) {
     btn.innerText = 'Removing...';
     btn.disabled  = true;
-
     fetch(`/removeWishlist/${productId}`, { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const card = btn.closest('.product-card');
-
-                // Animate out
                 card.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-                card.style.opacity    = '0';
-                card.style.transform  = 'scale(0.92)';
-
-                setTimeout(() => {
-                    card.remove();
-                    // After removal, refill from next page if needed
-                    refillGrid();
-                }, 370);
-
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.92)';
+                setTimeout(() => { card.remove(); refillGrid(); }, 370);
                 showNotification('Removed from wishlist', 'success');
             } else {
-                btn.innerText = 'Remove';
-                btn.disabled  = false;
+                btn.innerText = 'Remove'; btn.disabled = false;
                 showNotification(data.message || 'Failed to remove', 'error');
             }
         })
-        .catch(() => {
-            btn.innerText = 'Remove';
-            btn.disabled  = false;
-            showNotification('Something went wrong', 'error');
-        });
+        .catch(() => { btn.innerText = 'Remove'; btn.disabled = false; showNotification('Something went wrong', 'error'); });
 }
 
-/* ── ADD TO CART (checks options first) ── */
+/* ── ADD TO CART ── */
 function addToCart(productId, name, btn) {
     btn.innerText = 'Checking...';
     btn.disabled  = true;
@@ -502,16 +434,18 @@ function addToCart(productId, name, btn) {
         .then(data => {
             if (!data.success) throw new Error('Failed to load product');
 
-            const sizes  = Array.isArray(data.sizes)  ? data.sizes  : [];
-            const colors = Array.isArray(data.colors) ? data.colors : [];
-            const hasOptions = sizes.length > 1 || colors.length > 1;
+            const sizes    = Array.isArray(data.sizes)  ? data.sizes  : [];
+            const colors   = Array.isArray(data.colors) ? data.colors : [];
+            const stockMap = data.stockMap || {};
 
             btn.innerText = 'Add to Cart';
             btn.disabled  = false;
 
+            // Has options = more than 1 color OR more than 1 size
+            const hasOptions = colors.length > 1 || sizes.length > 1;
             hasOptions
-                ? showOptionsModal(productId, name, sizes, colors, btn)
-                : doAddToCart(productId, name, null, null, btn);
+                ? showOptionsModal(productId, name, sizes, colors, stockMap)
+                : doAddToCart(productId, name, sizes[0] || null, colors[0] || null, btn);
         })
         .catch(() => {
             btn.innerText = 'Add to Cart';
@@ -521,59 +455,47 @@ function addToCart(productId, name, btn) {
 }
 
 /* ── OPTIONS MODAL ── */
-function showOptionsModal(productId, productName, sizes, colors, triggerBtn) {
+function showOptionsModal(productId, productName, sizes, colors, stockMap) {
     const existing = document.getElementById('wishlistOptionsModal');
     if (existing) existing.remove();
 
     const modal = document.createElement('div');
     modal.id = 'wishlistOptionsModal';
+    modal._stockMap = stockMap;
     modal.style.cssText = `
         position:fixed;inset:0;z-index:10000;
         background:rgba(0,0,0,0.5);backdrop-filter:blur(5px);
         display:flex;align-items:center;justify-content:center;`;
 
+    // Color: show dropdown if >1, else hidden input
+    const colorHtml = colors.length > 1
+        ? `<label class="wl-label">Color *</label>
+           <select class="wl-select" id="wlColor" onchange="updateWLSizes()">
+               <option value="">Choose a color</option>
+               ${colors.map(c => `<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
+           </select>`
+        : `<input type="hidden" id="wlColor" value="${colors[0] || ''}">`;
+
     modal.innerHTML = `
         <style>
-            #wishlistOptionsModal .wl-box {
-                background:white;border-radius:15px;width:90%;max-width:480px;
-                box-shadow:0 10px 40px rgba(0,0,0,0.2);overflow:hidden;
-            }
-            #wishlistOptionsModal .wl-head {
-                padding:1.5rem 2rem;border-bottom:1px solid #eee;
-                display:flex;justify-content:space-between;align-items:center;
-            }
+            #wishlistOptionsModal .wl-box{background:white;border-radius:15px;width:90%;max-width:480px;box-shadow:0 10px 40px rgba(0,0,0,0.2);overflow:hidden;}
+            #wishlistOptionsModal .wl-head{padding:1.5rem 2rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;}
             #wishlistOptionsModal .wl-head h3{margin:0;font-size:1.2rem;color:#333;}
             #wishlistOptionsModal .wl-pname{color:#D4B49B;font-size:0.85rem;margin-top:0.3rem;}
-            #wishlistOptionsModal .wl-x{
-                width:30px;height:30px;border-radius:6px;background:#f5f5f5;
-                border:none;font-size:1.2rem;cursor:pointer;
-                display:flex;align-items:center;justify-content:center;color:#666;
-            }
+            #wishlistOptionsModal .wl-x{width:30px;height:30px;border-radius:6px;background:#f5f5f5;border:none;font-size:1.2rem;cursor:pointer;color:#666;}
             #wishlistOptionsModal .wl-x:hover{background:#eee;}
             #wishlistOptionsModal .wl-body{padding:1.5rem 2rem;}
-            #wishlistOptionsModal .wl-label{
-                display:block;font-size:0.85rem;font-weight:600;
-                color:#333;margin-bottom:0.5rem;margin-top:1rem;
-            }
+            #wishlistOptionsModal .wl-label{display:block;font-size:0.85rem;font-weight:600;color:#333;margin-bottom:0.5rem;margin-top:1rem;}
             #wishlistOptionsModal .wl-label:first-child{margin-top:0;}
-            #wishlistOptionsModal .wl-select{
-                width:100%;padding:0.75rem 1rem;border:1px solid #ddd;
-                border-radius:8px;font-size:0.95rem;color:#333;
-                background:#fafafa;cursor:pointer;appearance:none;
-            }
+            #wishlistOptionsModal .wl-select{width:100%;padding:0.75rem 1rem;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;color:#333;background:#fafafa;cursor:pointer;appearance:none;}
             #wishlistOptionsModal .wl-select:focus{outline:none;border-color:#D4B49B;}
-            #wishlistOptionsModal .wl-foot{
-                padding:1.5rem 2rem;background:#fafafa;
-                border-top:1px solid #eee;display:flex;gap:1rem;
-            }
-            #wishlistOptionsModal .wl-btn{
-                flex:1;padding:0.8rem;border:none;border-radius:8px;
-                font-size:0.95rem;font-weight:600;cursor:pointer;transition:0.2s;
-            }
+            #wishlistOptionsModal .wl-foot{padding:1.5rem 2rem;background:#fafafa;border-top:1px solid #eee;display:flex;gap:1rem;}
+            #wishlistOptionsModal .wl-btn{flex:1;padding:0.8rem;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;transition:0.2s;}
             #wishlistOptionsModal .wl-cancel{background:white;color:#666;border:1px solid #ddd;}
             #wishlistOptionsModal .wl-cancel:hover{background:#f5f5f5;}
             #wishlistOptionsModal .wl-confirm{background:#D4B49B;color:white;}
             #wishlistOptionsModal .wl-confirm:hover{background:#c9a587;}
+            #wishlistOptionsModal .wl-confirm:disabled{background:#e0e0e0;color:#999;cursor:not-allowed;}
         </style>
         <div class="wl-box">
             <div class="wl-head">
@@ -584,22 +506,18 @@ function showOptionsModal(productId, productName, sizes, colors, triggerBtn) {
                 <button class="wl-x" onclick="closeWLModal()">&times;</button>
             </div>
             <div class="wl-body">
-                ${sizes.length > 1 ? `
+                ${colorHtml}
+                <div id="wlSizeGroup" style="display:none">
                     <label class="wl-label">Size *</label>
-                    <select class="wl-select" id="wlSize">
+                    <select class="wl-select" id="wlSize"
+                        onchange="document.getElementById('wlConfirmBtn').disabled = !this.value">
                         <option value="">Choose a size</option>
-                        ${sizes.map(s => `<option value="${s}">${s}</option>`).join('')}
-                    </select>` : ''}
-                ${colors.length > 1 ? `
-                    <label class="wl-label">Color *</label>
-                    <select class="wl-select" id="wlColor">
-                        <option value="">Choose a color</option>
-                        ${colors.map(c => `<option value="${c}">${c}</option>`).join('')}
-                    </select>` : ''}
+                    </select>
+                </div>
             </div>
             <div class="wl-foot">
                 <button class="wl-btn wl-cancel" onclick="closeWLModal()">Cancel</button>
-                <button class="wl-btn wl-confirm"
+                <button class="wl-btn wl-confirm" id="wlConfirmBtn" disabled
                     onclick="confirmWLCart('${productId}','${productName.replace(/'/g,"\\'")}')">
                     Add to Cart
                 </button>
@@ -608,6 +526,41 @@ function showOptionsModal(productId, productName, sizes, colors, triggerBtn) {
 
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) closeWLModal(); });
+
+    // Single color — auto-populate sizes immediately
+    if (colors.length === 1) {
+        updateWLSizes();
+    }
+}
+
+/* ── UPDATE SIZES BASED ON SELECTED COLOR ── */
+function updateWLSizes() {
+    const modal      = document.getElementById('wishlistOptionsModal');
+    const colorEl    = document.getElementById('wlColor');
+    const sizeEl     = document.getElementById('wlSize');
+    const sizeGrp    = document.getElementById('wlSizeGroup');
+    const confirmBtn = document.getElementById('wlConfirmBtn');
+    const stockMap   = modal._stockMap || {};
+
+    const selectedColor = colorEl.value;
+    if (!selectedColor) {
+        sizeGrp.style.display = 'none';
+        confirmBtn.disabled = true;
+        return;
+    }
+
+    const availableSizes = Object.keys(stockMap)
+        .filter(key => key.startsWith(selectedColor + '__') && stockMap[key] > 0)
+        .map(key => key.split('__')[1]);
+
+    sizeEl.innerHTML = '<option value="">Choose a size</option>' +
+        availableSizes.map(s => `<option value="${s}">${s}</option>`).join('');
+
+    sizeGrp.style.display = availableSizes.length > 0 ? 'block' : 'block';
+    if (availableSizes.length === 0) {
+        sizeEl.innerHTML = '<option value="">No sizes in stock for this color</option>';
+    }
+    confirmBtn.disabled = true;
 }
 
 function closeWLModal() {
@@ -619,12 +572,10 @@ function confirmWLCart(productId, productName) {
     const ss = document.getElementById('wlSize');
     const cs = document.getElementById('wlColor');
 
-    if (ss && ss.options.length > 1 && !ss.value) {
-        ss.style.borderColor = '#ef4444';
+    if (ss && ss.tagName === 'SELECT' && !ss.value) {
         showNotification('Please select a size', 'error'); return;
     }
-    if (cs && cs.options.length > 1 && !cs.value) {
-        cs.style.borderColor = '#ef4444';
+    if (cs && cs.tagName === 'SELECT' && !cs.value) {
         showNotification('Please select a color', 'error'); return;
     }
 
@@ -633,31 +584,26 @@ function confirmWLCart(productId, productName) {
     doAddToCart(productId, productName, ss?.value || null, cs?.value || null, btn);
 }
 
-/* ── ACTUAL CART API CALL ── */
+/* ── CART API CALL ── */
 function doAddToCart(productId, productName, size, color, btn) {
     if (btn) { btn.innerText = 'Adding...'; btn.disabled = true; }
 
     fetch('/api/add-to-cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ productId, quantity: 1, selectedSize: size, selectedColor: color })
+        body: JSON.stringify({ productId, quantity: 1, selectedSize: size, selectedColor: color })
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
             showNotification(`${productName} added to cart ✓`, 'success');
             if (window.updateCartCount) window.updateCartCount();
-
-            // Remove card and refill
             const card = btn ? btn.closest('.product-card') : null;
             if (card) {
                 card.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
-                card.style.opacity    = '0';
-                card.style.transform  = 'scale(0.92)';
-                setTimeout(() => {
-                    card.remove();
-                    refillGrid();
-                }, 370);
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.92)';
+                setTimeout(() => { card.remove(); refillGrid(); }, 370);
             }
         } else {
             if (btn) { btn.innerText = 'Add to Cart'; btn.disabled = false; }

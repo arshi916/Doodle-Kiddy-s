@@ -74,6 +74,7 @@ router.get('/api/products', shopController.getProductsForShop);
 router.get('/api/categories', shopController.getCategories);
 router.get('/product/:id', shopController.loadProductDetail);
 router.get('/api/search-suggestions', shopController.getSearchSuggestions);
+router.get('/api/product-status/:id', shopController.checkProductStatus);
 
 //wishlist
 router.get('/wishlist', wishlistController.loadWishlist);
@@ -140,12 +141,12 @@ router.get('/api/wallet/balance',userAuth, walletController.getWalletBalance);
 router.get('/api/coupons/available', userAuth, couponController.getAvailableCoupons);
 router.post('/api/coupons/apply',    userAuth, upload.none(), couponController.applyCoupon);
 router.post('/api/coupons/remove',   userAuth, couponController.removeCoupon);
-
+router.post('/api/coupons/clear-pending', userAuth, checkoutController.clearPendingCoupon);
 router.post("/create-order", userAuth, userController.createRazorpayOrder);
 
 router.get('/referral',              userAuth, referralController.loadReferral);
 router.get('/api/referral/validate', referralController.validateReferralCode);
-router.get('/api/referral/info',     userAuth, referralController.getReferralInfo); // ← ADD THIS
+router.get('/api/referral/info',     userAuth, referralController.getReferralInfo);
 router.get('/api/categories-with-offers', shopController.getCategoriesWithOffers);
 router.get('/api/wishlist', wishlistController.getWishlistPage)
 

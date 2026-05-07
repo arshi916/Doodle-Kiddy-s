@@ -32,7 +32,7 @@ function getDateRange(period, year) {
       end: new Date(y, 11, 31, 23, 59, 59),
     };
   }
-  // default: current month
+ 
   return {
     start: new Date(now.getFullYear(), now.getMonth(), 1),
     end: now,
@@ -155,7 +155,7 @@ export const getChartData = async (req, res) => {
 export const getBestProducts = async (req, res) => {
   try {
     const result = await Order.aggregate([
-      // Only delivered / non-cancelled orders
+     
       { $match: { status: { $nin: ["Cancelled", "Returned"] } } },
       { $unwind: "$orderedItems" },
       {

@@ -602,29 +602,54 @@
         <div class="cart-layout">
             <!-- Cart Items -->
             <div class="cart-items">
-                  <% if (typeof blockedItems !== 'undefined' && blockedItems.length > 0) { %>
-        <div id="blocked-items-banner" style="
-            background: linear-gradient(135deg, #fff5f5, #ffeaea);
-            border: 2px solid #e74c3c;
-            border-radius: 14px;
-            padding: 18px 22px;
-            margin-bottom: 22px;
-        ">
-            <div style="display:flex; align-items:flex-start; gap:12px;">
-                <i class="fas fa-ban" style="color:#e74c3c; font-size:20px; margin-top:2px;"></i>
-                <div>
-                    <p style="font-weight:700; color:#c0392b; font-size:15px; margin-bottom:6px;">
-                        <%= blockedItems.length %> item<%= blockedItems.length > 1 ? 's' : '' %> removed — no longer available
+                 <%# Blocked items banner — already exists %>
+<% if (typeof blockedItems !== 'undefined' && blockedItems.length > 0) { %>
+    <div style="
+        background: linear-gradient(135deg, #fff5f5, #ffeaea);
+        border: 2px solid #e74c3c; border-radius: 14px;
+        padding: 18px 22px; margin-bottom: 22px;">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+            <i class="fas fa-ban" style="color:#e74c3c; font-size:20px; margin-top:2px;"></i>
+            <div>
+                <p style="font-weight:700; color:#c0392b; font-size:15px; margin-bottom:6px;">
+                    <%= blockedItems.length %> item<%= blockedItems.length > 1 ? 's' : '' %> removed — no longer available
+                </p>
+                <% blockedItems.forEach(item => { %>
+                    <p style="font-size:13px; color:#666; margin:2px 0;">
+                        • <%= item.productId ? item.productId.productName : 'Unknown Product' %>
                     </p>
-                    <% blockedItems.forEach(item => { %>
-                        <p style="font-size:13px; color:#666; margin:2px 0;">
-                            • <%= item.productId ? item.productId.productName : 'Unknown Product' %>
-                        </p>
-                    <% }); %>
-                </div>
+                <% }); %>
             </div>
         </div>
-    <% } %>
+    </div>
+<% } %>
+
+<%# NEW — Out of stock banner %>
+<% if (typeof outOfStockItems !== 'undefined' && outOfStockItems.length > 0) { %>
+    <div style="
+        background: linear-gradient(135deg, #fffbf0, #fff3cd);
+        border: 2px solid #f0a500; border-radius: 14px;
+        padding: 18px 22px; margin-bottom: 22px;">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+            <i class="fas fa-exclamation-triangle" style="color:#f0a500; font-size:20px; margin-top:2px;"></i>
+            <div>
+                <p style="font-weight:700; color:#b7791f; font-size:15px; margin-bottom:6px;">
+                    <%= outOfStockItems.length %> item<%= outOfStockItems.length > 1 ? 's were' : ' was' %> automatically removed — out of stock
+                </p>
+                <% outOfStockItems.forEach(item => { %>
+                    <p style="font-size:13px; color:#666; margin:2px 0;">
+                        • <%= item.productId ? item.productId.productName : 'Unknown Product' %>
+                        <% if (item.selectedColor || item.selectedSize) { %>
+                            <span style="color:#999;">
+                                (<%= item.selectedColor %> / <%= item.selectedSize %>)
+                            </span>
+                        <% } %>
+                    </p>
+                <% }); %>
+            </div>
+        </div>
+    </div>
+<% } %>
                 <div class="section-title">
                     <i class="fas fa-list"></i>
                     Cart Items (<span id="cart-item-count"><%= cart.items.length %></span>)
@@ -671,15 +696,18 @@
                     </div>
                     <div class="item-actions">
                         <div class="item-price">₹<span class="item-total-price"><%= item.totalPrice.toFixed(2) %></span></div>
-                        <div class="quantity-controls">
-                            <button class="qty-btn" onclick="updateQuantity('<%= item.productId._id %>', -1)">-</button>
-                            <span class="qty-display" id="qty-<%= item.productId._id %>"><%= item.quantity %></span>
-                   <button class="qty-btn"
-onclick="updateQuantity('<%= item.productId._id %>', 1)"
-<%= item.quantity >= 5 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : '' %>>
-+
-</button>
-                        </div>
+                      
+<div class="quantity-controls" 
+     data-product-id="<%= item.productId._id %>"
+     data-color="<%= item.selectedColor %>"
+     data-size="<%= item.selectedSize %>">
+    <button class="qty-btn" onclick="updateQuantity(this, -1)">-</button>
+    <span class="qty-display"><%= item.quantity %></span>
+    <button class="qty-btn" onclick="updateQuantity(this, 1)"
+        <%= item.quantity >= 5 ? 'disabled style="opacity:0.5;cursor:not-allowed"' : '' %>>
+        +
+    </button>
+</div>
                         <button class="remove-btn" onclick="removeItem('<%= item.productId._id %>')">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -809,51 +837,51 @@ function addToCart(productId, selectedSize, selectedColor) {
 }
 
          // Update the updateQuantity function to handle rupees in display
-    function updateQuantity(productId, change) {
-        const qtyDisplay = document.getElementById(`qty-${productId}`);
-        let currentQty = parseInt(qtyDisplay.textContent);
-        let newQty = currentQty + change;
+   function updateQuantity(btn, change) {
+    // Walk up to the controls wrapper to read data attributes
+    const controls  = btn.closest('.quantity-controls');
+    const productId = controls.dataset.productId;
+    const qtySpan   = controls.querySelector('.qty-display');
+    const plusBtn   = controls.querySelector('.qty-btn:last-child');
 
-        if (newQty < 1) {
-            return;
+    let currentQty = parseInt(qtySpan.textContent);
+    let newQty = currentQty + change;
+
+    if (newQty < 1) return;
+
+    fetch('/api/update-cart-quantity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: newQty })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            qtySpan.textContent = newQty;
+
+            // Disable + if at max (server tells us via data.maxQty, or cap at 5)
+            const maxAllowed = data.maxQty || 5;
+            plusBtn.disabled = newQty >= maxAllowed;
+            plusBtn.style.opacity = newQty >= maxAllowed ? '0.5' : '1';
+            plusBtn.style.cursor  = newQty >= maxAllowed ? 'not-allowed' : 'pointer';
+
+            // Update item total price
+            const cartItem = controls.closest('.cart-item');
+            const priceEl  = cartItem?.querySelector('.item-total-price');
+            if (priceEl) priceEl.textContent = data.itemTotal.toFixed(2);
+
+            updateCartSummary();
+            updateCartCount();
+            showNotification('Quantity updated', 'success');
+        } else {
+            showNotification(data.message || 'Failed to update quantity', 'error');
         }
+    })
+    .catch(() => showNotification('Error updating quantity', 'error'));
+}
 
-        fetch('/api/update-cart-quantity', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                productId: productId, 
-                quantity: newQty 
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                qtyDisplay.textContent = newQty;
-                
-                // Update item total price with rupee symbol
-                const itemTotalElement = document.querySelector(`[data-product-id="${productId}"] .item-total-price`);
-                if (itemTotalElement) {
-                    itemTotalElement.textContent = data.itemTotal.toFixed(2);
-                }
-                
-                // Update cart summary
-                updateCartSummary();
-                updateCartCount();
-                showNotification('Quantity updated successfully', 'success');
-            } else {
-                showNotification(data.message || 'Failed to update quantity', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating quantity:', error);
-            showNotification('Error updating quantity', 'error');
-        });
-    }
-        function removeItem(productId) {
-    // Create modal overlay
+   
+function removeItem(productId) { 
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: fixed; inset: 0; background: rgba(0,0,0,0.45);

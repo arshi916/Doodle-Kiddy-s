@@ -18,7 +18,7 @@ import {
   updateOrderStatus,
   handleReturnRequest,
   approveReturn,
-  getOrderStats
+  getOrderStats,  updateItemStatus 
 } from "../controllers/admin/orderController.js";
 import {
   loadSalesReport,
@@ -56,7 +56,7 @@ router.get("/logout", async (req, res) => {
   });
 });
 
-// ─── Dashboard ───────────────────────────────────────────────────────────────
+//  Dashboard 
 router.get("/", adminAuth, loadDashboard);
 
 // Dashboard API endpoints (called by the chart / tables via fetch)
@@ -65,7 +65,7 @@ router.get("/dashboard/best-products",  adminAuth, getBestProducts);
 router.get("/dashboard/best-categories",adminAuth, getBestCategories);
 router.get("/dashboard/ledger",         adminAuth, getLedgerData);
 
-// ─── Customers ───────────────────────────────────────────────────────────────
+//  Customers 
 router.get("/customers", adminAuth, customerController.customerInfo);
 router.get("/customers/edit/:id", adminAuth, customerController.loadEditCustomer);
 router.post("/customers/edit/:id", adminAuth, upload.single("profileImage"), customerController.updateCustomer);
@@ -73,7 +73,7 @@ router.post("/users/toggle-block", adminAuth, customerController.toggleBlockStat
 router.post("/users/add", adminAuth, customerController.addCustomer);
 router.post("/users/delete", adminAuth, customerController.deleteCustomer);
 
-// ─── Categories ──────────────────────────────────────────────────────────────
+//  Categories 
 router.get("/categories", adminAuth, categoryController.loadCategories);
 router.get("/categories/add", adminAuth, categoryController.loadAddCategory);
 router.get("/categories/edit/:id", adminAuth, categoryController.loadEditCategory);
@@ -85,7 +85,7 @@ router.post("/categories/add-offer", adminAuth, categoryController.addCategoryOf
 router.get("/categories/listed", adminAuth, categoryController.getListedCategories);
 router.post("/categories/remove-offer", adminAuth, categoryController.removeCategoryOffer);
 
-// ─── Products ────────────────────────────────────────────────────────────────
+//  Products 
 router.get("/products", adminAuth, productController.loadProductPage);
 router.get("/products/add", adminAuth, productController.getAddProduct);
 router.post("/products/add", adminAuth, uploadMultipleMiddleware, productController.addProduct);
@@ -96,7 +96,7 @@ router.post("/products/delete", adminAuth, productController.deleteProduct);
 router.get("/products/listed", adminAuth, productController.getListedProducts);
 router.post("/products/add-offer", adminAuth, productController.addProductOffer);
 
-// ─── Orders ──────────────────────────────────────────────────────────────────
+// Orders 
 router.get("/orders", adminAuth, loadOrders);
 router.get("/orders/stats", adminAuth, getOrderStats);
 router.get("/orders/detail/:id", adminAuth, viewOrder);
@@ -105,15 +105,16 @@ router.post("/orders/update-status", adminAuth, updateOrderStatus);
 router.post("/orders/handle-return", adminAuth, handleReturnRequest);
 router.post("/orders/approve-return", adminAuth, approveReturn);
 router.get("/orders/:id", adminAuth, viewOrder);
+router.post("/orders/update-item-status", adminAuth, updateItemStatus);
 
-// ─── Coupons ─────────────────────────────────────────────────────────────────
+//  Coupons 
 router.get("/coupons", adminAuth, couponController.loadCoupons);
 router.post("/coupons/add", adminAuth, couponController.addCoupon);
 router.post("/coupons/edit/:id", adminAuth, couponController.editCoupon);
 router.post("/coupons/toggle", adminAuth, couponController.toggleCoupon);
 router.post("/coupons/delete", adminAuth, couponController.deleteCoupon);
 
-// ─── Sales Report ─────────────────────────────────────────────────────────────
+//  Sales Report 
 router.get("/sales-report", adminAuth, loadSalesReport);
 router.get("/sales-report/data", adminAuth, getSalesReportData);
 

@@ -42,7 +42,6 @@ const userSchema = new Schema({
     wishlist:     [{ type: Schema.Types.ObjectId, ref: "Wishlist" }],
     orderHistory: [{ type: Schema.Types.ObjectId, ref: "Order" }],
 
-    // ── Referral fields (single clean declaration each) ──
     referralCode: { type: String, sparse: true, default: null },
     referredBy:   { type: String, default: null },
     redeemed:     { type: Boolean, default: false },

@@ -297,13 +297,12 @@ const getProductsForShop = async (req, res) => {
             return res.json({ success: true, products: [], totalProducts: 0 });
         }
 
-        const matchQuery = {
-            isDeleted: { $ne: true },
-            isBlocked: { $ne: true },
-            status: 'Available',
-            quantity: { $gt: 0 },
-            category: { $in: activeCategoryIds }
-        };
+const matchQuery = {
+    isDeleted: { $ne: true },
+    isBlocked: { $ne: true },
+    status: { $ne: 'deleted' },   
+    category: { $in: activeCategoryIds }
+};
 
         if (category) {
             const categories = category.split(',').map(c => c.trim());
@@ -412,7 +411,32 @@ const getProductOptions = async (req, res) => {
         const productId = req.params.id;
         const product = await Product.findById(productId).lean();
         if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-        res.json({ success: true, sizes: product.size || [], colors: product.color || [], productId: product._id, productName: product.productName });
+
+        const stocks = product.stocks || [];
+
+        const availableColors = [...new Set(
+            stocks.filter(s => s.quantity > 0).map(s => s.color)
+        )];
+
+        const availableSizes = [...new Set(
+            stocks.filter(s => s.quantity > 0).map(s => s.size)
+        )];
+
+        const stockMap = {};
+        stocks.forEach(s => {
+            if (s.quantity > 0) {
+                stockMap[`${s.color}__${s.size}`] = s.quantity;
+            }
+        });
+
+        res.json({ 
+            success: true, 
+            sizes: availableSizes,    
+            colors: availableColors,   
+            stockMap,                   
+            productId: product._id, 
+            productName: product.productName 
+        });
     } catch (error) {
         console.error('Error fetching product options:', error);
         res.status(500).json({ success: false, message: 'Error loading options' });
@@ -429,31 +453,37 @@ const loadProductDetail = async (req, res) => {
 
         const productId = req.params.id;
 
-if (!mongoose.Types.ObjectId.isValid(productId)) {
-    return res.redirect('/shop?msg=unavailable');
-}
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.redirect('/shop?msg=unavailable');
+        }
 
         const productAgg = await Product.aggregate([
-            { 
-                $match: { 
-                    _id: new mongoose.Types.ObjectId(productId), 
-                    isDeleted: { $ne: true }, 
-                    isBlocked: { $ne: true }, 
-                    status: 'Available', 
-                    quantity: { $gt: 0 } 
-                } 
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(productId),
+                    isDeleted: { $ne: true },
+                    isBlocked: { $ne: true },
+                    status: 'Available',
+                    quantity: { $gt: 0 }
+                }
             },
-            { 
-                $lookup: { 
-                    from: 'categories', 
-                    localField: 'category', 
-                    foreignField: '_id', 
-                    as: 'categoryData' 
-                } 
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
             },
-            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: false } }, 
 
-            // Safe discount extraction
+            {
+                $match: {
+                    'categoryData.isListed': true,
+                    'categoryData.isDeleted': { $ne: true }
+                }
+            },
+
             {
                 $addFields: {
                     productDiscount: { $ifNull: ['$productOffer', 0] },
@@ -465,7 +495,6 @@ if (!mongoose.Types.ObjectId.isValid(productId)) {
                     effectiveDiscount: { $max: ['$productDiscount', '$categoryDiscount'] }
                 }
             },
-
             {
                 $addFields: {
                     finalPrice: {
@@ -481,7 +510,6 @@ if (!mongoose.Types.ObjectId.isValid(productId)) {
                     }
                 }
             },
-
             {
                 $project: {
                     _id: 1,
@@ -494,6 +522,7 @@ if (!mongoose.Types.ObjectId.isValid(productId)) {
                     quantity: 1,
                     color: 1,
                     size: 1,
+                    stocks: 1,        
                     productImage: 1,
                     status: 1,
                     returnPolicy: 1
@@ -501,34 +530,59 @@ if (!mongoose.Types.ObjectId.isValid(productId)) {
             }
         ]);
 
-      // REPLACE WITH THIS
-if (!productAgg || productAgg.length === 0) {
-    return res.redirect('/shop?msg=unavailable');
-}
+        if (!productAgg || productAgg.length === 0) {
+            return res.redirect('/shop?msg=unavailable');
+        }
 
         const product = productAgg[0];
+        const stocks = product.stocks || [];
 
-        // Related Products (same safe logic)
+        if (stocks.length > 0) {
+            product.availableColors = [...new Set(
+                stocks.filter(s => s.quantity > 0).map(s => s.color).filter(Boolean)
+            )];
+            product.availableSizes = [...new Set(
+                stocks.filter(s => s.quantity > 0).map(s => s.size).filter(Boolean)
+            )];
+            product.stockMap = {};
+            stocks.forEach(s => {
+                if (s.quantity > 0) {
+                    product.stockMap[`${s.color}__${s.size}`] = s.quantity;
+                }
+            });
+        } else {
+            product.availableColors = product.color || [];
+            product.availableSizes  = product.size  || [];
+            product.stockMap = {};
+        }
+
         const relatedProducts = await Product.aggregate([
-            { 
-                $match: { 
-                    category: new mongoose.Types.ObjectId(product.category._id), 
-                    _id: { $ne: new mongoose.Types.ObjectId(productId) }, 
-                    isDeleted: { $ne: true }, 
-                    isBlocked: { $ne: true }, 
-                    status: 'Available', 
-                    quantity: { $gt: 0 } 
-                } 
+            {
+                $match: {
+                    category: new mongoose.Types.ObjectId(product.category._id),
+                    _id: { $ne: new mongoose.Types.ObjectId(productId) },
+                    isDeleted: { $ne: true },
+                    isBlocked: { $ne: true },
+                    status: 'Available',
+                    quantity: { $gt: 0 }
+                }
             },
-            { 
-                $lookup: { 
-                    from: 'categories', 
-                    localField: 'category', 
-                    foreignField: '_id', 
-                    as: 'categoryData' 
-                } 
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
             },
-            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: false } },
+
+            {
+                $match: {
+                    'categoryData.isListed': true,
+                    'categoryData.isDeleted': { $ne: true }
+                }
+            },
 
             {
                 $addFields: {
@@ -537,7 +591,6 @@ if (!productAgg || productAgg.length === 0) {
                 }
             },
             { $addFields: { effectiveDiscount: { $max: ['$productDiscount', '$categoryDiscount'] } } },
-
             {
                 $addFields: {
                     finalPrice: {
@@ -553,7 +606,6 @@ if (!productAgg || productAgg.length === 0) {
                     }
                 }
             },
-
             {
                 $project: {
                     _id: 1,
@@ -574,20 +626,66 @@ if (!productAgg || productAgg.length === 0) {
             { $limit: 4 }
         ]);
 
-        res.render('user/product', { 
-            product, 
-            relatedProducts, 
-            error: null, 
-            user 
+        res.render('user/product', {
+            product,
+            relatedProducts,
+            error: null,
+            user
         });
 
     } catch (error) {
         console.error('Error in loadProductDetail:', error);
-return res.redirect('/shop?msg=unavailable');
+        return res.redirect('/shop?msg=unavailable');
     }
 };
 
-
+const checkProductStatus = async (req, res) => {
+    try {
+        const productId = req.params.id;
+ 
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.json({ available: false, reason: 'invalid' });
+        }
+ 
+        const product = await Product.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(productId),
+                    isDeleted: { $ne: true },
+                    isBlocked: { $ne: true },
+                    status: 'Available',
+                    quantity: { $gt: 0 }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'categoryData'
+                }
+            },
+            { $unwind: { path: '$categoryData', preserveNullAndEmptyArrays: false } },
+            {
+                $match: {
+                    'categoryData.isListed': true,
+                    'categoryData.isDeleted': { $ne: true }
+                }
+            },
+            { $project: { _id: 1, productName: 1, quantity: 1, status: 1 } }
+        ]);
+ 
+        if (!product || product.length === 0) {
+            return res.json({ available: false, reason: 'unavailable' });
+        }
+ 
+        return res.json({ available: true });
+ 
+    } catch (error) {
+        console.error('Error checking product status:', error);
+        return res.json({ available: false, reason: 'error' });
+    }
+};
 
 const searchProducts = async (req, res) => {
     try {
@@ -677,6 +775,7 @@ export default {
     getCategories,
     getProductOptions,
     loadProductDetail,
+    checkProductStatus,
     searchProducts,
     getSearchSuggestions,
     loadCart,

@@ -1,4 +1,3 @@
-import { query } from "express-validator";
 import Order from "../../models/orderSchema.js";
 import User from "../../models/userSchema.js";
 
@@ -11,9 +10,8 @@ function getDateRange(filter, startDate, endDate) {
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
       end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
       break;
-
     case "week": {
-      const day = now.getDay(); 
+      const day = now.getDay();
       start = new Date(now);
       start.setDate(now.getDate() - day);
       start.setHours(0, 0, 0, 0);
@@ -22,17 +20,14 @@ function getDateRange(filter, startDate, endDate) {
       end.setHours(23, 59, 59, 999);
       break;
     }
-
     case "year":
       start = new Date(now.getFullYear(), 0, 1, 0, 0, 0);
       end   = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
       break;
-
     case "custom":
       start = new Date(startDate + "T00:00:00");
       end   = new Date(endDate   + "T23:59:59");
       break;
-
     case "month":
     default:
       start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
@@ -44,15 +39,59 @@ function getDateRange(filter, startDate, endDate) {
 }
 
 
-async function getReportData(start, end, page, limit) {
-    const orders = await Order.find({
+async function debugCouponFields(start, end) {
+  const sample = await Order.find({
     createdOn: { $gte: start, $lte: end },
     status: { $nin: ["Cancelled"] }
-  })
-    .sort({ createdOn: -1 })
-  .skip((page - 1) * limit)  
-  .limit(limit)      
-    .lean();
+  }).limit(5).lean();
+
+  if (sample.length > 0) {
+    console.log("=== COUPON DEBUG: Sample order keys ===");
+    const allKeys = new Set();
+    sample.forEach(o => Object.keys(o).forEach(k => allKeys.add(k)));
+    const couponKeys = [...allKeys].filter(k =>
+      k.toLowerCase().includes('coupon') ||
+      k.toLowerCase().includes('discount') ||
+      k.toLowerCase().includes('promo') ||
+      k.toLowerCase().includes('offer')
+    );
+    console.log("Discount-related fields found:", couponKeys);
+    sample.forEach((o, i) => {
+      console.log(`Order ${i + 1}:`, {
+        totalPrice: o.totalPrice,
+        finalAmount: o.finalAmount,
+        discount: o.discount,
+        couponDiscount: o.couponDiscount,
+        couponCode: o.couponCode,
+        couponApplied: o.couponApplied,
+        offerDiscount: o.offerDiscount,
+        couponSavings: o.couponSavings,
+        couponAmount: o.couponAmount,
+      });
+    });
+    console.log("=======================================");
+  }
+}
+
+
+async function getReportData(start, end, page, limit) {
+  const usePagination = page != null && limit != null &&
+                        !isNaN(page) && !isNaN(limit);
+
+  if (process.env.NODE_ENV !== 'production') {
+    await debugCouponFields(start, end);
+  }
+
+  let query = Order.find({
+    createdOn: { $gte: start, $lte: end },
+    status: { $nin: ["Cancelled"] }
+  }).sort({ createdOn: -1 });
+
+  if (usePagination) {
+    query = query.skip((page - 1) * limit).limit(limit);
+  }
+
+  const orders = await query.lean();
 
   const userIds = [...new Set(
     orders
@@ -66,29 +105,39 @@ async function getReportData(start, end, page, limit) {
       const users = await User.find({ _id: { $in: userIds } }, "name email").lean();
       users.forEach(u => { userMap[u._id.toString()] = u; });
     }
-  } catch (_) { /* silently ignore — address fallback will be used */ }
+  } catch (_) { /* silently ignore */ }
 
-  let totalSalesCount      = 0;
-  let totalOrderAmount     = 0;
-  let totalDiscount        = 0;
-  let totalCouponDiscount  = 0;
+  let totalSalesCount     = 0;
+  let totalOrderAmount    = 0;
+  let totalDiscount       = 0;
+  let totalCouponDiscount = 0;
 
   const formattedOrders = orders.map(order => {
-    const grossAmount    = order.totalPrice     ?? order.grossAmount    ?? order.subtotal ?? 0;
-    const discount       = order.discount       ?? order.offerDiscount  ?? 0;
-    const couponDiscount = order.couponDiscount ?? order.couponSavings  ?? order.couponAmount ?? 0;
-    const netAmount      = order.finalAmount    ?? order.netAmount      ?? order.totalAmount
-                           ?? (grossAmount - discount - couponDiscount);
+    const grossAmount = order.totalPrice ?? 0;
+    const netAmount   = order.finalAmount ?? grossAmount;
+
+    let effectiveProductDiscount;
+    let effectiveCouponDiscount;
+
+    if (order.couponDiscount !== undefined && order.couponDiscount !== null) {
+      effectiveProductDiscount = order.discount ?? 0;
+      effectiveCouponDiscount  = order.couponDiscount;
+    } else if (order.couponCode) {
+      effectiveProductDiscount = 0;
+      effectiveCouponDiscount  = order.discount ?? 0;
+    } else {
+      effectiveProductDiscount = order.discount ?? 0;
+      effectiveCouponDiscount  = 0;
+    }
 
     totalSalesCount++;
     totalOrderAmount    += grossAmount;
-    totalDiscount       += discount;
-    totalCouponDiscount += couponDiscount;
+    totalDiscount       += effectiveProductDiscount;
+    totalCouponDiscount += effectiveCouponDiscount;
 
-    const userRef   = order.user ?? order.userId ?? order.customerId ?? order.customer ?? null;
-    const userDoc   = userRef ? userMap[userRef.toString()] : null;
-
-    const addrObj   = Array.isArray(order.address) ? order.address[0] : order.address;
+    const userRef  = order.user ?? order.userId ?? order.customerId ?? order.customer ?? null;
+    const userDoc  = userRef ? userMap[userRef.toString()] : null;
+    const addrObj  = Array.isArray(order.address) ? order.address[0] : order.address;
 
     const customerName  = userDoc?.name  ?? addrObj?.name  ?? addrObj?.fullName  ?? "Guest";
     const customerEmail = userDoc?.email ?? addrObj?.email ?? "—";
@@ -103,8 +152,8 @@ async function getReportData(start, end, page, limit) {
       dateStr,
       status:         order.status ?? "Pending",
       grossAmount:    Math.round(grossAmount),
-      discount:       Math.round(discount),
-      couponDiscount: Math.round(couponDiscount),
+      discount:       Math.round(effectiveProductDiscount),
+      couponDiscount: Math.round(effectiveCouponDiscount),
       netAmount:      Math.round(netAmount),
     };
   });
@@ -127,8 +176,8 @@ async function getReportData(start, end, page, limit) {
 export const loadSalesReport = async (req, res) => {
   try {
     const search = req.query.search ? req.query.search.trim() : "";
-    const page  = parseInt(req.query.page) || 1;
-    const limit = 8;
+    const page   = parseInt(req.query.page) || 1;
+    const limit  = 8;
 
     const filter    = req.query.filter    ?? "month";
     const startDate = req.query.startDate ?? null;
@@ -150,7 +199,7 @@ export const loadSalesReport = async (req, res) => {
       startDate,
       endDate,
       activePage: "sales-report",
-      totalPages: Math.ceil(total / limit),
+      totalPages:  Math.ceil(total / limit),
       currentPage: page,
       search
     });
@@ -168,7 +217,8 @@ export const getSalesReportData = async (req, res) => {
     const endDate   = req.query.endDate   ?? null;
 
     const { start, end } = getDateRange(filter, startDate, endDate);
-    const data = await getReportData(start, end);
+
+    const data = await getReportData(start, end, null, null);
 
     res.json(data);
   } catch (error) {

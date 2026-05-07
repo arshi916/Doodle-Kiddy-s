@@ -88,7 +88,6 @@ const getReferralInfo = async (req, res) => {
         const baseUrl     = req.protocol + '://' + req.get('host');
         const referralUrl = `${baseUrl}/signup?ref=${user.referralCode}`;
 
-        // FIX: use the actual saved array length
         const referredCount = user.redeemedUsers ? user.redeemedUsers.length : 0;
 
         let referralEarnings = 0;
@@ -98,7 +97,6 @@ const getReferralInfo = async (req, res) => {
                 .filter(t => 
                     t.type === 'credit' && 
                     t.description && (
-                        // FIX: case-insensitive, catches both "Referral reward" and "referral"
                         t.description.toLowerCase().includes('referral') ||
                         t.description.toLowerCase().includes('welcome bonus')
                     )

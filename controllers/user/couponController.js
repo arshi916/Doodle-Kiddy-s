@@ -30,16 +30,33 @@ const getAvailableCoupons = async (req, res) => {
             userBy:   { $ne: userId },         
         });
 
-        const result = coupons.map(c => ({
-            _id:          c._id,
-            name:         c.name,
-            offerPrice:   c.offerPrice,
-            minimumPrice: c.minimumPrice,
-            expireOn:     c.expireOn,
-            eligible:     subtotal >= c.minimumPrice,
-        }));
+        const result = coupons.map(c => {
+            let discountAmount = 0;
+            if (c.discountType === "percentage") {
+                discountAmount = (subtotal * c.offerPrice) / 100;
+                if (c.maxDiscount && discountAmount > c.maxDiscount) {
+                    discountAmount = c.maxDiscount;
+                }
+                discountAmount = Math.round(discountAmount * 100) / 100;
+            } else {
+                discountAmount = c.offerPrice;
+            }
+
+            return {
+                _id:            c._id,
+                name:           c.name,
+                discountType:   c.discountType,
+                offerPrice:     c.offerPrice,
+                discountAmount,
+                maxDiscount:    c.maxDiscount,
+                minimumPrice:   c.minimumPrice,
+                expireOn:       c.expireOn,
+                eligible:       subtotal >= c.minimumPrice,
+            };
+        });
 
         return res.json({ success: true, coupons: result, subtotal });
+
     } catch (err) {
         console.error("getAvailableCoupons error:", err);
         return res.status(500).json({ success: false, message: "Server error" });
@@ -89,14 +106,32 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        const totals = calcTotals(cart.items, coupon.offerPrice);
+
+        let discount = 0;
+        if (coupon.discountType === "percentage") {
+            discount = (subtotal * coupon.offerPrice) / 100;
+
+            if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                discount = coupon.maxDiscount;
+            }
+            discount = Math.round(discount * 100) / 100;
+        } else {
+            
+            discount = coupon.offerPrice;
+        }
+
+        const totals = calcTotals(cart.items, discount);
+
+        const savingsMsg = coupon.discountType === "percentage"
+            ? `${coupon.offerPrice}% off — you saved ₹${discount.toFixed(2)}${coupon.maxDiscount ? ` (capped at ₹${coupon.maxDiscount})` : ''}`
+            : `₹${discount.toFixed(2)} off`;
 
         return res.json({
             success:    true,
-            message:    `Coupon "${coupon.name}" applied successfully! You saved ₹${coupon.offerPrice.toFixed(2)}`,
+            message:    `Coupon "${coupon.name}" applied! ${savingsMsg}`,
             couponCode: coupon.name,
             couponId:   coupon._id,
-            discount:   coupon.offerPrice,
+            discount,
             ...totals,
         });
     } catch (err) {
@@ -107,6 +142,7 @@ const applyCoupon = async (req, res) => {
 
 const removeCoupon = async (req, res) => {
     try {
+          req.session.pendingCoupon = null;
         const userId = req.session.user;
         if (!userId) return res.json({ success: false, message: "Please login" });
 

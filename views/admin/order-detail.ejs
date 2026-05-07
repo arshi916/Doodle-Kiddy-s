@@ -9,38 +9,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
-    /* Perfect font size - this is the magic */
     html { font-size: 13.5px; }
-    
     body { 
       font-family: 'Inter', sans-serif; 
       background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
     }
-    
     .glass { 
       background: rgba(255, 255, 255, 0.95); 
       backdrop-filter: blur(12px); 
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
-    
-    .hover-lift { 
-      transition: all 0.3s ease; 
-    }
-    .hover-lift:hover { 
-      transform: translateY(-4px); 
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-    }
-    
+    .hover-lift { transition: all 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
     .product-image {
-      width: 68px;
-      height: 68px;
-      object-fit: cover;
-      border-radius: 12px;
+      width: 68px; height: 68px;
+      object-fit: cover; border-radius: 12px;
       border: 2px solid #e5e7eb;
     }
-    
     .status-badge {
-      @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold;
+      display: inline-flex; align-items: center;
+      padding: 0.375rem 0.75rem; border-radius: 9999px;
+      font-size: 0.75rem; font-weight: 600;
     }
   </style>
 </head>
@@ -48,7 +37,7 @@
 
 <div class="flex h-screen">
   <!-- Sidebar -->
-   <aside class="w-64 bg-white shadow-2xl border-r border-stone-300">
+  <aside class="w-64 bg-white shadow-2xl border-r border-stone-300">
     <div class="p-6">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 bg-gradient-to-r from-stone-600 to-amber-800 rounded-lg flex items-center justify-center">
@@ -59,7 +48,6 @@
         <h2 class="text-xl font-bold bg-gradient-to-r from-stone-600 to-amber-800 bg-clip-text text-transparent">AdminHub</h2>
       </div>
     </div>
-    
     <nav class="mt-2 px-4 space-y-1">
       <a href="/admin" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -67,45 +55,36 @@
         </svg>
         <span class="font-medium">Dashboard</span>
       </a>
-
       <a href="/admin/customers" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
         </svg>
         <span class="font-medium">Customers</span>
       </a>
-
       <a href="/admin/products" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V5a2 2 0 00-2-2H6a2 2 0 00-2 2v8m16 0H4m0 0v6a2 2 0 002 2h12a2 2 0 002-2v-6" />
         </svg>
         <span class="font-medium">Products</span>
       </a>
-
       <a href="/admin/orders" class="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-stone-200 to-amber-100 text-stone-800 rounded-xl shadow-sm">
         <svg class="w-5 h-5 text-stone-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         <span class="font-semibold">Orders</span>
       </a>
-
       <a href="/admin/categories" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
         </svg>
         <span class="font-medium">Categories</span>
       </a>
-
-
-      <!-- Coupons -->
       <a href="/admin/coupons" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
         </svg>
         <span class="font-medium">Coupons</span>
       </a>
-
-      <!-- Settings -->
       <a href="#" class="flex items-center gap-3 py-3 px-4 text-gray-700 hover:bg-gradient-to-r hover:from-stone-100 hover:to-amber-50 hover:text-stone-700 rounded-xl transition-all duration-200 group">
         <svg class="w-5 h-5 text-stone-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -113,7 +92,6 @@
         </svg>
         <span class="font-medium">Settings</span>
       </a>
-      
       <div class="pt-4 mt-4 border-t border-stone-200">
         <a href="#" onclick="showLogoutModal(event)" class="flex items-center gap-3 py-3 px-4 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 group">
           <svg class="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -131,10 +109,13 @@
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-4">
           <a href="/admin/orders" class="text-gray-600 hover:text-gray-900">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
           </a>
           <h1 class="text-2xl font-bold text-gray-800">Order Details</h1>
-<span class="status-badge bg-amber-100 text-amber-800">#<%= String(order.orderId).slice(-8).toUpperCase() %></span>        </div>
+          <span class="status-badge bg-amber-100 text-amber-800">#<%= String(order.orderId).slice(-8).toUpperCase() %></span>
+        </div>
         <button onclick="printOrder()" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl hover:shadow-lg transition font-medium text-sm">
           Print Order
         </button>
@@ -149,9 +130,8 @@
             <div class="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">ID</div>
             <div>
               <p class="text-gray-600 text-xs">Order ID</p>
-<p class="font-bold text-lg">
-  #<%= String(order.orderId).slice(-8).toUpperCase() %>
-</p>          </div>
+              <p class="font-bold text-lg">#<%= String(order.orderId).slice(-8).toUpperCase() %></p>
+            </div>
           </div>
         </div>
         <div class="bg-white rounded-2xl shadow-lg p-5 hover-lift border border-gray-100">
@@ -175,7 +155,9 @@
         <div class="bg-white rounded-2xl shadow-lg p-5 hover-lift border border-gray-100">
           <div class="flex items-center gap-4">
             <div class="w-11 h-11 bg-amber-500 rounded-xl flex items-center justify-center text-white">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
             </div>
             <div>
               <p class="text-gray-600 text-xs">Order Date</p>
@@ -186,255 +168,261 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-7">
-        <!-- LEFT: Order Items + Customer Info -->
-        <div class="lg:col-span-2 space-y-7">
 
-         <!-- Order Items Section -->
-<div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
-  <h3 class="text-xl font-bold text-gray-800 mb-5">Order Items</h3>
-  
-  <div class="space-y-5">
-    <% if (order.orderedItems && order.orderedItems.length > 0) { %>
-      <% order.orderedItems.forEach(item => { %>
-        <div class="flex gap-5 p-5 bg-gray-50 rounded-xl border border-gray-200">
-          <% const img = item.product?.productImage?.[0] ? `/images/${item.product.productImage[0]}` : '/images/placeholder.jpg'; %>
-          <img src="<%= img %>" alt="<%= item.product?.productName %>" 
-               class="product-image" 
-               onerror="this.src='/images/placeholder.jpg'">
-          
-          <div class="flex-1">
-            <h4 class="font-bold text-gray-800 text-lg"><%= item.product?.productName || 'Unknown' %></h4>
-            <p class="text-gray-600 text-sm mt-1">
-              <% if (item.size) { %>Size: <%= item.size %><% } %>
-              <% if (item.product?.color?.[0]) { %><%= item.size ? ' • ' : '' %>Color: <%= item.product.color[0] %><% } %>
-            </p>
-            
-            <div class="flex items-center gap-6 mt-3">
-              <span class="text-sm">Qty: <strong><%= item.quantity %></strong></span>
-              <span class="text-sm">₹<%= item.product?.salePrice || 0 %> each</span>
-              <span class="font-bold text-lg">₹<%= (item.product?.salePrice || 0) * item.quantity %></span>
-            </div>
+        <!-- LEFT col: Order Items only -->
+        <div class="lg:col-span-2">
 
-            <div class="mt-3">
-              <%
-                const s = (item.status || 'Pending').trim();
-                const badgeClass =
-                  s === 'Delivered'       ? 'bg-green-100 text-green-800' :
-                  s === 'Returned'        ? 'bg-blue-100 text-blue-800' :
-                  s === 'Return Request'  ? 'bg-red-100 text-red-800' :
-                  s === 'Cancelled'       ? 'bg-gray-200 text-gray-600' :
-                  s === 'Shipping'        ? 'bg-purple-100 text-purple-800' :
-                  s === 'Processing'      ? 'bg-yellow-100 text-yellow-800' :
-                                            'bg-amber-100 text-amber-800';
-              %>
-              <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold <%= badgeClass %>">
-                <%= s %>
-              </span>
-              <% if (item.returnReason) { %>
-                <span class="text-xs text-gray-500 ml-3">Reason: <%= item.returnReason %></span>
+          <!-- Order Items Section -->
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
+            <h3 class="text-xl font-bold text-gray-800 mb-5">Order Items</h3>
+            <div class="space-y-5">
+              <% if (order.orderedItems && order.orderedItems.length > 0) { %>
+                <% order.orderedItems.forEach(item => { %>
+                  <div class="flex gap-5 p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <% const img = item.product?.productImage?.[0] ? `/images/${item.product.productImage[0]}` : '/images/placeholder.jpg'; %>
+                    <img src="<%= img %>" alt="<%= item.product?.productName %>"
+                         class="product-image"
+                         onerror="this.src='/images/placeholder.jpg'">
+                    <div class="flex-1">
+                      <h4 class="font-bold text-gray-800 text-lg"><%= item.product?.productName || 'Unknown' %></h4>
+                      <p class="text-gray-600 text-sm mt-1">
+                        <% if (item.size) { %>Size: <%= item.size %><% } %>
+                        <% if (item.product?.color?.[0]) { %><%= item.size ? ' • ' : '' %>Color: <%= item.product.color[0] %><% } %>
+                      </p>
+                      <div class="flex items-center gap-6 mt-3">
+                        <span class="text-sm">Qty: <strong><%= item.quantity %></strong></span>
+                        <span class="text-sm">₹<%= item.product?.salePrice || 0 %> each</span>
+                        <span class="font-bold text-lg">₹<%= (item.product?.salePrice || 0) * item.quantity %></span>
+                      </div>
+
+                      <!-- Per-item status + update control -->
+                      <div class="mt-3 flex items-center gap-3 flex-wrap">
+                        <%
+                          const s = (item.status || 'Pending').trim();
+                          const badgeClass =
+                            s === 'Delivered'      ? 'bg-green-100 text-green-800'   :
+                            s === 'Returned'       ? 'bg-blue-100 text-blue-800'     :
+                            s === 'Return Request' ? 'bg-red-100 text-red-800'       :
+                            s === 'Cancelled'      ? 'bg-gray-200 text-gray-600'     :
+                            s === 'Shipping'       ? 'bg-purple-100 text-purple-800' :
+                            s === 'Processing'     ? 'bg-yellow-100 text-yellow-800' :
+                                                     'bg-amber-100 text-amber-800';
+                          const isFinalItem     = ['Returned', 'Cancelled'].includes(s);
+                          const isDeliveredItem = ['Delivered', 'Return Request', 'Returned'].includes(s);
+                        %>
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold <%= badgeClass %>">
+                          <%= s %>
+                        </span>
+                        <% if (item.returnReason) { %>
+                          <span class="text-xs text-gray-500">Reason: <%= item.returnReason %></span>
+                        <% } %>
+
+                        <% if (!isFinalItem) { %>
+                        <div class="flex items-center gap-2 mt-2 w-full">
+                          <select id="itemStatus_<%= item._id %>"
+                                  class="flex-1 p-2 border border-gray-300 rounded-lg text-xs">
+                            <% ['Pending','Processing','Shipping','Delivered'].forEach(st => { %>
+                              <%
+                                let optDisabled = false;
+                                if (isDeliveredItem && ['Pending','Processing','Shipping'].includes(st)) optDisabled = true;
+                              %>
+                              <option value="<%= st %>"
+                                      <%= s === st ? 'selected' : '' %>
+                                      <%= optDisabled ? 'disabled' : '' %>>
+                                <%= st %>
+                              </option>
+                            <% }) %>
+                          </select>
+                          <button onclick="updateItemStatus('<%= order._id %>', '<%= item._id %>')"
+                                  id="itemBtn_<%= item._id %>"
+                                  class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition whitespace-nowrap">
+                            Update
+                          </button>
+                        </div>
+                        <% } %>
+                      </div>
+                      <!-- end per-item status -->
+
+                    </div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <p class="text-center text-gray-500 py-10">No items found</p>
               <% } %>
             </div>
+
+            <!-- Order Totals Summary -->
+            <div class="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
+              <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <div class="max-w-xs ml-auto space-y-3 text-sm">
+                  <div class="flex justify-between text-gray-600">
+                    <span>Items Subtotal</span>
+                    <span class="font-medium">₹<%= order.orderedItems.reduce((sum, item) => sum + (item.price || item.product?.salePrice || 0) * item.quantity, 0).toFixed(2) %></span>
+                  </div>
+                  <div class="flex justify-between text-orange-600">
+                    <span>Total Tax (5% GST)</span>
+                    <span class="font-medium">₹<%= (order.finalAmount * 0.05 / 1.05).toFixed(2) %></span>
+                  </div>
+                  <% if (order.discount > 0) { %>
+                  <div class="flex justify-between text-green-600">
+                    <span>Coupon / Discount</span>
+                    <span class="font-medium">-₹<%= order.discount %></span>
+                  </div>
+                  <% } %>
+                  <% if (order.walletAmountUsed > 0) { %>
+                  <div class="flex justify-between text-purple-600">
+                    <span>Wallet Used</span>
+                    <span class="font-medium">-₹<%= order.walletAmountUsed.toFixed(2) %></span>
+                  </div>
+                  <% } %>
+                  <div class="border-t-2 border-gray-300 pt-3 flex justify-between items-center">
+                    <span class="font-bold text-base">Grand Total</span>
+                    <span class="font-bold text-2xl text-amber-700">₹<%= order.finalAmount %></span>
+                  </div>
+                  <div class="pt-3 border-t border-gray-200">
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-500">Payment Method</span>
+                      <span class="px-4 py-1.5 rounded-full text-xs font-semibold
+                        <%= order.paymentMethod === 'cod'      ? 'bg-green-100 text-green-700' :
+                           order.paymentMethod === 'razorpay' ? 'bg-blue-100 text-blue-700'   :
+                                                                'bg-amber-100 text-amber-700' %>">
+                        <%= order.paymentMethod === 'cod'      ? 'Cash on Delivery'  :
+                           order.paymentMethod === 'razorpay' ? 'Razorpay (Online)' :
+                           order.paymentMethod === 'wallet'   ? 'Wallet'             :
+                           order.paymentMethod || 'N/A' %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+          <!-- end Order Items Section -->
+
         </div>
-      <% }) %>
-    <% } else { %>
-      <p class="text-center text-gray-500 py-10">No items found</p>
-    <% } %>
-  </div>
+        <!-- end LEFT col -->
 
-  <!-- Order Totals Summary (Kept - Clean & Professional) -->
-  <div class="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
-    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-      <div class="max-w-xs ml-auto space-y-3 text-sm">
+        <!-- RIGHT col: Return panel + Payment + Customer Info -->
+        <div class="space-y-7">
 
-        <div class="flex justify-between text-gray-600">
-          <span>Items Subtotal</span>
-          <span class="font-medium">₹<%= order.orderedItems.reduce((sum, item) => sum + (item.price || item.product?.salePrice || 0) * item.quantity, 0).toFixed(2) %></span>
-        </div>
+          <%
+            const hasItemReturnRequest  = order.orderedItems.some(item => (item.status || '').trim() === 'Return Request');
+            const hasOrderReturnRequest = order.status === 'Return Request';
+            const showReturnPanel       = hasItemReturnRequest || hasOrderReturnRequest;
+          %>
 
-        <div class="flex justify-between text-orange-600">
-          <span>Total Tax (5% GST)</span>
-          <span class="font-medium">₹<%= (order.finalAmount * 0.05 / 1.05).toFixed(2) %></span>
-        </div>
-
-        <% if (order.discount > 0) { %>
-        <div class="flex justify-between text-green-600">
-          <span>Coupon / Discount</span>
-          <span class="font-medium">-₹<%= order.discount %></span>
-        </div>
-        <% } %>
-
-        <% if (order.walletAmountUsed > 0) { %>
-        <div class="flex justify-between text-purple-600">
-          <span>Wallet Used</span>
-          <span class="font-medium">-₹<%= order.walletAmountUsed.toFixed(2) %></span>
-        </div>
-        <% } %>
-
-        <div class="border-t-2 border-gray-300 pt-3 flex justify-between items-center">
-          <span class="font-bold text-base">Grand Total</span>
-          <span class="font-bold text-2xl text-amber-700">₹<%= order.finalAmount %></span>
-        </div>
-
-        <!-- Payment Method -->
-        <div class="pt-3 border-t border-gray-200">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-500">Payment Method</span>
-            <span class="px-4 py-1.5 rounded-full text-xs font-semibold 
-              <%= order.paymentMethod === 'cod' ? 'bg-green-100 text-green-700' : 
-                 order.paymentMethod === 'razorpay' ? 'bg-blue-100 text-blue-700' : 
-                 'bg-amber-100 text-amber-700' %>">
-              <%= order.paymentMethod === 'cod' ? 'Cash on Delivery' :
-                 order.paymentMethod === 'razorpay' ? 'Razorpay (Online)' :
-                 order.paymentMethod === 'wallet' ? 'Wallet' : order.paymentMethod || 'N/A' %>
-            </span>
+          <!-- Return Panel (only when needed) -->
+          <% if (showReturnPanel) { %>
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
+            <h3 class="text-xl font-bold text-gray-800 mb-5">Return Request</h3>
+            <div class="p-5 bg-red-50 border-2 border-red-200 rounded-xl">
+              <p class="font-bold text-red-800 mb-3 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Return Request Pending
+              </p>
+              <% if (hasOrderReturnRequest && !hasItemReturnRequest) { %>
+                <p class="text-sm text-red-700 mb-4">Full order return requested.</p>
+              <% } else { %>
+                <div class="mb-4 text-sm text-red-700">
+                  Items requesting return:
+                  <ul class="list-disc list-inside ml-3 mt-1 space-y-1">
+                    <% order.orderedItems.forEach(item => { %>
+                      <% if ((item.status || '').trim() === 'Return Request') { %>
+                        <li>
+                          <strong><%= item.product?.productName || 'Product' %></strong>
+                          (Qty: <%= item.quantity %>)
+                          <% if (item.returnReason) { %> — <em><%= item.returnReason %></em><% } %>
+                        </li>
+                      <% } %>
+                    <% }) %>
+                  </ul>
+                </div>
+              <% } %>
+              <div class="grid grid-cols-2 gap-3">
+                <button onclick="handleReturnRequest('<%= order._id %>', 'accept')"
+                        class="py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
+                  ✓ Accept Return
+                </button>
+                <button onclick="handleReturnRequest('<%= order._id %>', 'reject')"
+                        class="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
+                  ✗ Reject Return
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+          <% } %>
 
-          <!-- Customer Information -->
+          <!-- Payment Card -->
+          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
+            <h3 class="text-xl font-bold text-gray-800 mb-5">Payment</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Method</span>
+                <strong><%= order.paymentMethod === 'cod'      ? 'Cash on Delivery'  :
+                             order.paymentMethod === 'razorpay' ? 'Razorpay (Online)' :
+                             order.paymentMethod === 'wallet'   ? 'Wallet'             :
+                             order.paymentMethod || 'N/A' %></strong>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Status</span>
+                <span class="text-green-600 font-bold">Paid</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Date</span>
+                <strong><%= order.formattedDate %></strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Information (moved here, under Payment) -->
           <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
             <div class="flex items-center justify-between mb-5">
-              <h3 class="text-xl font-bold text-gray-800">Customer Information</h3>
-              <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+              <h3 class="text-xl font-bold text-gray-800">Customer</h3>
+              <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-lg">
                 <%= order.address?.name?.[0]?.toUpperCase() || 'U' %>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-5 text-sm">
-              <div><strong>Name:</strong> <%= order.address?.name || 'N/A' %></div>
-              <div><strong>Email:</strong> <%= order.address?.email || 'N/A' %></div>
-              <div><strong>Phone:</strong> <%= order.address?.phone || 'N/A' %></div>
-              <div><strong>User ID:</strong> #<%= order.address?._id?.toString().slice(-6).toUpperCase() || 'N/A' %></div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Name</span>
+                <strong><%= order.address?.name || 'N/A' %></strong>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Email</span>
+                <span class="text-gray-700 text-xs truncate max-w-32"><%= order.address?.email || 'N/A' %></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Phone</span>
+                <strong><%= order.address?.phone || 'N/A' %></strong>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">User ID</span>
+                <span class="text-gray-600 font-mono text-xs">#<%= order.address?._id?.toString().slice(-6).toUpperCase() || 'N/A' %></span>
+              </div>
             </div>
-            <div class="mt-6 pt-6 border-t-2 border-dashed border-gray-300">
-              <h4 class="font-bold mb-3">Shipping Address</h4>
-              <div class="bg-gray-50 p-5 rounded-xl text-sm">
-                <p class="font-semibold"><%= order.address?.name %></p>
-                <p class="text-gray-700 mt-1"><%= order.address?.houseName %> <%= order.address?.streetAddress %></p>
-                <p class="text-gray-700"><%= order.address?.city %>, <%= order.address?.state %> <%= order.address?.pincode %></p>
+
+            <!-- Shipping Address -->
+            <div class="mt-5 pt-5 border-t border-dashed border-gray-300">
+              <p class="font-bold text-gray-700 mb-3 text-sm">Shipping Address</p>
+              <div class="bg-gray-50 p-4 rounded-xl text-sm space-y-1">
+                <p class="font-semibold text-gray-800"><%= order.address?.name %></p>
+                <p class="text-gray-600"><%= order.address?.houseName %> <%= order.address?.streetAddress %></p>
+                <p class="text-gray-600"><%= order.address?.city %>, <%= order.address?.state %> <%= order.address?.pincode %></p>
                 <p class="text-gray-700 font-medium"><%= order.address?.country || 'India' %></p>
               </div>
             </div>
           </div>
+
         </div>
+        <!-- end RIGHT col -->
 
-        <!-- RIGHT: Status & Actions -->
-        <div class="space-y-7">
-          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
-            <h3 class="text-xl font-bold text-gray-800 mb-5">Order Status</h3>
-            
-            <div class="mb-5">
-              <span class="status-badge <%= order.status === 'Delivered' ? 'bg-green-100 text-green-800' : order.status === 'Return Request' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800' %>">
-                <%= order.status %>
-              </span>
-            </div>
-
-    <%
-  // Handles both order-level and item-level return requests
-  const hasItemReturnRequest = order.orderedItems.some(item =>
-    (item.status || '').trim() === 'Return Request'
-  );
-  const hasOrderReturnRequest = order.status === 'Return Request';
-  const showReturnPanel = hasItemReturnRequest || hasOrderReturnRequest;
-%>
-
-<% if (showReturnPanel) { %>
-  <div class="p-5 bg-red-50 border-2 border-red-200 rounded-xl mb-6">
-    <p class="font-bold text-red-800 mb-3 text-sm flex items-center gap-2">
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-      </svg>
-      Return Request Pending
-    </p>
-
-    <% if (hasOrderReturnRequest && !hasItemReturnRequest) { %>
-      <p class="text-sm text-red-700 mb-4">Full order return requested.</p>
-    <% } else { %>
-      <div class="mb-4 text-sm text-red-700">
-        Items requesting return:
-        <ul class="list-disc list-inside ml-3 mt-1 space-y-1">
-          <% order.orderedItems.forEach(item => { %>
-            <% if ((item.status || '').trim() === 'Return Request') { %>
-              <li>
-                <strong><%= item.product?.productName || 'Product' %></strong>
-                (Qty: <%= item.quantity %>)
-                <% if (item.returnReason) { %> — <em><%= item.returnReason %></em><% } %>
-              </li>
-            <% } %>
-          <% }) %>
-        </ul>
-      </div>
-    <% } %>
-
-    <div class="grid grid-cols-2 gap-3">
-      <button onclick="handleReturnRequest('<%= order._id %>', 'accept')"
-              class="py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
-        ✓ Accept Return
-      </button>
-      <button onclick="handleReturnRequest('<%= order._id %>', 'reject')"
-              class="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition shadow-md text-sm">
-        ✗ Reject Return
-      </button>
-    </div>
-  </div>
-<% } %>
-
-
-
-           <%
-  const isDelivered = ['Delivered', 'Return Request', 'Returned'].includes(order.status);
-  const isFinal = ['Returned', 'Cancelled'].includes(order.status);
-  // Options disabled after delivery (can't go back to earlier states)
-  const disabledIfDelivered = ['Pending', 'Processing', 'Shipping'];
-%>
-<select id="statusSelect" 
-        class="w-full p-3 border border-gray-300 rounded-xl text-sm mb-4 <%= isFinal ? 'opacity-50 cursor-not-allowed' : '' %>"
-        <%= isFinal ? 'disabled' : '' %>>
-  <% const allStatuses = ['Pending','Processing','Shipping','Delivered']; %>
-  <% allStatuses.forEach(s => { %>
-    <%
-      let isDisabled = false;
-      // Once delivered or further, can't go back to pre-delivery states
-      if (isDelivered && disabledIfDelivered.includes(s)) isDisabled = true;
-      // Once fully final (Returned/Cancelled), disable all
-      if (isFinal) isDisabled = true;
-    %>
-    <option value="<%= s %>" 
-            <%= order.status === s ? 'selected' : '' %>
-            <%= isDisabled ? 'disabled' : '' %>
-            class="<%= isDisabled ? 'text-gray-300' : '' %>">
-      <%= s %>
-    </option>
-  <% }) %>
-</select>
-
-<% if (isFinal) { %>
-  <p class="text-xs text-gray-400 text-center mb-4">
-    This order is <%= order.status.toLowerCase() %> — no further status changes allowed.
-  </p>
-<% } %>
-            
-            <button onclick="updateOrderStatus()" class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl font-bold hover:shadow-xl transition text-sm">
-              Update Status
-            </button>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover-lift">
-            <h3 class="text-xl font-bold text-gray-800 mb-5">Payment</h3>
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between"><span>Method:</span> <strong><%= order.paymentMethod || 'N/A' %></strong></div>
-              <div class="flex justify-between"><span>Status:</span> <span class="text-green-600 font-bold">Paid</span></div>
-              <div class="flex justify-between"><span>Date:</span> <strong><%= order.formattedDate %></strong></div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   </div>
 </div>
+
 <!-- Logout Confirmation Modal -->
 <div id="logout-modal" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
   <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4 text-center">
@@ -446,11 +434,11 @@
     <h2 class="text-xl font-bold text-gray-800 mb-2">Log out?</h2>
     <p class="text-gray-500 text-sm mb-6">Are you sure you want to log out of the admin panel?</p>
     <div class="flex gap-3 justify-center">
-      <button onclick="closeLogoutModal()" 
+      <button onclick="closeLogoutModal()"
               class="px-6 py-2.5 border border-stone-300 text-gray-600 rounded-xl hover:bg-stone-50 font-medium transition-all duration-200">
         Cancel
       </button>
-      <a href="/admin/logout" 
+      <a href="/admin/logout"
          class="px-6 py-2.5 bg-gradient-to-r from-stone-600 to-amber-800 text-white rounded-xl hover:opacity-90 font-medium transition-all duration-200">
         Yes, log out
       </a>
@@ -458,35 +446,27 @@
   </div>
 </div>
 
-<!-- SINGLE WORKING SCRIPT -->
 <script>
-  // ─── Update Order Status ───────────────────────────────────────
-  async function updateOrderStatus() {
-    const statusSelect = document.getElementById('statusSelect');
-    const status = statusSelect.value;
-    const orderId = '<%= order._id %>';
+  // ─── Per-item Status Update ────────────────────────────────────
+  async function updateItemStatus(orderId, itemId) {
+    const select = document.getElementById(`itemStatus_${itemId}`);
+    const btn    = document.getElementById(`itemBtn_${itemId}`);
+    const status = select.value;
 
-    const btn = document.querySelector('button[onclick="updateOrderStatus()"]');
     const original = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = 'Updating...';
+    btn.innerHTML = '...';
 
     try {
-      const res = await fetch('/admin/orders/update-status', {
+      const res  = await fetch('/admin/orders/update-item-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status })
+        body: JSON.stringify({ orderId, itemId, status })
       });
       const data = await res.json();
 
       if (data.success) {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Updated!',
-          text: data.message,
-          timer: 2000,
-          showConfirmButton: false
-        });
+        await Swal.fire({ icon: 'success', title: 'Updated!', text: data.message, timer: 1800, showConfirmButton: false });
         location.reload();
       } else {
         throw new Error(data.message || 'Update failed');
@@ -494,7 +474,7 @@
     } catch (err) {
       Swal.fire('Error', err.message, 'error');
       btn.innerHTML = original;
-      btn.disabled = false;
+      btn.disabled  = false;
     }
   }
 
@@ -502,27 +482,26 @@
   async function handleReturnRequest(orderId, action) {
     const result = await Swal.fire({
       title: action === 'accept' ? 'Accept Return?' : 'Reject Return?',
-      text: action === 'accept'
+      text:  action === 'accept'
         ? 'Items will be marked returned and stock restored. Refund credited to wallet.'
         : 'Return request will be rejected. Order stays as Delivered.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: action === 'accept' ? '#10b981' : '#ef4444',
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: action === 'accept' ? 'Yes, Accept' : 'Yes, Reject',
-      cancelButtonText: 'Cancel'
+      cancelButtonColor:  '#6b7280',
+      confirmButtonText:  action === 'accept' ? 'Yes, Accept' : 'Yes, Reject',
+      cancelButtonText:   'Cancel'
     });
 
     if (!result.isConfirmed) return;
 
-    // find the clicked button safely
-    const btns = document.querySelectorAll(`button[onclick*="${action}"]`);
-    const btn = btns[btns.length - 1];
+    const btns     = document.querySelectorAll(`button[onclick*="${action}"]`);
+    const btn      = btns[btns.length - 1];
     const original = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; btn.innerHTML = 'Processing...'; }
 
     try {
-      const res = await fetch('/admin/orders/handle-return', {
+      const res  = await fetch('/admin/orders/handle-return', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, action })
@@ -530,13 +509,7 @@
       const data = await res.json();
 
       if (data.success) {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Done!',
-          text: data.message,
-          timer: 2500,
-          showConfirmButton: false
-        });
+        await Swal.fire({ icon: 'success', title: 'Done!', text: data.message, timer: 2500, showConfirmButton: false });
         location.reload();
       } else {
         throw new Error(data.message || 'Operation failed');
@@ -548,25 +521,20 @@
   }
 
   // ─── Print ─────────────────────────────────────────────────────
-  function printOrder() {
-    window.print();
-  }
+  function printOrder() { window.print(); }
 
   // ─── Logout Modal ──────────────────────────────────────────────
   function showLogoutModal(e) {
     e.preventDefault();
     document.getElementById('logout-modal').style.display = 'flex';
   }
-
   function closeLogoutModal() {
     document.getElementById('logout-modal').style.display = 'none';
   }
-
-  document.getElementById('logout-modal').addEventListener('click', function (e) {
+  document.getElementById('logout-modal').addEventListener('click', function(e) {
     if (e.target === this) closeLogoutModal();
   });
-
-  document.addEventListener('keydown', function (e) {
+  document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeLogoutModal();
   });
 </script>

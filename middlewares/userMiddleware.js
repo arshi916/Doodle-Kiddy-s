@@ -12,7 +12,6 @@ const userMiddleware = async (req, res, next) => {
 
                 req.session.destroy();
 
-                // AJAX request check
                 if (req.xhr || req.headers.accept.includes('json')) {
 
                     return res.status(403).json({

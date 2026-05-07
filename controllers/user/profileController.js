@@ -180,7 +180,6 @@ const updateAvatar = async (req, res) => {
       .jpeg({ quality: 90 })
       .toFile(finalPath);
 
-    // Delete old image if it exists and isn't the default
     const currentUser = await User.findById(userId);
     if (currentUser?.profileImage && currentUser.profileImage !== '/images/default-avatar.jpg') {
       const oldPath = path.join(__dirname, '../../public', currentUser.profileImage);
@@ -593,10 +592,7 @@ const addAddress = async (req, res) => {
 
 const updateAddress = async (req, res) => {
   try {
-    console.log('=== UPDATE ADDRESS DEBUG ===');
-    console.log('Request body:', req.body);
-    console.log('Address ID:', req.params.id);
-    console.log('===========================');
+  
     
     const userId = req.session.user;
     const addressId = req.params.id;
@@ -1289,6 +1285,9 @@ const getOrderDetails = async (req, res) => {
       totalPrice: order.totalPrice || 0,
       finalAmount: order.finalAmount || 0,
       discount: order.discount || 0,
+      couponDiscount: order.couponDiscount || 0,   
+    couponCode:     order.couponCode     || null, 
+    couponApplied:  order.couponApplied  || (order.couponDiscount > 0), 
       status: order.status || 'Pending',
       createdOn: order.createdOn,
       invoiceDate: order.invoiceDate,
@@ -1479,12 +1478,7 @@ const cancelOrder = async (req, res) => {
     }
 
    
-    if (!['Pending', 'Processing'].includes(order.status)) {
-      return res.json({ 
-        success: false, 
-        message: 'Orders can only be cancelled before shipping. Please contact support for assistance.' 
-      });
-    }
+
 
   
     for (const item of order.orderedItems) {
@@ -1618,17 +1612,7 @@ const cancelOrderItem = async (req, res) => {
     }).populate('orderedItems.product');
 
     if (!order) {
-      return res.json({ 
-        success: false, 
-        message: 'Order not found' 
-      });
-    }
-
-    if (!['Pending', 'Processing'].includes(order.status)) {
-      return res.json({ 
-        success: false, 
-        message: 'Items can only be cancelled before shipping.' 
-      });
+      return res.json({ success: false, message: 'Order not found' });
     }
 
     const itemIndex = order.orderedItems.findIndex(
@@ -1636,20 +1620,20 @@ const cancelOrderItem = async (req, res) => {
     );
 
     if (itemIndex === -1) {
-      return res.json({ 
-        success: false, 
-        message: 'Item not found in order' 
-      });
+      return res.json({ success: false, message: 'Item not found in order' });
     }
 
     const item = order.orderedItems[itemIndex];
 
-  
-    if (item.status === 'Cancelled') {
+    if (!['Pending', 'Processing'].includes(item.status || 'Pending')) {
       return res.json({ 
         success: false, 
-        message: 'This item has already been cancelled' 
+        message: `This item cannot be cancelled. Its status is "${item.status}".` 
       });
+    }
+
+    if (item.status === 'Cancelled') {
+      return res.json({ success: false, message: 'This item has already been cancelled' });
     }
 
 
@@ -1661,7 +1645,16 @@ const cancelOrderItem = async (req, res) => {
     }
 
    
-    const itemRefund = item.price * item.quantity;
+const activeItems = order.orderedItems.filter(i => i.status !== 'Cancelled');
+const orderSubtotal = activeItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+const itemSubtotal = item.price * item.quantity;
+const discountRatio = orderSubtotal > 0 ? itemSubtotal / orderSubtotal : 0;
+
+const itemProductDiscount = Math.round((order.discount || 0) * discountRatio * 100) / 100;
+
+const itemCouponDiscount = Math.round((order.couponDiscount || 0) * discountRatio * 100) / 100;
+
+const itemRefund = Math.round((itemSubtotal - itemProductDiscount - itemCouponDiscount) * 100) / 100;
 
     
     order.orderedItems[itemIndex].status = 'Cancelled';
@@ -1670,8 +1663,10 @@ const cancelOrderItem = async (req, res) => {
     order.orderedItems[itemIndex].cancelledDate = new Date();
 
    
-    order.totalPrice -= itemRefund;
-    order.finalAmount -= itemRefund;
+order.totalPrice -= itemSubtotal;
+order.discount = Math.round(((order.discount || 0) - itemProductDiscount) * 100) / 100;
+order.couponDiscount = Math.round(((order.couponDiscount || 0) - itemCouponDiscount) * 100) / 100;
+order.finalAmount -= itemRefund;
 
     
     const allItemsCancelled = order.orderedItems.every(
@@ -1986,7 +1981,7 @@ const generateInvoice = async (req, res) => {
       ['Date',        new Date(order.createdOn).toLocaleDateString('en-IN', {
                         day: '2-digit', month: 'short', year: 'numeric'
                       })],
-      ['Payment',     paymentDisplay],       // now max 10 chars — no wrapping
+      ['Payment',     paymentDisplay],     
       ['Pay Status',  order.paymentStatus || 'Pending'],
       ['Order Status',order.status],
     ];
@@ -2038,7 +2033,6 @@ const generateInvoice = async (req, res) => {
       Y += 8;
     }
 
-    // Separator
     doc.moveTo(ML, Y).lineTo(PW - MR, Y).strokeColor('#D4B896').lineWidth(0.8).stroke();
     Y += 12;
 
@@ -2103,7 +2097,6 @@ const generateInvoice = async (req, res) => {
       { label: 'Subtotal:', value: `Rs.${(order.totalPrice || 0).toFixed(2)}`,  color: '#333333', bold: false },
       { label: 'Discount:', value: `- Rs.${(order.discount || 0).toFixed(2)}`,  color: '#e74c3c', bold: false },
     ];
-
     summaryRows.forEach(row => {
       drawText(row.label, SX, Y, 9, '#555555', row.bold);
       doc.fontSize(9).fillColor(row.color).font('Helvetica')

@@ -622,6 +622,20 @@
                                 <button type="button" class="save-address-btn" onclick="saveEditedAddress()"><i class="fas fa-save"></i> Save Changes</button>
                                 <button type="button" class="cancel-edit-btn" onclick="cancelEdit()"><i class="fas fa-times"></i> Cancel</button>
                             </div>
+                            <!-- Add this right after the country/state form-row, before closing new-address-container -->
+<div id="new-address-save-section" style="margin-top: 15px;">
+    <button type="button" 
+        onclick="saveNewAddress()"
+        style="padding: 12px 30px; 
+               background: linear-gradient(135deg, #D4B896 0%, #C8A882 100%); 
+               color: white; border: none; border-radius: 10px; 
+               font-weight: 700; font-size: 14px; cursor: pointer;
+               transition: all .3s;"
+        onmouseover="this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.transform='translateY(0)'">
+        <i class="fas fa-save"></i> Save Address & Continue
+    </button>
+</div>
                         </div>
                     </div>
                 </div>
@@ -1078,7 +1092,11 @@ async function openCouponModal() {
                 <div class="coupon-card eligible">
                     <div class="coupon-card-top">
                         <span class="coupon-name">${c.name}</span>
-                        <span class="coupon-discount-badge">₹${c.offerPrice} OFF</span>
+                        <span class="coupon-discount-badge">
+    ${c.discountType === 'percentage' 
+        ? `${c.offerPrice}% OFF (save ₹${c.discountAmount})` 
+        : `₹${c.offerPrice} OFF`}
+</span>
                     </div>
                     <div class="coupon-card-meta">
                         <span><i class="fas fa-shopping-cart"></i> Min. ₹${c.minimumPrice}</span>
@@ -1212,20 +1230,22 @@ document.getElementById('checkout-form').addEventListener('submit', async functi
                     });
                     const orderData = await orderRes.json();
 
-                    if (orderData.success) {
+                  if (orderData.success) {
                         window.location.href = '/order-success';
                     } else {
-                        window.location.href = `/order-failed?reason=${encodeURIComponent(orderData.message || 'Payment failed')}`;
+                        const couponParam = appliedCouponCode ? `&coupon=${encodeURIComponent(appliedCouponCode)}` : '';
+                        window.location.href = `/order-failed?reason=${encodeURIComponent(orderData.message || 'Payment failed')}${couponParam}`;
                     }
                 },
                 prefill: {
                     name:  '<%= user ? user.name : "" %>',
                     email: '<%= user ? user.email : "" %>'
                 },
-                theme: { color: '#D4B896' },
+              theme: { color: '#D4B896' },
                 modal: {
                     ondismiss: function() {
-                        window.location.href = '/order-failed?reason=Payment+was+cancelled';
+                        const couponParam = appliedCouponCode ? `&coupon=${encodeURIComponent(appliedCouponCode)}` : '';
+                        window.location.href = `/order-failed?reason=Payment+was+cancelled${couponParam}`;
                     }
                 }
             };
@@ -1433,7 +1453,57 @@ if (orderTotal > 1000) {
     });
     document.querySelectorAll('input').forEach(i => i.addEventListener('keypress', e => { if (e.key === 'Enter') e.preventDefault(); }));
     document.getElementById('couponCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); } });
+    
+       <% if (typeof pendingCoupon !== 'undefined' && pendingCoupon) { %>
+    setTimeout(async () => {
+        document.getElementById('couponCodeInput').value = '<%= pendingCoupon %>';
+        await applyCoupon();
+    }, 800);
+<% } %>
 });
+
+async function saveNewAddress() {
+    const name     = document.getElementById('firstName').value.trim();
+    const phone    = document.getElementById('phone').value.trim();
+    const addr     = document.getElementById('address').value.trim();
+    const city     = document.getElementById('city').value.trim();
+    const state    = document.getElementById('state').value.trim();
+    const zipCode  = document.getElementById('zipCode').value.trim();
+    const country  = document.getElementById('country').value.trim();
+    const addrType = document.getElementById('addressType').value;
+
+    // Validate
+    if (!name || !addr || !city || !state || !zipCode || !country) {
+        showAlert('error', 'Error', 'Please fill in all required fields');
+        return;
+    }
+    if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) {
+        showAlert('error', 'Error', 'Please enter a valid 10-digit phone number');
+        return;
+    }
+    if (!/^\d{5,6}$/.test(zipCode)) {
+        showAlert('error', 'Error', 'Please enter a valid zip code');
+        return;
+    }
+
+    try {
+        const res  = await fetch('/user/checkout/address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ addressType: addrType, name, phone, address: addr, city, state, zipCode, country })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showAlert('success', 'Address Saved!', 'Your address has been saved successfully.');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', 'Error', data.message);
+        }
+    } catch (e) {
+        showAlert('error', 'Error', 'Failed to save address. Please try again.');
+    }
+}
 </script>
 </body>
 </html>

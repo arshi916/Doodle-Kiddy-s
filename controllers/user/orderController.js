@@ -526,7 +526,6 @@ const generateInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Invoice generation logic here
     res.json({ success: true, message: 'Invoice generated' });
 
   } catch (error) {

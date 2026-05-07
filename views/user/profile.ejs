@@ -3372,11 +3372,24 @@ function showOrderDetails(orderId) {
                             <h4>Total Amount</h4>
                             <p>₹${order.finalAmount.toFixed(2)}</p>
                         </div>
-                        <div class="order-info-card">
-                            <i class="fas fa-tags"></i>
-                            <h4>Discount</h4>
-                            <p>₹${order.discount.toFixed(2)}</p>
-                        </div>
+                        <div class="order-info-card" style="${(order.couponDiscount > 0) ? 
+    'border: 2px solid rgba(39,174,96,0.3); background: linear-gradient(135deg, #f0fff4 0%, #fff 100%);' : ''}">
+    <i class="fas fa-tag" style="${order.couponDiscount > 0 ? 'color:#27ae60;' : ''}"></i>
+    <h4 style="${order.couponDiscount > 0 ? 'color:#27ae60;' : ''}">
+        ${order.couponDiscount > 0 ? 'Coupon Saving' : 'Discount'}
+    </h4>
+    <p style="${order.couponDiscount > 0 ? 'color:#27ae60;' : ''}">
+        ${order.couponDiscount > 0 
+            ? `- ₹${order.couponDiscount.toFixed(2)}` 
+            : `₹${order.discount.toFixed(2)}`}
+    </p>
+    ${order.couponCode ? `
+        <p style="font-size:0.72rem; color:#27ae60; margin-top:4px; 
+                  font-weight:700; letter-spacing:1px; background:rgba(39,174,96,0.1); 
+                  padding:2px 8px; border-radius:10px; display:inline-block;">
+            ${order.couponCode}
+        </p>` : ''}
+</div>
                         <div class="order-info-card">
                             <i class="fas fa-info-circle"></i>
                             <h4>Order Status</h4>
@@ -3548,7 +3561,7 @@ ${order.paymentMethod === 'wallet+cod' && order.walletAmountUsed > 0 ? `
                     <div class="section-divider">
                         <span><i class="fas fa-route"></i> Order Timeline</span>
                     </div>
-                    ${generateOrderTimeline(order.status, order.createdOn)}
+                    ${generateOrderTimeline(order.status, order.createdOn, order.items)}
 
 <!-- Order Actions -->
 <div class="order-actions" style="margin-top: 25px; display: flex; gap: 12px; flex-wrap: wrap;">
@@ -4399,142 +4412,196 @@ document.addEventListener('keydown', function(e) {
 });
 
 
-function generateOrderTimeline(currentStatus, orderDate) {function generateOrderTimeline(status, createdOn) {
-    const statuses = ['Pending', 'Processing', 'Shipping', 'Delivered'];
-    const currentIndex = statuses.indexOf(status);
-    const timeline = statuses.map((s, index) => {
-        const isActive = index <= currentIndex || status === 'Cancelled' || status.includes('Return');
-        const isCurrent = index === currentIndex;
-        return `
-            <div class="timeline-item ${isActive ? 'active' : ''} ${isCurrent ? 'current' : ''}">
-                <div class="timeline-icon">
-                    <i class="fas ${getStatusIcon(s)}"></i>
+function generateOrderTimeline(currentStatus, orderDate, items) {
+  // If items exist, show per-item timeline
+  if (items && items.length > 0) {
+    const itemRows = items.map(item => {
+      const s = (item.status || 'Pending').trim();
+      const color =
+        s === 'Delivered'      ? '#28a745' :
+        s === 'Returned'       ? '#17a2b8' :
+        s === 'Return Request' ? '#fd7e14' :
+        s === 'Cancelled'      ? '#dc3545' :
+        s === 'Shipping'       ? '#6f42c1' :
+        s === 'Processing'     ? '#007bff' :
+                                 '#ffc107';
+
+      const icon =
+        s === 'Delivered'      ? 'fa-check-circle' :
+        s === 'Cancelled'      ? 'fa-times-circle' :
+        s === 'Returned'       ? 'fa-undo-alt'     :
+        s === 'Return Request' ? 'fa-undo'         :
+        s === 'Shipping'       ? 'fa-truck'        :
+        s === 'Processing'     ? 'fa-cog'          :
+                                 'fa-clock';
+
+      const steps = ['Pending', 'Processing', 'Shipping', 'Delivered'];
+      const currentIdx = steps.indexOf(s);
+
+      let stepsHTML = '';
+      if (!['Cancelled', 'Returned', 'Return Request'].includes(s)) {
+        stepsHTML = `
+          <div style="display:flex;align-items:center;gap:0;margin-top:10px;">
+            ${steps.map((step, idx) => {
+              const done    = idx <= currentIdx;
+              const current = idx === currentIdx;
+              return `
+                <div style="display:flex;align-items:center;">
+                  <div style="
+                    width:${current ? '28px' : '22px'};
+                    height:${current ? '28px' : '22px'};
+                    border-radius:50%;
+                    background:${done ? color : '#e9ecef'};
+                    border:2px solid ${done ? color : '#dee2e6'};
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:${current ? '11px' : '9px'};
+                    color:${done ? 'white' : '#aaa'};
+                    font-weight:600;
+                    box-shadow:${current ? `0 0 0 3px ${color}33` : 'none'};
+                    transition:all 0.3s;
+                    flex-shrink:0;
+                  " title="${step}">
+                    ${done ? '<i class="fas fa-check" style="font-size:8px;"></i>' : ''}
+                  </div>
+                  ${idx < steps.length - 1 ? `
+                    <div style="
+                      width:40px;height:3px;
+                      background:${idx < currentIdx ? color : '#e9ecef'};
+                      transition:all 0.3s;
+                    "></div>
+                  ` : ''}
                 </div>
-                <div class="timeline-content">
-                    <h5>${s}</h5>
-                    <p>${index === 0 ? new Date(createdOn).toLocaleDateString('en-IN') : ''}</p>
-                </div>
-            </div>
+              `;
+            }).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;padding:0 2px;">
+            ${steps.map((step, idx) => `
+              <div style="
+                font-size:9px;
+                color:${idx <= currentIdx ? color : '#aaa'};
+                font-weight:${idx === currentIdx ? '700' : '400'};
+                text-align:center;
+                width:${idx === steps.length-1 ? 'auto' : '62px'};
+              ">${step}</div>
+            `).join('')}
+          </div>
         `;
+      }
+
+      return `
+        <div style="
+          background:white;
+          border-radius:12px;
+          padding:16px 20px;
+          margin-bottom:12px;
+          border-left:4px solid ${color};
+          box-shadow:0 2px 8px rgba(0,0,0,0.06);
+        ">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+              <img 
+                src="${item.productImage || '/images/default-product.jpg'}" 
+                onerror="this.src='/images/default-product.jpg'"
+                style="width:48px;height:48px;object-fit:cover;border-radius:10px;border:2px solid #f0f0f0;flex-shrink:0;"
+              >
+              <div style="min-width:0;">
+                <p style="margin:0 0 4px;font-weight:600;color:#333;font-size:0.95rem;
+                           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  ${item.productName || 'Product'}
+                </p>
+                <p style="margin:0;font-size:0.8rem;color:#888;">
+                  Qty: ${item.quantity}  &nbsp;·&nbsp;  ₹${(item.price || 0).toFixed(2)} each
+                </p>
+              </div>
+            </div>
+            <div style="
+              display:inline-flex;align-items:center;gap:6px;
+              padding:5px 12px;border-radius:20px;
+              background:${color}18;
+              color:${color};
+              font-size:0.78rem;font-weight:700;
+              flex-shrink:0;white-space:nowrap;
+            ">
+              <i class="fas ${icon}" style="font-size:0.75rem;"></i>
+              ${s}
+            </div>
+          </div>
+          ${stepsHTML}
+        </div>
+      `;
     }).join('');
-    return `<div class="timeline">${timeline}</div>`;
-}
-    
-    const timelineSteps = [
-        {
-            id: 'placed',
-            title: 'Order Placed',
-            description: 'We have received your order and payment',
-            icon: 'fa-shopping-cart',
-            statuses: ['Pending', 'Processing', 'Shipped', 'Shipping', 'Delivered', 'Completed']
-        },
-        {
-            id: 'confirmed',
-            title: 'Order Confirmed',
-            description: 'Your order has been confirmed and is being prepared',
-            icon: 'fa-check-circle',
-            statuses: ['Processing', 'Shipped', 'Shipping', 'Delivered', 'Completed']
-        },
-        {
-            id: 'processing',
-            title: 'Processing',
-            description: 'Your items are being prepared for shipment',
-            icon: 'fa-cog',
-            statuses: ['Processing', 'Shipped', 'Shipping', 'Delivered', 'Completed']
-        },
-        {
-            id: 'shipped',
-            title: 'Shipped',
-            description: 'Your order is on its way to you',
-            icon: 'fa-truck',
-            statuses: ['Shipped', 'Shipping', 'Delivered', 'Completed']
-        },
-        {
-            id: 'delivered',
-            title: 'Delivered',
-            description: 'Your order has been successfully delivered',
-            icon: 'fa-home',
-            statuses: ['Delivered', 'Completed']
-        }
-    ];
 
-    // Handle cancelled orders
-    if (currentStatus === 'Cancelled') {
-        return `
-            <div class="timeline-container">
-                <div class="timeline-item completed">
-                    <div class="timeline-icon completed">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="timeline-content">
-                        <div class="timeline-title completed">Order Placed</div>
-                        <div class="timeline-description">Order was successfully placed</div>
-                        <div class="timeline-date completed">${formatTimelineDate(orderDate)}</div>
-                    </div>
-                </div>
-                <div class="timeline-item active">
-                    <div class="timeline-icon" style="background: linear-gradient(135deg, #dc3545, #c82333);">
-                        <i class="fas fa-times-circle"></i>
-                    </div>
-                    <div class="timeline-content">
-                        <div class="timeline-title" style="color: #dc3545;">Order Cancelled</div>
-                        <div class="timeline-description">This order has been cancelled</div>
-                        <div class="timeline-date">${formatTimelineDate(orderDate, 1)}</div>
-                        <div class="timeline-status-badge" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
-                            <i class="fas fa-times"></i> Cancelled
-                        </div>
-                    </div>
-                </div>
+    return `
+      <div style="margin-top:8px;">
+        <p style="font-size:0.8rem;color:#aaa;margin:0 0 12px;display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-info-circle"></i>
+          Each item is tracked individually
+        </p>
+        ${itemRows}
+      </div>
+    `;
+  }
+
+  // Fallback: order-level timeline (no items)
+  if (currentStatus === 'Cancelled') {
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:20px;
+                  background:#fff5f5;border-radius:12px;border-left:4px solid #dc3545;">
+        <i class="fas fa-times-circle" style="color:#dc3545;font-size:1.8rem;"></i>
+        <div>
+          <p style="margin:0;font-weight:700;color:#dc3545;">Order Cancelled</p>
+          <p style="margin:4px 0 0;font-size:0.85rem;color:#888;">
+            ${new Date(orderDate).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}
+          </p>
+        </div>
+      </div>`;
+  }
+
+  const steps = ['Pending', 'Processing', 'Shipping', 'Delivered'];
+  const currentIdx = Math.max(0, steps.indexOf(currentStatus));
+  const color = '#D4B896';
+
+  return `
+    <div style="padding:16px 20px;background:white;border-radius:12px;
+                box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="display:flex;align-items:center;gap:0;">
+        ${steps.map((step, idx) => {
+          const done    = idx <= currentIdx;
+          const current = idx === currentIdx;
+          return `
+            <div style="display:flex;align-items:center;flex:${idx < steps.length-1 ? '1' : '0'};">
+              <div style="
+                width:${current ? '32px' : '26px'};
+                height:${current ? '32px' : '26px'};
+                border-radius:50%;
+                background:${done ? color : '#e9ecef'};
+                border:2px solid ${done ? color : '#dee2e6'};
+                display:flex;align-items:center;justify-content:center;
+                color:${done ? 'white' : '#aaa'};
+                box-shadow:${current ? `0 0 0 4px ${color}33` : 'none'};
+                flex-shrink:0;
+              ">
+                <i class="fas ${done ? 'fa-check' : 'fa-circle'}" style="font-size:9px;"></i>
+              </div>
+              ${idx < steps.length - 1 ? `
+                <div style="flex:1;height:3px;background:${idx < currentIdx ? color : '#e9ecef'};"></div>
+              ` : ''}
             </div>
-        `;
-    }
-
-    // Generate timeline HTML
-    let timelineHTML = '<div class="timeline-container">';
-    
-    timelineSteps.forEach((step, index) => {
-        const isCompleted = step.statuses.includes(currentStatus) && getStatusOrder(currentStatus) > getStatusOrder(step.statuses[0]);
-        const isActive = step.statuses.includes(currentStatus) && (
-            (currentStatus === 'Pending' && step.id === 'placed') ||
-            (currentStatus === 'Processing' && (step.id === 'confirmed' || step.id === 'processing')) ||
-            ((currentStatus === 'Shipped' || currentStatus === 'Shipping') && step.id === 'shipped') ||
-            ((currentStatus === 'Delivered' || currentStatus === 'Completed') && step.id === 'delivered')
-        );
-        const isPending = !isCompleted && !isActive;
-
-        let statusClass = isPending ? 'pending' : (isCompleted ? 'completed' : 'active');
-        let iconClass = isPending ? 'pending' : (isCompleted ? 'completed' : 'active');
-        
-        // Calculate estimated date
-        let displayDate = '';
-        if (isCompleted || isActive) {
-            displayDate = formatTimelineDate(orderDate, index);
-        } else if (isPending) {
-            displayDate = 'Pending';
-        }
-
-        timelineHTML += `
-            <div class="timeline-item ${statusClass}">
-                <div class="timeline-icon ${iconClass}">
-                    <i class="fas ${step.icon}"></i>
-                </div>
-                <div class="timeline-content">
-                    <div class="timeline-title ${statusClass}">${step.title}</div>
-                    <div class="timeline-description">${step.description}</div>
-                    <div class="timeline-date ${statusClass}">${displayDate}</div>
-                    ${isActive ? `<div class="timeline-status-badge active">
-                        <i class="fas fa-clock"></i> Current Status
-                    </div>` : ''}
-                    ${isCompleted ? `<div class="timeline-status-badge completed">
-                        <i class="fas fa-check"></i> Completed
-                    </div>` : ''}
-                </div>
-            </div>
-        `;
-    });
-
-    timelineHTML += '</div>';
-    return timelineHTML;
+          `;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;">
+        ${steps.map((step, idx) => `
+          <div style="
+            font-size:0.8rem;
+            color:${idx <= currentIdx ? color : '#aaa'};
+            font-weight:${idx === currentIdx ? '700' : '400'};
+            text-align:${idx === 0 ? 'left' : idx === steps.length-1 ? 'right' : 'center'};
+            flex:1;
+          ">${step}</div>
+        `).join('')}
+      </div>
+    </div>`;
 }
 
 // Helper function to get status order for comparison

@@ -143,6 +143,13 @@
         .sidebar { position: static; }
         #toast-wrap { width: calc(100vw - 32px); right: 16px; }
     }
+    .add-to-cart:disabled {
+    background: #d0d0d0 !important;
+    color: #888 !important;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
 </style>
 </head>
 <body>
@@ -387,13 +394,43 @@ function showOptionsModal(productId, productName, price) {
         .then(r => r.json())
         .then(data => {
             if (!data.success) throw new Error(data.message || 'Failed to load options');
-            const sizes = Array.isArray(data.sizes) ? data.sizes : [];
-            const colors = Array.isArray(data.colors) ? data.colors : [];
-            const hasOpts = sizes.length > 0 || colors.length > 0;
+
+            const colors   = data.colors   || [];
+            const sizes    = data.sizes    || [];
+            const stockMap = data.stockMap || {};
 
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.id = 'productOptionsModal';
+            modal._stockMap = stockMap;  // store for use by updateSizeOptions
+
+            const colorOptions = colors.map(c =>
+                `<option value="${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</option>`
+            ).join('');
+
+            // If only 1 color, skip color select and go straight to size
+            const colorHtml = colors.length > 1 ? `
+                <div class="option-group-custom">
+                    <label class="option-label-custom">Color *</label>
+                    <select class="option-select-custom" id="colorSelect" onchange="updateSizeOptions('${productId}')">
+                        <option value="">Choose a color</option>
+                        ${colorOptions}
+                    </select>
+                </div>` : `<input type="hidden" id="colorSelect" value="${colors[0] || ''}">`;
+
+            // If only 1 color, pre-build size options for that color
+            const singleColorSizes = colors.length === 1
+                ? sizes.filter(s => (stockMap[`${colors[0]}__${s}`] || 0) > 0)
+                : [];
+
+            const sizeOptionsHtml = singleColorSizes.length > 0
+                ? singleColorSizes.map(s => {
+                    const qty = stockMap[`${colors[0]}__${s}`] || 0;
+                    return `<option value="${s}">${s}</option>`;
+
+                  }).join('')
+                : '';
+
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-header-custom">
@@ -402,27 +439,30 @@ function showOptionsModal(productId, productName, price) {
                         <button class="close" onclick="closeOptionsModal()">&times;</button>
                     </div>
                     <div class="modal-body-custom">
-                        ${!hasOpts ? '<div class="no-options-alert">No options available for this product</div>' : ''}
-                        ${sizes.length > 0 ? `<div class="option-group-custom">
+                        ${colors.length === 0 && sizes.length === 0
+                            ? '<div class="no-options-alert">No options available</div>'
+                            : ''}
+                        ${colorHtml}
+                        <div class="option-group-custom" id="sizeGroup"
+                             style="${colors.length > 1 && singleColorSizes.length === 0 ? 'display:none' : ''}">
                             <label class="option-label-custom">Size *</label>
-                            <select class="option-select-custom" id="sizeSelect">
+                            <select class="option-select-custom" id="sizeSelect"
+                                    onchange="document.getElementById('confirmModalBtn').disabled = !this.value">
                                 <option value="">Choose a size</option>
-                                ${sizes.map(s => `<option value="${s}">${s}</option>`).join('')}
-                            </select></div>` : ''}
-                        ${colors.length > 0 ? `<div class="option-group-custom">
-                            <label class="option-label-custom">Color *</label>
-                            <select class="option-select-custom" id="colorSelect">
-                                <option value="">Choose a color</option>
-                                ${colors.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select></div>` : ''}
+                                ${sizeOptionsHtml}
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-footer-custom">
                         <button class="modal-btn-custom modal-btn-cancel" onclick="closeOptionsModal()">Cancel</button>
-                        <button class="modal-btn-custom modal-btn-confirm"
+                        <button class="modal-btn-custom modal-btn-confirm" id="confirmModalBtn"
                             onclick="confirmSelection('${productId}','${productName.replace(/'/g,"\\'")}',${price})"
-                            ${!hasOpts ? 'disabled' : ''}>Add to Cart</button>
+                            ${(colors.length === 0 && sizes.length === 0) ? 'disabled' : ''}>
+                            Add to Cart
+                        </button>
                     </div>
                 </div>`;
+
             document.body.appendChild(modal);
             setTimeout(() => { modal.style.display = 'block'; }, 10);
             modal.addEventListener('click', e => { if (e.target === modal) closeOptionsModal(); });
@@ -430,6 +470,41 @@ function showOptionsModal(productId, productName, price) {
         .catch(err => showNotification(err.message || 'Error loading options', 'error'));
 }
 
+// Called when color changes — updates size dropdown
+function updateSizeOptions(productId) {
+    const modal    = document.getElementById('productOptionsModal');
+    const colorEl  = document.getElementById('colorSelect');
+    const sizeEl   = document.getElementById('sizeSelect');
+    const sizeGrp  = document.getElementById('sizeGroup');
+    const confirmBtn = document.getElementById('confirmModalBtn');
+    const stockMap = modal._stockMap || {};
+
+    const selectedColor = colorEl.value;
+    if (!selectedColor) {
+        sizeGrp.style.display = 'none';
+        confirmBtn.disabled = true;
+        return;
+    }
+
+    // Get sizes available for this color
+    const availableSizes = Object.keys(stockMap)
+        .filter(key => key.startsWith(selectedColor + '__') && stockMap[key] > 0)
+        .map(key => key.split('__')[1]);
+
+    sizeEl.innerHTML = '<option value="">Choose a size</option>' +
+        availableSizes.map(s => {
+            const qty = stockMap[`${selectedColor}__${s}`];
+            return `<option value="${s}">${s}</option>`;
+
+        }).join('');
+
+    sizeGrp.style.display = availableSizes.length > 0 ? 'block' : 'none';
+    if (availableSizes.length === 0) {
+        sizeEl.innerHTML = '<option value="">No sizes in stock for this color</option>';
+        sizeGrp.style.display = 'block';
+    }
+    confirmBtn.disabled = true; // re-enable only after size is picked
+}
 function closeOptionsModal() {
     const m = document.getElementById('productOptionsModal');
     if (m) { m.style.opacity = '0'; setTimeout(() => m.remove(), 300); }
@@ -438,12 +513,21 @@ function closeOptionsModal() {
 function confirmSelection(productId, productName, price) {
     const ss = document.getElementById('sizeSelect');
     const cs = document.getElementById('colorSelect');
-    if (ss && ss.options.length > 1 && !ss.value) { showNotification('Please select a size', 'error'); ss.style.borderColor = '#ef4444'; return; }
-    if (cs && cs.options.length > 1 && !cs.value) { showNotification('Please select a color', 'error'); cs.style.borderColor = '#ef4444'; return; }
-    if (ss) ss.style.borderColor = '#d4d4d4';
-    if (cs) cs.style.borderColor = '#d4d4d4';
+
+    if (ss && !ss.value) { 
+        showNotification('Please select a size', 'error'); 
+        return; 
+    }
+    if (cs && cs.tagName === 'SELECT' && !cs.value) { 
+        showNotification('Please select a color', 'error'); 
+        return; 
+    }
+
     const btn = document.querySelector(`.add-to-cart[data-product-id="${productId}"]`);
-    addToCart(productId, productName, price, btn, { size: ss?.value || null, color: cs?.value || null });
+    addToCart(productId, productName, price, btn, { 
+        size: ss?.value || null, 
+        color: cs?.value || null 
+    });
     closeOptionsModal();
 }
 
@@ -561,7 +645,6 @@ async function fetchProducts() {
     updatePagination();
 }
 
-/* ═══ RENDER PRODUCTS ═══ */
 function renderProducts(products) {
     const grid = document.getElementById('productsGrid');
     grid.innerHTML = '';
@@ -572,49 +655,76 @@ function renderProducts(products) {
         const imageSrc = product.productImage?.[0] ? `/images/${product.productImage[0]}` : '/images/placeholder.jpg';
         const finalPrice = product.finalPrice || product.salePrice || 0;
         const hasOptions = hasMultipleOptions(product);
-        const outOfStock = product.quantity === 0;
+        const outOfStock = product.quantity === 0 || product.status === 'out of stock';
         const safeName = product.productName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         const card = document.createElement('div');
         card.className = 'product-card';
+
         card.innerHTML = `
-            <a href="/product/${product._id}" style="text-decoration:none;color:inherit;display:block;">
+            <a href="${outOfStock ? 'javascript:void(0)' : '/product/' + product._id}"
+               style="text-decoration:none;color:inherit;display:block;${outOfStock ? 'pointer-events:none;cursor:default;' : ''}">
                 <div style="position:relative;overflow:hidden;border-radius:15px 15px 0 0;">
                     <img src="${imageSrc}" alt="${product.productName}" class="product-image"
-                         onerror="this.src='/images/placeholder.jpg'">
+                         onerror="this.src='/images/placeholder.jpg'"
+                         style="${outOfStock ? 'filter:grayscale(50%);opacity:0.8;' : ''}">
                     <div class="price-badge">₹${finalPrice}</div>
                     ${product.discountPercent > 0 ? `<div class="discount-badge">-${product.discountPercent}%</div>` : ''}
-                    ${outOfStock ? `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:0.5rem 1rem;border-radius:10px;pointer-events:none;">Out of Stock</div>` : ''}
+
+                    ${outOfStock ? `
+                        <div style="
+                            position:absolute; inset:0;
+                            background:rgba(0,0,0,0.45);
+                            display:flex; align-items:center; justify-content:center;
+                            border-radius:15px 15px 0 0;">
+                            <span style="
+                                background:rgba(0,0,0,0.75); color:white;
+                                padding:0.5rem 1.2rem; border-radius:20px;
+                                font-size:0.85rem; font-weight:700; letter-spacing:1px;">
+                                OUT OF STOCK
+                            </span>
+                        </div>` : ''}
                 </div>
+
                 <div class="product-info">
-                    <h3 class="product-title">${product.productName}</h3>
+                    <h3 class="product-title" style="${outOfStock ? 'color:#aaa;' : ''}">${product.productName}</h3>
                     <div class="product-price">
-                        <span class="current-price">₹${finalPrice}</span>
-                        ${product.originalPrice && product.originalPrice > finalPrice ? `<span class="old-price">₹${product.originalPrice}</span>` : ''}
+                        <span class="current-price" style="${outOfStock ? 'color:#aaa;' : ''}">₹${finalPrice}</span>
+                        ${product.originalPrice && product.originalPrice > finalPrice
+                            ? `<span class="old-price">₹${product.originalPrice}</span>` : ''}
                     </div>
                     <div class="product-rating">
                         <div class="stars">★★★★★</div>
                         <span style="color:#666;font-size:0.8rem;">(24)</span>
                     </div>
-                    <button class="add-to-cart"
-                        data-product-id="${product._id}"
-                        data-has-options="${hasOptions}"
-                        onclick="event.preventDefault();event.stopPropagation();handleAddToCart(this,'${safeName}',${finalPrice})"
-                        ${outOfStock ? 'disabled' : ''}>
-                        ${outOfStock ? 'Out of Stock' : (hasOptions ? 'Choose Options' : '<i class="fas fa-shopping-cart"></i> Add to Cart')}
-                    </button>
+
+                    ${outOfStock
+                        ? `<button class="add-to-cart" disabled>
+                               <i class="fas fa-ban"></i> Out of Stock
+                           </button>`
+                        : `<button class="add-to-cart"
+                               data-product-id="${product._id}"
+                               data-has-options="${hasOptions}"
+                               onclick="event.preventDefault();event.stopPropagation();handleAddToCart(this,'${safeName}',${finalPrice})">
+                               ${hasOptions ? 'Choose Options' : '<i class="fas fa-shopping-cart"></i> Add to Cart'}
+                           </button>`
+                    }
                 </div>
             </a>
+
             <div class="product-actions">
                 <button class="action-btn wishlist"
                     data-product-id="${product._id}"
-                    title="${button_in_wishlist(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}"
+                    ${outOfStock ? 'disabled style="opacity:0.4;cursor:not-allowed;pointer-events:none;"' : ''}
                     onclick="toggleWishlist(event,this,'${product._id}','${safeName}')">
-                    <i class="far fa-heart"></i>
+                    <i class="${outOfStock ? 'fas' : 'far'} fa-heart"
+                       style="${outOfStock ? 'color:#ccc;' : ''}"></i>
                 </button>
                 <button class="action-btn" title="Zoom"
+                    ${outOfStock ? 'disabled style="opacity:0.4;cursor:not-allowed;pointer-events:none;"' : ''}
                     onclick="event.preventDefault();event.stopPropagation();openZoom('${imageSrc}')">
-                    <i class="fas fa-search-plus"></i>
+                    <i class="fas fa-search-plus"
+                       style="${outOfStock ? 'color:#ccc;' : ''}"></i>
                 </button>
             </div>`;
 

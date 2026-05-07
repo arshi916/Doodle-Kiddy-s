@@ -177,6 +177,9 @@ const addProduct = async (req, res) => {
       });
     }
 
+    // FIX: Define autoStatus based on totalQty
+    const autoStatus = totalQty === 0 ? "out of stock" : "Available";
+
    
     if (!description || description.trim().length < 10) {
       return res.status(400).json({
@@ -193,15 +196,6 @@ const addProduct = async (req, res) => {
     }
 
     
-    const validStatuses = ["Available", "out of stock", "Discontinued"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Please select a valid status"
-      });
-    }
-
-   
     const existingProduct = await Product.findOne({
       productName: { $regex: new RegExp(`^${productName.trim()}$`, 'i') },
       isDeleted: { $ne: true }
@@ -222,7 +216,7 @@ const addProduct = async (req, res) => {
       regularPrice: regPrice,
       salePrice: salePriceNum,
       quantity: totalQty,
-      status,
+      status: autoStatus,  // FIX: was using undefined autoStatus before
       productImage: processedImages,
       color: colors,
       size: Array.from(seenSizes),
@@ -253,28 +247,20 @@ const addProduct = async (req, res) => {
 };
 const loadProductPage = async (req, res) => {
   try {
-
-    
-
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 5;
 
-    
     let query = {
       isDeleted: { $ne: true }
     };
 
-  
     if (search && search.trim()) {
       const searchTerm = search.trim();
-      
       const searchRegex = new RegExp(
         searchTerm.split(/\s+/).join('\\s*'), 
         'i'
       );
-
-    
       query.$or = [
         { productName: { $regex: searchRegex } },
         { description: { $regex: searchRegex } },
@@ -283,7 +269,6 @@ const loadProductPage = async (req, res) => {
     }
  
     const totalProducts = await Product.countDocuments(query);
-
     const totalPages = Math.ceil(totalProducts / limit);
 
     const products = await Product.find(query)
@@ -291,8 +276,7 @@ const loadProductPage = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
-const totalPrice = await products.reduce((sum,price)=>{return sum+price.salePrice},0)
-    
+
     const successMessage = req.session.successMessage;
     if (successMessage) {
       delete req.session.successMessage;
@@ -307,8 +291,6 @@ const totalPrice = await products.reduce((sum,price)=>{return sum+price.salePric
       totalPages,
       activePage: "products",
       successMessage,
-   
-
     });
   } catch (error) {
     console.error("Error loading product page:", error);
@@ -337,24 +319,15 @@ const listProducts = async (req, res) => {
 const getAddProduct = async (req, res) => {
   try {
     console.log('Loading add product page...');
-    
     const categories = await Category.find({ 
       isListed: true 
     }).sort({ name: 1 });
     
     console.log('Found categories:', categories.length);
-    console.log('Categories data:', categories.map(cat => ({ 
-      id: cat._id, 
-      name: cat.name, 
-      isListed: cat.isListed 
-    })));
-    
     res.render("admin/add-product", { 
       categories, 
       title: "Add Product" 
     });
-    
-    console.log('Add product page rendered successfully');
   } catch (error) {
     console.error("Error loading add product page:", error);
     res.render("admin/admin-error", {
@@ -397,16 +370,13 @@ const getEditProduct = async (req, res) => {
       });
     }
 
-    console.log('Categories for edit:', categories.length);
-    console.log('Categories:', categories.map(cat => ({ id: cat._id, name: cat.name })));
-
    const returnPage = req.query.page || 1;
-res.render("admin/edit-product", {
-  product,
-  categories,
-  title: "Edit Product",
-  returnPage,
-});
+   res.render("admin/edit-product", {
+     product,
+     categories,
+     title: "Edit Product",
+     returnPage,
+   });
   } catch (error) {
     console.error("Error loading edit product page:", error);
     res.render("admin/admin-error", {
@@ -419,10 +389,6 @@ res.render("admin/edit-product", {
 const updateProductPost = async (req, res) => {
   try {
     const productId = req.params.id;
-
-    console.log('=== UPDATE REQUEST ===');
-    console.log('body.existingImages:', req.body.existingImages);
-    console.log('files count:', req.files?.length || 0);
 
     const {
       productName,
@@ -441,7 +407,6 @@ const updateProductPost = async (req, res) => {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-   
     let oldImages = [];
     if (req.body.existingImages) {
       try {
@@ -451,34 +416,22 @@ const updateProductPost = async (req, res) => {
       }
     }
 
+    // FIX: Process new images only once (removed duplicate loop)
     let newImages = [];
-if (req.files && req.files.length > 0) {
-  for (let file of req.files) {
-    const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2,9)}-${file.originalname}`;
-    const outputPath = path.join("public", "images", filename);
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2,9)}-${file.originalname}`;
+        const outputPath = path.join("public", "images", filename);
 
-    await sharp(file.buffer)
-      .resize(300, 300, { fit: "cover", position: "center" })
-      .jpeg({ quality: 90 })
-      .toFile(outputPath);
+        await sharp(file.buffer)
+          .resize(300, 300, { fit: "cover", position: "center" })
+          .jpeg({ quality: 90 })
+          .toFile(outputPath);
 
-    newImages.push(filename);
-  }
-}
+        newImages.push(filename);
+      }
+    }
 
-   if (req.files && req.files.length > 0) {
-  for (let file of req.files) {
-    const filename = `resized-${Date.now()}-${Math.random().toString(36).substr(2,9)}-${file.originalname}`;
-    const outputPath = path.join("public", "images", filename);
-    
-    await sharp(file.buffer)
-      .resize(300, 300, { fit: "cover" })
-      .jpeg({ quality: 90 })
-      .toFile(outputPath);
-
-    newImages.push(filename); 
-  }
-}
     const productImages = [...oldImages, ...newImages];
 
     if (productImages.length < 3) {
@@ -495,7 +448,6 @@ if (req.files && req.files.length > 0) {
       });
     }
 
- 
     if (!productName || productName.trim().length < 3) {
       return res.status(400).json({ success: false, message: "Product name must be at least 3 characters long" });
     }
@@ -504,7 +456,6 @@ if (req.files && req.files.length > 0) {
       return res.status(400).json({ success: false, message: "Product name cannot exceed 50 characters" });
     }
 
-    
     const existingProduct = await Product.findOne({
       productName: { $regex: new RegExp(`^${productName.trim()}$`, 'i') },
       _id: { $ne: productId },
@@ -518,19 +469,16 @@ if (req.files && req.files.length > 0) {
       });
     }
 
-    
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return res.status(400).json({ success: false, message: "Please select a valid category" });
     }
 
-   
     const colors = Array.isArray(color) ? color : (color ? [color] : []);
     if (colors.length === 0) {
       return res.status(400).json({ success: false, message: "Please select at least one color" });
     }
 
-   
     const regPrice = Number(regularPrice);
     const salePriceNum = Number(salePrice);
     
@@ -546,7 +494,6 @@ if (req.files && req.files.length > 0) {
       return res.status(400).json({ success: false, message: "Sale price must be less than regular price" });
     }
 
-    
     const stocks = [];
     const selectedSizes = sizes ? sizes.split(',').filter(s => s.trim()) : [];
     const validSizes = ["XS", "S", "M", "L", "XL"];
@@ -566,6 +513,7 @@ if (req.files && req.files.length > 0) {
     });
 
     const totalQty = stocks.reduce((sum, v) => sum + v.quantity, 0);
+    const autoStatus = totalQty === 0 ? "out of stock" : "Available";
 
     if (selectedSizes.length === 0) {
       return res.status(400).json({ success: false, message: "Please select at least one size" });
@@ -575,7 +523,6 @@ if (req.files && req.files.length > 0) {
       return res.status(400).json({ success: false, message: "Please provide stock quantity for at least one color-size combination" });
     }
 
-   
     if (!description || description.trim().length < 10) {
       return res.status(400).json({ success: false, message: "Description must be at least 10 characters long" });
     }
@@ -584,20 +531,13 @@ if (req.files && req.files.length > 0) {
       return res.status(400).json({ success: false, message: "Description cannot exceed 1000 characters" });
     }
 
-  
-    const validStatuses = ["Available", "out of stock", "Discontinued"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Please select a valid status" });
-    }
-
-    
     product.productName = productName.trim();
     product.description = description.trim();
     product.category = category;
     product.regularPrice = regPrice;
     product.salePrice = salePriceNum;
     product.quantity = totalQty;
-    product.status = status;
+    product.status = autoStatus;
     product.productImage = productImages;
     product.color = colors;
     product.size = Array.from(seenSizes);
@@ -607,10 +547,8 @@ if (req.files && req.files.length > 0) {
     await product.save();
     console.log('Product updated successfully:', productId);
 
-   
     req.session.successMessage = `Product "${productName.trim()}" has been updated successfully!`;
 
-    
     const isAjax = req.headers['content-type']?.includes('multipart/form-data') && 
                    (req.headers['accept']?.includes('application/json') || req.headers['x-requested-with'] === 'XMLHttpRequest') ||
                    req.xhr;
@@ -622,11 +560,11 @@ if (req.files && req.files.length > 0) {
       });
     }
 
-const returnPage = req.body.returnPage || 1;
-const returnSearch = req.body.returnSearch || '';
-const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
-res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
- } catch (error) {
+    const returnPage = req.body.returnPage || 1;
+    const returnSearch = req.body.returnSearch || '';
+    const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
+    res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
+  } catch (error) {
     console.error("Product update failed:", error);
 
     const isAjax = req.headers['content-type']?.includes('multipart/form-data') && 
@@ -668,11 +606,11 @@ const deleteProduct = async (req, res) => {
     await Product.findByIdAndUpdate(productsId, { isDeleted: true });
     
     req.session.successMessage = `Product "${product.productName}" has been deleted successfully!`;
-const returnPage = req.body.returnPage || 1;
-const returnSearch = req.body.returnSearch || '';
-const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
-res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
-} catch (error) {
+    const returnPage = req.body.returnPage || 1;
+    const returnSearch = req.body.returnSearch || '';
+    const searchParam = returnSearch ? `&search=${encodeURIComponent(returnSearch)}` : '';
+    res.redirect(`/admin/products?page=${returnPage}${searchParam}`);
+  } catch (error) {
     console.error("Soft delete failed:", error);
     res.render("admin/admin-error", {
       title: "Error",
@@ -699,16 +637,14 @@ const toggleBlockStatus = async (req, res) => {
       });
     }
 
-   
-    const previousStatus = product.isBlocked;
     product.isBlocked = !product.isBlocked;
     await product.save();
 
     const statusText = product.isBlocked ? 'blocked' : 'unblocked';
     req.session.successMessage = `Product "${product.productName}" has been ${statusText} successfully!`;
 
-const returnPage = req.body.returnPage || 1;
-res.redirect(`/admin/products?page=${returnPage}`);
+    const returnPage = req.body.returnPage || 1;
+    res.redirect(`/admin/products?page=${returnPage}`);
   } catch (error) {
     console.error("Error toggling block status:", error);
     res.render("admin/admin-error", {
@@ -717,6 +653,7 @@ res.redirect(`/admin/products?page=${returnPage}`);
     });
   }
 };
+
 const getListedProducts = async (req, res) => {
   try {
     const products = await Product.find({ isDeleted: { $ne: true }, isBlocked: false })
@@ -769,6 +706,6 @@ export default {
   updateProductPost,
   deleteProduct,
   toggleBlockStatus,
-   getListedProducts,  
+  getListedProducts,  
   addProductOffer, 
 };

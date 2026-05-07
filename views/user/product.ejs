@@ -15,10 +15,7 @@
             flex-direction: column;
             font-size: 1.25rem;
         }
-
-        main {
-            flex: 1;
-        }
+        main { flex: 1; }
 
         .zoom-container {
             position: relative;
@@ -27,18 +24,13 @@
             height: auto;
             overflow: hidden;
         }
-
         .zoom-image {
             width: 100%;
             height: auto;
             object-fit: contain;
             transition: opacity 0.3s ease;
         }
-
-        .zoom-lens {
-            display: none;
-        }
-
+        .zoom-lens { display: none; }
         .zoom-result {
             position: fixed;
             width: 300px;
@@ -47,24 +39,18 @@
             background: #fff;
             display: none;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             z-index: 1000;
         }
-
         .zoom-result img {
             width: 100%;
             height: 100%;
             object-fit: contain;
             transform-origin: 0 0;
         }
-
         @media (max-width: 1024px) {
-            .zoom-container {
-                cursor: zoom-in;
-            }
-            .zoom-result, .zoom-lens {
-                display: none !important;
-            }
+            .zoom-container { cursor: zoom-in; }
+            .zoom-result, .zoom-lens { display: none !important; }
         }
 
         .color-option {
@@ -76,29 +62,22 @@
             transition: all 0.2s ease;
             position: relative;
         }
-
-        .color-option:hover {
-            border-color: #fbbf24;
-            transform: scale(1.1);
-        }
-
-        .color-option.selected {
-            border-color: #fbbf24;
-            border-width: 3px;
-        }
-
+        .color-option:hover { border-color: #fbbf24; transform: scale(1.1); }
+        .color-option.selected { border-color: #fbbf24; border-width: 3px; }
         .color-option.selected::after {
             content: '✓';
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             color: white;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
-
-        /* Size option styles */
+        .color-option.oos {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .size-option {
             padding: 0.5rem 1rem;
             border: 2px solid #e5e7eb;
@@ -107,23 +86,19 @@
             transition: all 0.2s ease;
             background: white;
         }
-
-        .size-option:hover {
-            border-color: #fbbf24;
-            background: #fef3c7;
+        .size-option:hover { border-color: #fbbf24; background: #fef3c7; }
+        .size-option.selected { border-color: #fbbf24; background: #fbbf24; color: white; }
+        .size-option.oos {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+            text-decoration: line-through;
         }
 
-        .size-option.selected {
-            border-color: #fbbf24;
-            background: #fbbf24;
-            color: white;
-        }
-
-        /* Notification Styles */
+        /* Notification */
         .notification {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 20px; right: 20px;
             padding: 15px 25px;
             border-radius: 12px;
             color: white;
@@ -131,61 +106,126 @@
             z-index: 10000;
             transform: translateX(100%);
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
             backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             gap: 10px;
             max-width: 400px;
         }
-
-        .notification.success {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-        }
-
-        .notification.error {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
+        .notification.success { background: linear-gradient(135deg,#27ae60,#2ecc71); }
+        .notification.error   { background: linear-gradient(135deg,#e74c3c,#c0392b); }
+        .notification.warning { background: linear-gradient(135deg,#f39c12,#e67e22); }
+        .notification.show    { transform: translateX(0); }
 
         .spinner {
             border: 2px solid #f3f3f3;
             border-top: 2px solid #979aa3;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             animation: spin 1s linear infinite;
             display: inline-block;
             margin-right: 0.5rem;
         }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .loading { opacity: 0.6; pointer-events: none; }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Unavailable overlay */
+        #unavailableOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
         }
+        #unavailableOverlay.show {
+            display: flex;
+        }
+        #unavailableCard {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        #unavailableCard .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        #unavailableCard h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        #unavailableCard p {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        #unavailableCard .countdown {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-bottom: 1.5rem;
+        }
+        #unavailableCard .countdown span {
+            font-weight: 700;
+            color: #f59e0b;
+        }
+        #goShopBtn {
+            background: #1f2937;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        #goShopBtn:hover { background: #fbbf24; color: #1f2937; }
 
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
         .wishlist-main-btn.active i,
-.wishlist-main-btn.active span {
-    color: #ef4444 !important;
-}
+        .wishlist-main-btn.active span { color: #ef4444 !important; }
+        button.active i.fas { color: #ef4444 !important; }
 
-button.active i.fas {
-    color: #ef4444 !important;
-}
+        /* Product dimmed when unavailable */
+        .product-unavailable {
+            opacity: 0.4;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 
 <body class="bg-white text-gray-900">
     <%- include("../../views/partials/user/header") %>
-    <main class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+    <!-- Unavailable overlay (shown without page refresh) -->
+    <div id="unavailableOverlay">
+        <div id="unavailableCard">
+            <div class="icon">🚫</div>
+            <h2>Product No Longer Available</h2>
+            <p>This product or its category has been removed. You'll be redirected to the shop shortly.</p>
+            <div class="countdown">Redirecting in <span id="countdownNum">5</span> seconds...</div>
+            <button id="goShopBtn" onclick="window.location.href='/shop'">Go to Shop Now</button>
+        </div>
+    </div>
+
+    <main id="productMain" class="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <section class="flex flex-col lg:flex-row lg:space-x-12 gap-6">
+
             <!-- Product Images -->
             <div class="flex flex-col space-y-4 lg:w-1/2">
                 <nav aria-label="Breadcrumb" class="flex items-center space-x-2 text-base text-yellow-400 font-semibold uppercase">
@@ -199,19 +239,22 @@ button.active i.fas {
                     <span><%= product.productName %></span>
                 </nav>
 
-                <!-- Main Image with Zoom -->
                 <div class="zoom-container relative rounded-lg">
-                    <img id="mainImage" alt="<%= product.productName %>" class="zoom-image w-full max-w-[500px] h-auto object-contain" loading="lazy" src="/images/<%= product.productImage[0] %>">
+                    <img id="mainImage" alt="<%= product.productName %>"
+                         class="zoom-image w-full max-w-[500px] h-auto object-contain" loading="lazy"
+                         src="/images/<%= product.productImage[0] %>">
                     <div class="zoom-lens"></div>
                     <div class="zoom-result" id="zoomResult">
-                        <img id="zoomedImageResult" src="/images/<%= product.productImage[0] %>" alt="Zoomed product image">
+                        <img id="zoomedImageResult" src="/images/<%= product.productImage[0] %>" alt="Zoomed">
                     </div>
                 </div>
 
-                <!-- Thumbnails -->
                 <div class="flex flex-wrap justify-center gap-2 mt-4">
                     <% product.productImage.forEach((img, index) => { %>
-                        <img alt="<%= product.productName %> thumbnail <%= index + 1 %>" class="w-16 h-16 object-contain cursor-pointer border border-gray-300 rounded hover:border-yellow-400 transition" loading="lazy" src="/images/<%= img %>" onclick="changeMainImage('/images/<%= img %>')">
+                        <img alt="<%= product.productName %> thumbnail <%= index+1 %>"
+                             class="w-16 h-16 object-contain cursor-pointer border border-gray-300 rounded hover:border-yellow-400 transition"
+                             loading="lazy" src="/images/<%= img %>"
+                             onclick="changeMainImage('/images/<%= img %>')">
                     <% }) %>
                 </div>
             </div>
@@ -219,6 +262,7 @@ button.active i.fas {
             <!-- Product Details -->
             <div class="lg:w-1/2 mt-8 lg:mt-0 space-y-4">
                 <h1 class="text-2xl font-semibold text-gray-900"><%= product.productName %></h1>
+
                 <div class="flex items-center space-x-3">
                     <span class="text-xl font-semibold text-gray-900">₹<%= product.finalPrice %></span>
                     <% if (product.originalPrice > product.finalPrice) { %>
@@ -226,113 +270,122 @@ button.active i.fas {
                         <span class="text-base text-red-500">(<%= product.discountPercent %>% OFF)</span>
                     <% } %>
                 </div>
+
                 <p class="text-lg text-gray-600 leading-relaxed"><%= product.description %></p>
 
-                <!-- Colors -->
-                <% if (product.color && product.color.length > 0) { %>
-                <div class="flex items-center space-x-3">
-                    <label class="text-base font-semibold text-gray-900">Color:</label>
-                    <div class="flex flex-wrap gap-2">
-                        <% product.color.forEach((color, index) => { %>
-                            <div class="color-option <%= index === 0 ? 'selected' : '' %>" 
-                                 style="background-color: <%= color.toLowerCase() %>" 
-                                 title="<%= color %>" 
-                                 onclick="selectColor(this, '<%= color %>')">
-                            </div>
-                        <% }) %>
-                    </div>
-                    <span id="selectedColorText" class="text-sm text-gray-500">(<%= product.color[0] %>)</span>
-                </div>
-                <% } %>
-                
-                <!-- Sizes -->
-                <% if (product.size && product.size.length > 0) { %>
-                <div class="flex items-center space-x-3">
-                    <label class="text-base font-semibold text-gray-900">Sizes:</label>
-                    <div class="flex flex-wrap gap-2">
-                        <% product.size.forEach((size, index) => { %>
-                            <button class="size-option <%= index === 0 ? 'selected' : '' %>" onclick="selectSize(this, '<%= size %>')"><%= size %></button>
-                        <% }) %>
-                    </div>
-                </div>
-                <% } %>
-                
+              <!-- Colors -->
+<% if (product.availableColors && product.availableColors.length > 0) { %>
+<div class="space-y-2">
+    <label class="text-base font-semibold text-gray-900">
+        Color: <span id="selectedColorText" class="font-normal text-yellow-500"><%= product.availableColors[0] %></span>
+    </label>
+    <div class="flex flex-wrap gap-3" id="colorContainer">
+        <% product.availableColors.forEach((color, index) => { %>
+            <div class="color-option <%= index === 0 ? 'selected' : '' %>"
+                 style="background-color: <%= color.toLowerCase() %>;"
+                 title="<%= color %>"
+                 data-color="<%= color %>"
+                 onclick="selectColor(this, '<%= color %>')">
+            </div>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<!-- Sizes -->
+<% if (product.availableSizes && product.availableSizes.length > 0) { %>
+<div class="space-y-2">
+    <label class="text-base font-semibold text-gray-900">
+        Size: <span id="selectedSizeText" class="font-normal text-yellow-500"><%= product.availableSizes[0] %></span>
+    </label>
+    <div class="flex flex-wrap gap-2" id="sizeContainer">
+        <% product.availableSizes.forEach((size, index) => { %>
+            <button class="size-option"
+                    data-size="<%= size %>"
+                    onclick="selectSize(this, '<%= size %>')"><%= size %></button>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
                 <!-- Stock -->
                 <div class="flex items-center space-x-3">
                     <label class="text-base font-semibold text-gray-900">Stock:</label>
-                    <span class="text-base <%= product.quantity > 0 ? 'text-green-500' : 'text-red-500' %>">
+                    <span id="stockLabel" class="text-base <%= product.quantity > 0 ? 'text-green-500' : 'text-red-500' %>">
                         <%= product.quantity > 0 ? 'In Stock (' + product.quantity + ' available)' : 'Out of Stock' %>
                     </span>
                 </div>
-                
+
                 <!-- Ratings -->
                 <div class="flex items-center space-x-3">
                     <label class="text-base font-semibold text-gray-900">Ratings:</label>
                     <div class="flex items-center text-yellow-400 text-base">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i>
                         <i class="fas fa-star-half-alt"></i>
                         <span class="ml-2 text-gray-600">(4.5 / 5 - 24 reviews)</span>
                     </div>
                 </div>
-                
-                <!-- Quantity and Add to Cart -->
+
+                <!-- Quantity + Cart -->
                 <div class="flex items-center gap-4">
                     <label class="text-base font-semibold text-gray-900" for="quantity">Quantity:</label>
-                    <input class="w-16 border border-gray-300 rounded text-base text-center py-1 focus:outline-none focus:ring-1 focus:ring-yellow-400" id="quantity" min="1" max="<%= product.quantity > 5 ? 5 : product.quantity %>" type="number" value="1">
-                    <button class="bg-gray-900 text-white text-base font-semibold py-2 px-6 rounded hover:bg-yellow-400 hover:text-gray-900 transition <%= product.quantity === 0 ? 'opacity-50 cursor-not-allowed' : '' %>" <%= product.quantity === 0 ? 'disabled' : '' %> onclick="addToCart()">
+                    <input class="w-16 border border-gray-300 rounded text-base text-center py-1 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                           id="quantity" min="1"
+                           max="<%= product.quantity > 5 ? 5 : product.quantity %>"
+                           type="number" value="1">
+                    <button id="addToCartBtn"
+                            class="bg-gray-900 text-white text-base font-semibold py-2 px-6 rounded hover:bg-yellow-400 hover:text-gray-900 transition <%= product.quantity === 0 ? 'opacity-50 cursor-not-allowed' : '' %>"
+                            <%= product.quantity === 0 ? 'disabled' : '' %>
+                            onclick="addToCart()">
                         Add to Cart
                     </button>
                 </div>
-                
+
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-6 text-base text-gray-600">
-              <button id="wishlistBtn" 
-        class="wishlist-main-btn flex items-center gap-2 transition-colors duration-200" 
-        onclick="toggleWishlist(this, '<%= product.productName %>', '<%= product._id %>')"
-        style="background:none; border:none; cursor:pointer; font-size:1rem;">
-    <i id="wishlistIcon" class="far fa-heart" style="font-size:1.2rem;"></i>
-</button>
-                    <button class="flex items-center space-x-1 hover:text-yellow-400">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Compare</span>
+                    <button id="wishlistBtn"
+                            class="wishlist-main-btn flex items-center gap-2 transition-colors duration-200"
+                            onclick="toggleWishlist(this, '<%= product.productName %>', '<%= product._id %>')"
+                            style="background:none;border:none;cursor:pointer;font-size:1rem;">
+                        <i id="wishlistIcon" class="far fa-heart" style="font-size:1.2rem;"></i>
                     </button>
                     <button class="flex items-center space-x-1 hover:text-yellow-400">
-                        <i class="fas fa-book"></i>
-                        <span>Size Guide</span>
+                        <i class="fas fa-exchange-alt"></i><span>Compare</span>
+                    </button>
+                    <button class="flex items-center space-x-1 hover:text-yellow-400">
+                        <i class="fas fa-book"></i><span>Size Guide</span>
                     </button>
                 </div>
-                
-                <!-- Social Sharing -->
+
+                <!-- Social -->
                 <div class="border-t border-gray-200 pt-4 text-base text-gray-600">
                     <div class="mb-2 font-semibold text-gray-900">Category: <%= product.category.name %></div>
                     <div class="mb-3">Share your love</div>
                     <div class="flex gap-3">
-                        <button aria-label="Facebook" class="hover:text-yellow-400"><i class="fab fa-facebook-f"></i></button>
-                        <button aria-label="Twitter" class="hover:text-yellow-400"><i class="fab fa-twitter"></i></button>
+                        <button aria-label="Facebook"  class="hover:text-yellow-400"><i class="fab fa-facebook-f"></i></button>
+                        <button aria-label="Twitter"   class="hover:text-yellow-400"><i class="fab fa-twitter"></i></button>
                         <button aria-label="Instagram" class="hover:text-yellow-400"><i class="fab fa-instagram"></i></button>
                         <button aria-label="Pinterest" class="hover:text-yellow-400"><i class="fab fa-pinterest-p"></i></button>
-                        <button aria-label="LinkedIn" class="hover:text-yellow-400"><i class="fab fa-linkedin-in"></i></button>
-                        <button aria-label="YouTube" class="hover:text-yellow-400"><i class="fab fa-youtube"></i></button>
-                        <button aria-label="Tumblr" class="hover:text-yellow-400"><i class="fab fa-tumblr"></i></button>
+                        <button aria-label="LinkedIn"  class="hover:text-yellow-400"><i class="fab fa-linkedin-in"></i></button>
+                        <button aria-label="YouTube"   class="hover:text-yellow-400"><i class="fab fa-youtube"></i></button>
+                        <button aria-label="Tumblr"    class="hover:text-yellow-400"><i class="fab fa-tumblr"></i></button>
                     </div>
                 </div>
-                
-                <!-- Payment Methods -->
+
+                <!-- Payment -->
                 <div class="border border-gray-200 rounded mt-6 p-4 text-center text-base text-gray-600">
                     <div class="mb-2">Guaranteed Safe Checkout</div>
                     <div class="flex justify-center gap-3">
-                        <img alt="Visa credit card logo" class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Visa">
-                        <img alt="Mastercard credit card logo" class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Mastercard">
-                        <img alt="American Express credit card logo" class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Amex">
-                        <img alt="Paypal payment logo" class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Paypal">
+                        <img alt="Visa"       class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Visa">
+                        <img alt="Mastercard" class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Mastercard">
+                        <img alt="Amex"       class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Amex">
+                        <img alt="Paypal"     class="h-6 w-auto" loading="lazy" src="https://placehold.co/40x24/png?text=Paypal">
                     </div>
                 </div>
             </div>
         </section>
-        
+
         <!-- Tabs -->
         <section class="mt-12 border-b border-gray-200">
             <nav class="flex gap-6 text-base font-semibold text-gray-400 uppercase" role="tablist">
@@ -341,20 +394,12 @@ button.active i.fas {
                 <button role="tab" class="pb-1 hover:text-yellow-400" onclick="showTab('reviews')">Reviews (0)</button>
                 <button role="tab" class="pb-1 hover:text-yellow-400" onclick="showTab('custom')">Custom Tab</button>
             </nav>
-            <div id="description" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed">
-                <p><%= product.description %></p>
-            </div>
-            <div id="additional" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden">
-                <p>Additional information about the product will be displayed here.</p>
-            </div>
-            <div id="reviews" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden">
-                <p>No reviews yet. Be the first to review this product!</p>
-            </div>
-            <div id="custom" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden">
-                <p>Custom tab content goes here.</p>
-            </div>
+            <div id="description" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed"><p><%= product.description %></p></div>
+            <div id="additional" class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden"><p>Additional information about the product will be displayed here.</p></div>
+            <div id="reviews"     class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden"><p>No reviews yet. Be the first to review this product!</p></div>
+            <div id="custom"      class="tab-content mt-6 text-lg text-gray-600 leading-relaxed hidden"><p>Custom tab content goes here.</p></div>
         </section>
-        
+
         <!-- Related Products -->
         <section class="mt-12">
             <h2 class="text-2xl font-semibold text-gray-900 mb-6">Related Products</h2>
@@ -364,15 +409,20 @@ button.active i.fas {
                         <div class="border border-gray-200 rounded p-4 text-base text-gray-600 hover:shadow-md transition">
                             <div class="relative">
                                 <a href="/product/<%= relatedProduct._id %>">
-                                    <img alt="<%= relatedProduct.productName %>" class="w-full h-40 object-contain mb-2" loading="lazy" src="/images/<%= relatedProduct.productImage[0] %>">
+                                    <img alt="<%= relatedProduct.productName %>"
+                                         class="w-full h-40 object-contain mb-2" loading="lazy"
+                                         src="/images/<%= relatedProduct.productImage[0] %>">
                                 </a>
-                                <button aria-label="Add to wishlist" class="absolute top-2 right-2 text-gray-400 hover:text-yellow-400 text-base" onclick="event.preventDefault(); toggleWishlist(this, '<%= relatedProduct.productName %>', '<%= relatedProduct._id %>')">
+                                <button aria-label="Add to wishlist"
+                                        class="absolute top-2 right-2 text-gray-400 hover:text-yellow-400 text-base"
+                                        onclick="event.preventDefault();toggleWishlist(this,'<%= relatedProduct.productName %>','<%= relatedProduct._id %>')">
                                     <i class="far fa-heart"></i>
                                 </button>
                             </div>
                             <div class="font-semibold text-gray-900 mb-1"><%= relatedProduct.productName %></div>
                             <div class="mb-2">₹<%= relatedProduct.finalPrice %></div>
-                            <button class="w-full border border-gray-300 rounded py-1 text-base hover:border-yellow-400 hover:text-yellow-400 transition" onclick="addToCartRelated('<%= relatedProduct._id %>', '<%= relatedProduct.productName %>', <%= relatedProduct.finalPrice %>, this)">
+                            <button class="w-full border border-gray-300 rounded py-1 text-base hover:border-yellow-400 hover:text-yellow-400 transition"
+                                    onclick="addToCartRelated('<%= relatedProduct._id %>','<%= relatedProduct.productName %>',<%= relatedProduct.finalPrice %>,this)">
                                 Add to Cart
                             </button>
                         </div>
@@ -383,421 +433,356 @@ button.active i.fas {
             <% } %>
         </section>
 
-        <!-- Zoom Modal (Mobile Fallback) -->
-        <div id="zoomModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden" role="dialog" aria-label="Image Zoom">
-            <button class="absolute top-4 right-4 text-white text-3xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-yellow-400" onclick="closeZoom()" aria-label="Close zoom modal">&times;</button>
-            <div class="relative">
-                <img id="zoomedImage" class="zoom-image max-w-[90vw] max-h-[90vh] object-contain" src="" alt="Zoomed product image">
-            </div>
+        <!-- Zoom Modal -->
+        <div id="zoomModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden"
+             role="dialog" aria-label="Image Zoom">
+            <button class="absolute top-4 right-4 text-white text-3xl cursor-pointer" onclick="closeZoom()">&times;</button>
+            <img id="zoomedImage" class="zoom-image max-w-[90vw] max-h-[90vh] object-contain" src="" alt="Zoomed">
         </div>
     </main>
+
     <%- include("../../views/partials/user/footer") %>
-    
-    <script>
-        // FIXED: Initialize selected values
-        let selectedSize = '<%= product.size && product.size.length > 0 ? product.size[0] : "" %>';
-        let selectedColor = '<%= product.color && product.color.length > 0 ? product.color[0] : "" %>';
 
-        console.log('Initial selections:', { selectedSize, selectedColor });
+<script>
+    // ── State ──────────────────────────────────────────────────────────────
+    const PRODUCT_ID = '<%= product._id %>';
+    const stockMap   = <%- JSON.stringify(product.stockMap || {}) %>;
 
-        // Function to show notifications
-        function showNotification(message, type = 'success') {
-            const existingNotifications = document.querySelectorAll('.notification');
-            existingNotifications.forEach(notif => notif.remove());
+    let selectedColor = '<%= product.availableColors && product.availableColors.length > 0 ? product.availableColors[0] : "" %>';
+    let selectedSize  = '<%= product.availableSizes  && product.availableSizes.length  > 0 ? product.availableSizes[0]  : "" %>';
+    let productIsLive = true;
+    let pollingTimer  = null;
+    let redirectTimer = null;
 
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            
-            const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
-            notification.innerHTML = `
-                <i class="${icon}"></i>
-                <span>${message}</span>
-            `;
+    // ── Single DOMContentLoaded ───────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        startAvailabilityPolling();
 
-            document.body.appendChild(notification);
+        // Init sizes for first color on page load
+        if (selectedColor) initSizesByColor(selectedColor);
 
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
-        }
-
-        function addToCart() {
-            <% if (!locals.user) { %>
-                showNotification('Please login to add items to cart', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1500);
-                return;
-            <% } %>
-
-            const quantity = document.getElementById('quantity').value;
-            
-            console.log('Adding to cart with:', {
-                productId: '<%= product._id %>',
-                quantity: quantity,
-                selectedColor: selectedColor,
-                selectedSize: selectedSize
-            });
-            
-            const button = event.target;
-            const originalText = button.innerHTML;
-            
-            button.innerHTML = '<div class="spinner"></div> Adding...';
-            button.classList.add('loading');
-
-            fetch('/api/add-to-cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: '<%= product._id %>',
-                    quantity: parseInt(quantity),
-                    selectedColor: selectedColor,
-                    selectedSize: selectedSize
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Server response:', data);
-                if (data.success) {
-                    button.innerHTML = '<i class="fas fa-check"></i> Added!';
-                    button.classList.remove('bg-gray-900', 'hover:bg-yellow-400', 'hover:text-gray-900');
-                    button.classList.add('bg-green-500');
-                    
-                    setTimeout(() => {
-                        button.innerHTML = originalText;
-                        button.classList.remove('bg-green-500');
-                        button.classList.add('bg-gray-900', 'hover:bg-yellow-400', 'hover:text-gray-900');
-                    }, 2000);
-
-                    showNotification(`<%= product.productName %> added to cart!`, 'success');
-                    
-                    if (window.updateCartCount) {
-                        window.updateCartCount();
-                    }
-                } else {
-                    showNotification(data.message || 'Failed to add to cart', 'error');
+        // Wishlist sync
+        <% if (locals.user) { %>
+        (async () => {
+            try {
+                const res  = await fetch('/api/wishlist-ids');
+                const data = await res.json();
+                if (data.success && data.productIds.includes('<%= product._id.toString() %>')) {
+                    const btn  = document.getElementById('wishlistBtn');
+                    const icon = document.getElementById('wishlistIcon');
+                    if (btn)  btn.classList.add('active');
+                    if (icon) { icon.className = 'fas fa-heart'; icon.setAttribute('style','font-size:1.2rem;color:#ef4444;'); }
                 }
-            })
-            .catch(error => {
-                console.error('Error adding to cart:', error);
-                showNotification('An error occurred while adding to cart', 'error');
-            })
-            .finally(() => {
-                button.classList.remove('loading');
-                if (button.innerHTML.includes('Adding...')) {
-                    button.innerHTML = originalText;
-                }
-            });
-        }
-
-        function addToCartRelated(productId, productName, price, button) {
-            <% if (!locals.user) { %>
-                showNotification('Please login to add items to cart', 'error');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1500);
-                return;
-            <% } %>
-
-            const originalText = button.innerHTML;
-            button.innerHTML = '<div class="spinner"></div> Adding...';
-            button.disabled = true;
-
-            fetch('/api/add-to-cart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    quantity: 1,
-                    selectedColor: '', // Related products will use default values
-                    selectedSize: ''
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.innerHTML = '<i class="fas fa-check"></i> Added!';
-                    button.style.borderColor = '#4CAF50';
-                    button.style.color = '#4CAF50';
-                    
-                    setTimeout(() => {
-                        button.innerHTML = originalText;
-                        button.style.borderColor = '#d1d5db';
-                        button.style.color = '#6b7280';
-                    }, 2000);
-
-                    showNotification(`${productName} added to cart!`, 'success');
-                    
-                    if (window.updateCartCount) {
-                        window.updateCartCount();
-                    }
-                } else {
-                    showNotification(data.message || 'Failed to add to cart', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding to cart:', error);
-                showNotification('An error occurred while adding to cart', 'error');
-            })
-            .finally(() => {
-                button.disabled = false;
-                if (button.innerHTML.includes('Adding...')) {
-                    button.innerHTML = originalText;
-                }
-            });
-        }
-
-        function selectColor(element, color) {
-            selectedColor = color;
-            console.log('Selected color:', selectedColor);
-            
-            document.querySelectorAll('.color-option').forEach(el => {
-                el.classList.remove('selected');
-            });
-            
-            element.classList.add('selected');
-            
-            // Update color text display
-            const colorText = document.getElementById('selectedColorText');
-            if (colorText) {
-                colorText.textContent = `(${color})`;
-            }
-        }
-
-        function selectSize(button, size) {
-            selectedSize = size;
-            console.log('Selected size:', selectedSize);
-            
-            document.querySelectorAll('.size-option').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            button.classList.add('selected');
-        }
-
-     function toggleWishlist(button, productName, productId) {
-    const isLoggedIn = '<%= locals.user ? "yes" : "no" %>' === 'yes';
-    if (!isLoggedIn) {
-        showNotification('Please login to add to wishlist', 'error');
-        setTimeout(() => { window.location.href = '/login'; }, 1500);
-        return;
-    }
-
-    if (!productId) {
-        showNotification('Invalid product', 'error');
-        return;
-    }
-
-    const isActive = button.classList.contains('active');
-    const url = isActive ? `/removeWishlist/${productId}` : `/addWishlist/${productId}`;
-
-    // Try to get icon by ID first, then fallback to querySelector
-    const icon = document.getElementById('wishlistIcon') || button.querySelector('i');
-    const text = document.getElementById('wishlistText') || button.querySelector('span');
-
-    button.disabled = true;
-
-    fetch(url, { method: 'POST' })
-    .then(res => res.json())
-    .then(data => {
-        button.disabled = false;
-
-        const makeRed = () => {
-            button.classList.add('active');
-            if (icon) {
-                icon.className = 'fas fa-heart';
-                icon.setAttribute('style', 'font-size:1.2rem; color:#ef4444;');
-            }
-            if (text) text.style.color = '#ef4444';
-        };
-
-        const makeGrey = () => {
-            button.classList.remove('active');
-            if (icon) {
-                icon.className = 'far fa-heart';
-                icon.setAttribute('style', 'font-size:1.2rem; color:#666;');
-            }
-            if (text) text.style.color = '#666';
-        };
-
-        if (data.success) {
-            if (!isActive) {
-                makeRed();
-                showNotification('Added to wishlist ❤️', 'success');
-            } else {
-                makeGrey();
-                showNotification('Removed from wishlist', 'success');
-            }
-        } else if (data.message === 'Already in Wishlist') {
-            makeRed();
-        } else {
-            showNotification(data.message || 'Could not update wishlist', 'error');
-        }
-    })
-    .catch((err) => {
-        button.disabled = false;
-        console.error('Wishlist error:', err);
-        showNotification('Something went wrong', 'error');
+            } catch(e) { console.error('Wishlist load error:', e); }
+        })();
+        <% } %>
     });
-}
-<% if (locals.user) { %>
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const res = await fetch('/api/wishlist-ids');
-        const data = await res.json();
-        if (data.success && data.productIds.includes('<%= product._id.toString() %>')) {
-            const btn = document.getElementById('wishlistBtn');
-            const icon = document.getElementById('wishlistIcon');
-            const text = document.getElementById('wishlistText');
-            if (btn) btn.classList.add('active');
-            if (icon) icon.setAttribute('style', 'font-size:1.2rem; color:#ef4444;');
-            if (icon) icon.className = 'fas fa-heart';
-            if (text) text.style.color = '#ef4444';
+
+    // ── Availability polling ──────────────────────────────────────────────
+    function startAvailabilityPolling() {
+        pollingTimer = setInterval(async () => {
+            try {
+                const res  = await fetch(`/api/product-status/${PRODUCT_ID}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.available && productIsLive) {
+                    productIsLive = false;
+                    handleProductUnavailable();
+                }
+            } catch (_) {}
+        }, 5000);
+    }
+
+    function handleProductUnavailable() {
+        clearInterval(pollingTimer);
+        document.getElementById('productMain').classList.add('product-unavailable');
+        document.getElementById('unavailableOverlay').classList.add('show');
+        let count = 5;
+        document.getElementById('countdownNum').textContent = count;
+        redirectTimer = setInterval(() => {
+            count--;
+            document.getElementById('countdownNum').textContent = count;
+            if (count <= 0) {
+                clearInterval(redirectTimer);
+                window.location.href = '/shop?msg=unavailable';
+            }
+        }, 1000);
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    function showNotification(message, type = 'success') {
+        document.querySelectorAll('.notification').forEach(n => n.remove());
+        const n = document.createElement('div');
+        n.className = `notification ${type}`;
+        const icon = type === 'success' ? 'fas fa-check-circle'
+                   : type === 'warning' ? 'fas fa-exclamation-circle'
+                   : 'fas fa-exclamation-triangle';
+        n.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
+        document.body.appendChild(n);
+        setTimeout(() => n.classList.add('show'), 100);
+        setTimeout(() => {
+            n.classList.remove('show');
+            setTimeout(() => n.parentNode && n.parentNode.removeChild(n), 300);
+        }, 4000);
+    }
+
+    // ── Color selection ───────────────────────────────────────────────────
+    function selectColor(el, color) {
+        selectedColor = color;
+        document.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+        el.classList.add('selected');
+        const txt = document.getElementById('selectedColorText');
+        if (txt) txt.textContent = color;
+        initSizesByColor(color);
+    }
+
+    // ── Size selection ────────────────────────────────────────────────────
+    function selectSize(btn, size) {
+        if (btn.classList.contains('oos')) return;
+        selectedSize = size;
+        document.querySelectorAll('.size-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        const txt = document.getElementById('selectedSizeText');
+        if (txt) txt.textContent = size;
+    }
+
+    // ── Filter sizes by selected color ────────────────────────────────────
+    function initSizesByColor(color) {
+        const hasStockMap = Object.keys(stockMap).length > 0;
+        let firstAvailable = null;
+
+        document.querySelectorAll('.size-option').forEach(btn => {
+            const size    = btn.dataset.size;
+            const key     = `${color}__${size}`;
+            const inStock = !hasStockMap || !!stockMap[key];
+
+            btn.classList.remove('selected', 'oos');
+            btn.disabled = false;
+
+            if (inStock) {
+                if (!firstAvailable) firstAvailable = btn;
+            } else {
+                btn.classList.add('oos');
+                btn.disabled = true;
+            }
+        });
+
+        if (firstAvailable) {
+            firstAvailable.classList.add('selected');
+            selectedSize = firstAvailable.dataset.size;
+            const txt = document.getElementById('selectedSizeText');
+            if (txt) txt.textContent = selectedSize;
+        } else {
+            selectedSize = '';
+            const txt = document.getElementById('selectedSizeText');
+            if (txt) txt.textContent = 'None available';
         }
-    } catch(e) { console.error('Wishlist load error:', e); }
-});
-<% } %>
-        function changeMainImage(src) {
-            const mainImage = document.getElementById('mainImage');
-            const zoomedImageResult = document.getElementById('zoomedImageResult');
-            mainImage.src = src;
-            zoomedImageResult.src = src;
-            mainImage.classList.add('opacity-0');
-            setTimeout(() => mainImage.classList.remove('opacity-0'), 300);
+    }
+
+    // ── Add to Cart ───────────────────────────────────────────────────────
+    function addToCart() {
+        <% if (!locals.user) { %>
+            showNotification('Please login to add items to cart', 'error');
+            setTimeout(() => { window.location.href = '/login'; }, 1500);
+            return;
+        <% } %>
+
+        if (!productIsLive) {
+            showNotification('This product is no longer available', 'error');
+            return;
         }
 
-        function openZoom(src) {
-            document.getElementById('zoomedImage').src = src;
-            document.getElementById('zoomModal').classList.remove('hidden');
+        const quantity = document.getElementById('quantity').value;
+        const button   = event.target;
+        const origText = button.innerHTML;
+
+        button.innerHTML = '<div class="spinner"></div> Adding...';
+        button.classList.add('loading');
+
+        fetch('/api/add-to-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: PRODUCT_ID, quantity: parseInt(quantity), selectedColor, selectedSize })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                button.innerHTML = '<i class="fas fa-check"></i> Added!';
+                button.classList.replace('bg-gray-900', 'bg-green-500');
+                setTimeout(() => {
+                    button.innerHTML = origText;
+                    button.classList.replace('bg-green-500', 'bg-gray-900');
+                }, 2000);
+                showNotification('<%= product.productName %> added to cart!', 'success');
+                if (window.updateCartCount) window.updateCartCount();
+            } else {
+                showNotification(data.message || 'Failed to add to cart', 'error');
+            }
+        })
+        .catch(() => showNotification('An error occurred while adding to cart', 'error'))
+        .finally(() => {
+            button.classList.remove('loading');
+            if (button.innerHTML.includes('Adding...')) button.innerHTML = origText;
+        });
+    }
+
+    function addToCartRelated(productId, productName, price, button) {
+        <% if (!locals.user) { %>
+            showNotification('Please login to add items to cart', 'error');
+            setTimeout(() => { window.location.href = '/login'; }, 1500);
+            return;
+        <% } %>
+
+        const origText = button.innerHTML;
+        button.innerHTML = '<div class="spinner"></div> Adding...';
+        button.disabled = true;
+
+        fetch('/api/add-to-cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, quantity: 1, selectedColor: '', selectedSize: '' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                button.innerHTML = '<i class="fas fa-check"></i> Added!';
+                button.style.borderColor = '#4CAF50';
+                button.style.color = '#4CAF50';
+                setTimeout(() => {
+                    button.innerHTML = origText;
+                    button.style.borderColor = '#d1d5db';
+                    button.style.color = '#6b7280';
+                }, 2000);
+                showNotification(`${productName} added to cart!`, 'success');
+                if (window.updateCartCount) window.updateCartCount();
+            } else {
+                showNotification(data.message || 'Failed to add to cart', 'error');
+            }
+        })
+        .catch(() => showNotification('An error occurred while adding to cart', 'error'))
+        .finally(() => {
+            button.disabled = false;
+            if (button.innerHTML.includes('Adding...')) button.innerHTML = origText;
+        });
+    }
+
+    // ── Wishlist ──────────────────────────────────────────────────────────
+    function toggleWishlist(button, productName, productId) {
+        const isLoggedIn = '<%= locals.user ? "yes" : "no" %>' === 'yes';
+        if (!isLoggedIn) {
+            showNotification('Please login to add to wishlist', 'error');
+            setTimeout(() => { window.location.href = '/login'; }, 1500);
+            return;
         }
+        if (!productId) { showNotification('Invalid product', 'error'); return; }
 
-        function closeZoom() {
-            document.getElementById('zoomModal').classList.add('hidden');
-            document.getElementById('zoomedImage').style.transform = 'scale(1)';
+        const isActive = button.classList.contains('active');
+        const url  = isActive ? `/removeWishlist/${productId}` : `/addWishlist/${productId}`;
+        const icon = document.getElementById('wishlistIcon') || button.querySelector('i');
+        const text = document.getElementById('wishlistText') || button.querySelector('span');
+
+        button.disabled = true;
+        fetch(url, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            button.disabled = false;
+            const makeRed  = () => { button.classList.add('active');    if (icon) { icon.className = 'fas fa-heart'; icon.setAttribute('style','font-size:1.2rem;color:#ef4444;'); } if (text) text.style.color='#ef4444'; };
+            const makeGrey = () => { button.classList.remove('active'); if (icon) { icon.className = 'far fa-heart'; icon.setAttribute('style','font-size:1.2rem;color:#666;');    } if (text) text.style.color='#666'; };
+            if (data.success) {
+                isActive ? makeGrey() : makeRed();
+                showNotification(isActive ? 'Removed from wishlist' : 'Added to wishlist ❤️', 'success');
+            } else if (data.message === 'Already in Wishlist') {
+                makeRed();
+            } else {
+                showNotification(data.message || 'Could not update wishlist', 'error');
+            }
+        })
+        .catch(() => { button.disabled = false; showNotification('Something went wrong', 'error'); });
+    }
+
+    // ── Image helpers ─────────────────────────────────────────────────────
+    function changeMainImage(src) {
+        const main = document.getElementById('mainImage');
+        const zoom = document.getElementById('zoomedImageResult');
+        main.src = src; zoom.src = src;
+        main.classList.add('opacity-0');
+        setTimeout(() => main.classList.remove('opacity-0'), 300);
+    }
+    function openZoom(src) {
+        document.getElementById('zoomedImage').src = src;
+        document.getElementById('zoomModal').classList.remove('hidden');
+    }
+    function closeZoom() {
+        document.getElementById('zoomModal').classList.add('hidden');
+        document.getElementById('zoomedImage').style.transform = 'scale(1)';
+    }
+    document.getElementById('zoomModal').addEventListener('click', function(e) {
+        if (e.target === this || e.target.classList.contains('zoom-image')) closeZoom();
+    });
+
+    // ── Tab switcher ──────────────────────────────────────────────────────
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+        document.querySelectorAll('nav button[role="tab"]').forEach(b => {
+            b.classList.remove('border-yellow-400','text-yellow-400');
+            b.classList.add('text-gray-400');
+        });
+        document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('border-yellow-400','text-yellow-400');
+    }
+
+    // ── Desktop zoom ──────────────────────────────────────────────────────
+    const mainImage         = document.getElementById('mainImage');
+    const zoomResult        = document.getElementById('zoomResult');
+    const zoomedImageResult = document.getElementById('zoomedImageResult');
+    const zoomContainer     = document.querySelector('.zoom-container');
+    const ZOOM_LEVEL        = 3;
+
+    zoomContainer.addEventListener('mouseenter', () => { if (window.innerWidth > 1024) zoomResult.style.display = 'block'; });
+    zoomContainer.addEventListener('mouseleave', () => { zoomResult.style.display = 'none'; });
+    zoomContainer.addEventListener('mousemove', e => {
+        if (window.innerWidth <= 1024) return;
+        const rect = mainImage.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const y = Math.max(0, Math.min(e.clientY - rect.top,  rect.height));
+        zoomResult.style.left = `${e.clientX + (window.scrollX||window.pageXOffset) + 10}px`;
+        zoomResult.style.top  = `${e.clientY + (window.scrollY||window.pageYOffset) - zoomResult.offsetHeight / 2}px`;
+        zoomedImageResult.style.transform = `scale(${ZOOM_LEVEL}) translate(-${(x*ZOOM_LEVEL)/ZOOM_LEVEL}px,-${(y*ZOOM_LEVEL)/ZOOM_LEVEL}px)`;
+    });
+    mainImage.addEventListener('click', () => { if (window.innerWidth <= 1024) openZoom(mainImage.src); });
+
+    // ── Mobile pinch-zoom ─────────────────────────────────────────────────
+    let scale = 1, initialDistance = 0, translateX = 0, translateY = 0;
+    const zoomedImage = document.getElementById('zoomedImage');
+
+    zoomedImage.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            initialDistance = Math.hypot(e.touches[1].pageX - e.touches[0].pageX, e.touches[1].pageY - e.touches[0].pageY);
+        } else if (e.touches.length === 1 && scale > 1) {
+            e.preventDefault();
+            this.dataset.startX = e.touches[0].pageX - translateX;
+            this.dataset.startY = e.touches[0].pageY - translateY;
         }
-
-        document.getElementById('zoomModal').addEventListener('click', function(event) {
-            if (event.target === this || event.target.classList.contains('zoom-image')) {
-                closeZoom();
-            }
-        });
-
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-            document.querySelectorAll('nav button').forEach(btn => {
-                btn.classList.remove('border-yellow-400', 'text-yellow-400');
-                btn.classList.add('text-gray-400', 'hover:text-yellow-400');
-            });
-            document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('border-yellow-400', 'text-yellow-400');
+    });
+    zoomedImage.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const d = Math.hypot(e.touches[1].pageX - e.touches[0].pageX, e.touches[1].pageY - e.touches[0].pageY);
+            scale = Math.max(1, Math.min((d / initialDistance) * 1.5, 4));
+            this.style.transform = `scale(${scale}) translate(${translateX/scale}px,${translateY/scale}px)`;
+        } else if (e.touches.length === 1 && scale > 1) {
+            e.preventDefault();
+            translateX = e.touches[0].pageX - parseFloat(this.dataset.startX || 0);
+            translateY = e.touches[0].pageY - parseFloat(this.dataset.startY || 0);
+            const max = (this.offsetWidth * (scale - 1)) / (2 * scale);
+            translateX = Math.max(-max, Math.min(max, translateX));
+            translateY = Math.max(-max, Math.min(max, translateY));
+            this.style.transform = `scale(${scale}) translate(${translateX/scale}px,${translateY/scale}px)`;
         }
-
-        // Zoom functionality for desktop
-        const mainImage = document.getElementById('mainImage');
-        const zoomLens = document.querySelector('.zoom-lens');
-        const zoomResult = document.getElementById('zoomResult');
-        const zoomedImageResult = document.getElementById('zoomedImageResult');
-        const zoomContainer = document.querySelector('.zoom-container');
-        const zoomLevel = 3;
-
-        zoomContainer.addEventListener('mouseenter', () => {
-            if (window.innerWidth > 1024) {
-                zoomResult.style.display = 'block';
-            }
-        });
-
-        zoomContainer.addEventListener('mouseleave', () => {
-            zoomResult.style.display = 'none';
-        });
-
-        zoomContainer.addEventListener('mousemove', (e) => {
-            if (window.innerWidth <= 1024) return;
-
-            const rect = mainImage.getBoundingClientRect();
-            const resultWidth = zoomResult.offsetWidth;
-            const resultHeight = zoomResult.offsetHeight;
-
-            let x = e.clientX - rect.left;
-            let y = e.clientY - rect.top;
-
-            x = Math.max(0, Math.min(x, rect.width));
-            y = Math.max(0, Math.min(y, rect.height));
-
-            const scrollX = window.scrollX || window.pageXOffset;
-            const scrollY = window.scrollY || window.pageYOffset;
-            zoomResult.style.left = `${e.clientX + scrollX + 10}px`;
-            zoomResult.style.top = `${e.clientY + scrollY - resultHeight / 2}px`;
-
-            const rx = (x / rect.width) * 100;
-            const ry = (y / rect.height) * 100;
-            const zoomFactor = zoomLevel;
-            zoomedImageResult.style.transform = `scale(${zoomFactor}) translate(-${(x * zoomFactor) / zoomLevel}px, -${(y * zoomFactor) / zoomLevel}px)`;
-        });
-
-        mainImage.addEventListener('click', () => {
-            if (window.innerWidth <= 1024) {
-                openZoom(mainImage.src);
-            }
-        });
-
-        // Mobile touch zoom for modal
-        let scale = 1;
-        let initialDistance = 0;
-        let translateX = 0;
-        let translateY = 0;
-
-        const zoomedImage = document.getElementById('zoomedImage');
-        zoomedImage.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                initialDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-            } else if (e.touches.length === 1 && scale > 1) {
-                e.preventDefault();
-                this.dataset.startX = e.touches[0].pageX - translateX;
-                this.dataset.startY = e.touches[0].pageY - translateY;
-            }
-        });
-
-        zoomedImage.addEventListener('touchmove', function(e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                const currentDistance = Math.hypot(touch2.pageX - touch1.pageX, touch2.pageY - touch1.pageY);
-                scale = Math.max(1, Math.min((currentDistance / initialDistance) * 1.5, 4));
-                this.style.transform = `scale(${scale}) translate(${translateX / scale}px, ${translateY / scale}px)`;
-            } else if (e.touches.length === 1 && scale > 1) {
-                e.preventDefault();
-                translateX = e.touches[0].pageX - parseFloat(this.dataset.startX || 0);
-                translateY = e.touches[0].pageY - parseFloat(this.dataset.startY || 0);
-                const maxTranslate = (this.offsetWidth * (scale - 1)) / (2 * scale);
-                translateX = Math.max(-maxTranslate, Math.min(maxTranslate, translateX));
-                translateY = Math.max(-maxTranslate, Math.min(maxTranslate, translateY));
-                this.style.transform = `scale(${scale}) translate(${translateX / scale}px, ${translateY / scale}px)`;
-            }
-        });
-
-        zoomedImage.addEventListener('touchend', function() {
-            if (scale === 1) {
-                translateX = 0;
-                translateY = 0;
-                this.style.transform = 'scale(1)';
-            }
-        });
-    </script>
+    });
+    zoomedImage.addEventListener('touchend', function() {
+        if (scale === 1) { translateX = 0; translateY = 0; this.style.transform = 'scale(1)'; }
+    });
+</script>
 </body>
 </html>

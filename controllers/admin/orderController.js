@@ -303,7 +303,7 @@ refundAmount += finalItemAmount;
         order.status = 'Delivered';
       }
 
-      for (const item of returnRequestedItems) {  // ✅ fixed typo
+      for (const item of returnRequestedItems) {  
         item.status = 'Delivered';
         item.returnReason = undefined;
         item.returnComments = undefined;
@@ -333,7 +333,7 @@ const approveReturn = async (req, res) => {
       return res.json({ success: false, message: 'Order ID is required' });
     }
 
-    const order = await Order.findById(orderId).populate('orderedItems.product');  // ✅ fixed typo
+    const order = await Order.findById(orderId).populate('orderedItems.product');  
 
     if (!order) {
       return res.json({ success: false, message: 'Order not found' });
@@ -342,7 +342,7 @@ const approveReturn = async (req, res) => {
     let refundAmount = 0;
 
     if (itemId) {
-      const itemIndex = order.orderedItems.findIndex(  // ✅ fixed typo
+      const itemIndex = order.orderedItems.findIndex( 
         i => i._id.toString() === itemId
       );
 
@@ -350,14 +350,14 @@ const approveReturn = async (req, res) => {
         return res.json({ success: false, message: 'Item not found in order' });
       }
 
-      const item = order.orderedItems[itemIndex];  // ✅ fixed typo
+      const item = order.orderedItems[itemIndex];  
 
       if (item.status !== 'Return Request') {
         return res.json({ success: false, message: 'No return request for this item' });
       }
 
       refundAmount = item.price * item.quantity;
-      order.orderedItems[itemIndex].status = 'Returned';  // ✅ fixed typo
+      order.orderedItems[itemIndex].status = 'Returned';   
       order.orderedItems[itemIndex].returnApprovedDate = new Date();
 
       if (item.product?._id) {
@@ -526,6 +526,55 @@ const bulkUpdateStatus = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating orders' });
   }
 };
+const updateItemStatus = async (req, res) => {
+  try {
+    const { orderId, itemId, status } = req.body;
+
+    const validStatuses = ['Pending', 'Processing', 'Shipping', 'Delivered'];
+    if (!validStatuses.includes(status)) {
+      return res.json({ success: false, message: 'Invalid status' });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) return res.json({ success: false, message: 'Order not found' });
+
+    const item = order.orderedItems.id(itemId);
+    if (!item) return res.json({ success: false, message: 'Item not found' });
+
+    if (['Returned', 'Cancelled'].includes(item.status)) {
+      return res.json({ success: false, message: `Cannot update a ${item.status} item` });
+    }
+
+    item.status = status;
+
+    const priority = ['Pending', 'Processing', 'Shipping', 'Delivered'];
+    const activeItems = order.orderedItems.filter(
+      i => !['Cancelled', 'Returned'].includes(i.status || '')
+    );
+
+    if (activeItems.length === 0) {
+      order.status = 'Cancelled';
+    } else if (!['Return Request', 'Returned', 'Cancelled'].includes(order.status)) {
+    let highestIndex = 0;
+activeItems.forEach(i => {
+    const idx = priority.indexOf(i.status || 'Pending');
+    if (idx !== -1 && idx > highestIndex) highestIndex = idx;
+});
+order.status = priority[highestIndex];
+    }
+
+    if (status === 'Delivered') order.invoiceDate = order.invoiceDate || new Date();
+    order.updatedAt = new Date();
+    await order.save();
+
+    res.json({ success: true, message: `Item status updated to ${status}` });
+
+  } catch (err) {
+    console.error('Error updating item status:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 export {
   loadOrders,
@@ -537,5 +586,6 @@ export {
   exportOrders,
   deleteOrder,
   bulkUpdateStatus,
+   updateItemStatus
   
 };

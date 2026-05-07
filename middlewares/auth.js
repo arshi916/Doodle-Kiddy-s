@@ -26,7 +26,6 @@ const userAuth = async (req, res, next) => {
 const adminAuth = async (req, res, next) => {
   try {
     if (!req.session.admin) {
-      // ✅ Return JSON for AJAX/fetch, redirect for normal requests
       if (req.headers['content-type']?.includes('application/json')) {
         return res.status(401).json({ success: false, message: "Unauthorized" });
       }

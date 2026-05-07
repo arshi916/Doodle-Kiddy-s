@@ -186,8 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Update all cart count elements in header
-                const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count], .cart-badge');
-                cartCountElements.forEach(element => {
+const cartCountElements = document.querySelectorAll('.cart-count, [data-cart-count], .cart-badge, #cart-count');                cartCountElements.forEach(element => {
                     element.textContent = data.count || 0;
                     
                     // Hide badge if count is 0
@@ -230,11 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching cart count:', error);
         });
     }
-    
-    // Update cart count on page load
+    window.updateCartCount = updateHeaderCartCount;
     updateHeaderCartCount();
     
-    // Update cart count every 30 seconds to keep it in sync
     setInterval(updateHeaderCartCount, 30000);
 });
     class SearchManager {
